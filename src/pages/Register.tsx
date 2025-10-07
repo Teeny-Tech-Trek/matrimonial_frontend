@@ -1,5 +1,6 @@
+// src/pages/Register.tsx
 import React, { useState } from 'react';
-import { Heart, Phone, User, Calendar, Lock } from 'lucide-react';
+import { Heart, Phone, User, Calendar, Lock, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 interface RegisterProps {
@@ -19,11 +20,14 @@ export const Register: React.FC<RegisterProps> = ({ onNavigate }) => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
 
+    // Validation
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       return;
@@ -34,11 +38,39 @@ export const Register: React.FC<RegisterProps> = ({ onNavigate }) => {
       return;
     }
 
+    // Validate phone number
+    if (!formData.phoneNumber) {
+      setError('Phone number is required');
+      return;
+    }
+
     setLoading(true);
+    
     try {
-      await register(formData);
-      onNavigate('profile-setup');
+      // Prepare data for backend API
+      const registrationData = {
+        fullName: formData.fullName,
+        phoneNumber: formData.phoneNumber,
+        password: formData.password,
+        gender: formData.gender,
+        dateOfBirth: formData.dateOfBirth,
+        profileCreatedFor: formData.profileCreatedFor,
+      };
+
+      console.log('📤 Sending registration data:', registrationData);
+
+      // Call backend register API
+      await register(registrationData);
+      
+      setSuccess('Account created successfully! Redirecting...');
+      
+      // Redirect to dashboard after short delay
+      setTimeout(() => {
+        onNavigate('dashboard');
+      }, 1500);
+      
     } catch (err) {
+      console.error('Registration error:', err);
       setError(err instanceof Error ? err.message : 'Registration failed');
     } finally {
       setLoading(false);
@@ -46,7 +78,7 @@ export const Register: React.FC<RegisterProps> = ({ onNavigate }) => {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center">
+    <div className="min-h-[80vh] flex items-center justify-center py-12 px-4">
       <div className="max-w-2xl w-full bg-white rounded-2xl shadow-xl p-8">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
@@ -90,6 +122,7 @@ export const Register: React.FC<RegisterProps> = ({ onNavigate }) => {
                   required
                 />
               </div>
+              <p className="text-xs text-gray-500 mt-1">Enter with or without +91 prefix</p>
             </div>
 
             <div>
@@ -187,12 +220,19 @@ export const Register: React.FC<RegisterProps> = ({ onNavigate }) => {
             </div>
           )}
 
+          {success && (
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
+              {success}
+            </div>
+          )}
+
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-rose-600 to-pink-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50"
+            className="w-full bg-gradient-to-r from-rose-600 to-pink-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 flex items-center justify-center space-x-2"
           >
-            {loading ? 'Creating Account...' : 'Create Account'}
+            <span>{loading ? 'Creating Account...' : 'Create Account'}</span>
+            {!loading && <ArrowRight className="h-5 w-5" />}
           </button>
         </form>
 
@@ -206,6 +246,13 @@ export const Register: React.FC<RegisterProps> = ({ onNavigate }) => {
               Login
             </button>
           </p>
+        </div>
+
+        <div className="mt-6 p-4 bg-green-50 rounded-lg">
+          <p className="text-sm font-medium text-green-900 mb-2">📝 Registration Info:</p>
+          <p className="text-xs text-green-800">• Phone can be with or without +91</p>
+          <p className="text-xs text-green-800">• Password minimum 6 characters</p>
+          <p className="text-xs text-green-800">• All fields are required</p>
         </div>
       </div>
     </div>
