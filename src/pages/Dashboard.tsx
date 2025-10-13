@@ -321,6 +321,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       setError('');
       
       console.log('📥 Fetching profiles with filter type:', filterType);
+      console.log('👤 Current User ID:', currentUser?.id);
       
       // Build query string based on filter
       let queryString = 'page=1&limit=50&sortBy=createdAt&sortOrder=desc';
@@ -344,8 +345,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       console.log('📦 API Response:', data);
       
       if (data.success && data.data) {
-        console.log('✅ Profiles fetched:', data.data.length);
-        setProfiles(data.data || []);
+        // 🔥 FILTER OUT CURRENT USER'S PROFILE
+        const filteredProfiles = (data.data || []).filter((profile: CompleteProfile) => {
+          const profileUserId = profile.userId || profile.id || profile._id;
+          const currentUserId = currentUser?.id;
+          
+          console.log('🔍 Comparing profile:', {
+            profileUserId,
+            currentUserId,
+            profileName: profile.personalDetails?.fullName || 'Unknown',
+            isCurrentUser: profileUserId === currentUserId
+          });
+          
+          return profileUserId !== currentUserId;
+        });
+        
+        console.log('✅ Total profiles from API:', data.data.length);
+        console.log('✅ Filtered profiles (excluding own):', filteredProfiles.length);
+        
+        setProfiles(filteredProfiles);
       } else {
         console.log('⚠️ No profiles in response');
         setProfiles([]);
@@ -470,75 +488,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      {/* Filter Buttons */}
-      {/* <div className="bg-white rounded-xl shadow-lg p-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-4">Filter Profiles</h3>
-        <div className="flex flex-wrap gap-3">
-          <button
-            onClick={handleShowAll}
-            className={`px-6 py-2 rounded-lg font-semibold transition-all ${
-              activeFilter === 'all'
-                ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white shadow-lg'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            All Profiles ({profiles.length})
-          </button>
-          
-          <button
-            onClick={handleRecommended}
-            className={`px-6 py-2 rounded-lg font-semibold transition-all ${
-              activeFilter === 'recommended'
-                ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white shadow-lg'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            Recommended
-          </button>
-
-          <button
-            onClick={handleFilterByRecentlyJoined}
-            className={`px-6 py-2 rounded-lg font-semibold transition-all ${
-              activeFilter === 'recentlyJoined'
-                ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white shadow-lg'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            Recently Joined
-          </button> */}
-          
-          {/* <button
-            onClick={handleFilterByReligion}
-            className={`px-6 py-2 rounded-lg font-semibold transition-all ${
-              activeFilter === 'religion'
-                ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white shadow-lg'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            Same Religion
-          </button> */}
-          
-          {/* <button
-            onClick={handleFilterByCity}
-            className={`px-6 py-2 rounded-lg font-semibold transition-all ${
-              activeFilter === 'city'
-                ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white shadow-lg'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            Same City
-          </button> */}
-          
-          {/* <button
-            onClick={() => onNavigate('search')}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all"
-          >
-            Advanced Search
-          </button>
-        </div>
-      </div> */}
-      {/* <ViewRequests onNavigate={onNavigate} /> */}
-{/* View Requests Card - Clickable */}
+      {/* View Requests Card - Clickable */}
       <div 
         onClick={() => onNavigate('requests')}
         className="bg-white rounded-xl shadow-lg p-6 hover:shadow-2xl transition-all cursor-pointer group relative overflow-hidden"
@@ -565,9 +515,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             </span>
           </div>
         </div>
-        
-       
       </div>
+
       {/* Profiles Section */}
       <div>
         <div className="flex items-center justify-between mb-6">

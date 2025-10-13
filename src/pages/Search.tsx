@@ -84,8 +84,22 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
         console.log('✅ Current Page:', data.page);
         console.log('✅ Total Pages:', data.pages);
         
-        setProfiles(data.data || []);
-        setTotalProfiles(data.total || 0);
+        // 🔥 FILTER OUT CURRENT USER'S PROFILE
+        const filteredProfiles = (data.data || []).filter((profile: CompleteProfile) => {
+          // Compare using userId or id, depending on your data structure
+          const profileUserId = profile.userId || profile.id || profile._id;
+          const currentUserId = currentUser?.id;
+          
+          console.log('🔍 Comparing:', { profileUserId, currentUserId });
+          
+          return profileUserId !== currentUserId;
+        });
+        
+        console.log('✅ Filtered Profiles Count (excluding own):', filteredProfiles.length);
+        
+        setProfiles(filteredProfiles);
+        // Adjust total count to exclude current user
+        setTotalProfiles(filteredProfiles.length > 0 ? data.total - 1 : 0);
       } else {
         console.error('❌ API returned success: false');
         console.error('❌ Error Message:', data.message);
@@ -146,49 +160,47 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
   };
 
  
-const handleSendInterest = async (profileId: string) => {
-  if (!currentUser) {
-    alert("Please login to send an interest");
-    return;
-  }
-
-  // Assume your JWT token is stored in localStorage (or state)
-  const token = localStorage.getItem("authToken"); // or from context, redux, etc.
-
-  if (!token) {
-    alert("Authentication token not found. Please login again.");
-    return;
-  }
-
-  try {
-    console.log("💌 Sending interest to:", profileId);
-
-    const response = await fetch("http://localhost:5000/api/request/send", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`, // ✅ send token here
-      },
-      body: JSON.stringify({
-        senderId: currentUser.id,
-        receiverId: profileId,
-      }),
-    });
-
-    const data = await response.json();
-    console.log("📦 Interest Response:", data);
-
-    if (data.success) {
-      alert("Interest sent successfully ❤️");
-    } else {
-      alert(data.message || "Failed to send interest");
+  const handleSendInterest = async (profileId: string) => {
+    if (!currentUser) {
+      alert("Please login to send an interest");
+      return;
     }
-  } catch (error) {
-    console.error("❌ Failed to send interest:", error);
-    alert("Something went wrong while sending interest");
-  }
-};
 
+    const token = localStorage.getItem("authToken");
+
+    if (!token) {
+      alert("Authentication token not found. Please login again.");
+      return;
+    }
+
+    try {
+      console.log("💌 Sending interest to:", profileId);
+
+      const response = await fetch("http://localhost:5000/api/request/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          senderId: currentUser.id,
+          receiverId: profileId,
+        }),
+      });
+
+      const data = await response.json();
+      console.log("📦 Interest Response:", data);
+
+      if (data.success) {
+        alert("Interest sent successfully ❤️");
+      } else {
+        alert(data.message || "Failed to send interest");
+      }
+    } catch (error) {
+      console.error("❌ Failed to send interest:", error);
+      alert("Something went wrong while sending interest");
+    }
+  };
 
   // Handle search input with debounce
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -196,12 +208,10 @@ const handleSendInterest = async (profileId: string) => {
     setSearchTerm(value);
     console.log('🔍 Search term changed:', value);
     
-    // Clear previous timeout
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
     
-    // Set new timeout
     searchTimeoutRef.current = setTimeout(() => {
       console.log('🔍 Executing search after debounce...');
       setCurrentPage(1);
@@ -298,9 +308,7 @@ const handleSendInterest = async (profileId: string) => {
                   key={profile.id || profile._id}
                   profile={profile}
                   onViewProfile={(id) => onNavigate('profile-view', { profileId: id })}
-               onSendInterest={() => handleSendInterest(profile.userId)}
-
-
+                  onSendInterest={() => handleSendInterest(profile.userId)}
                   onMessage={(id) => onNavigate('messages', { profileId: id })}
                 />
               ))}
