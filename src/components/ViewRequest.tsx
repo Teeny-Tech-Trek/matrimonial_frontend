@@ -1,19 +1,26 @@
-// src/components/ViewRequests.tsx
 import React, { useState, useEffect } from 'react';
-import { UserPlus, CheckCircle, XCircle, Clock, Eye, Loader2, Heart, MessageCircle, ArrowRight, Filter, Search, Sparkles, TrendingUp, Users } from 'lucide-react';
+import { UserPlus, CheckCircle, XCircle, Clock, Eye, Loader2, Heart, Users, AlertTriangle, Search, Sparkles } from 'lucide-react';
+
+interface User {
+  _id: string;
+  fullName: string;
+  dateOfBirth: string;
+  gender: string;
+  profileCreatedFor: string;
+  education?: string;
+  occupation?: string;
+  location?: string;
+  profilePhotos?: string[];
+}
 
 interface Request {
-  id: string;
-  name: string;
-  age: number;
-  location: string;
-  education: string;
-  occupation: string;
-  image: string;
+  _id: string;
+  sender: User | null;
+  receiver: User | null;
   status: 'pending' | 'accepted' | 'rejected';
-  time: string;
-  type: 'received' | 'sent';
   compatibility?: number;
+  createdAt: string;
+  type: 'received' | 'sent';
 }
 
 interface ViewRequestsProps {
@@ -25,114 +32,325 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'accepted' | 'rejected'>('all');
-  
-  // Sample data - Replace with API calls
-  const [receivedRequests, setReceivedRequests] = useState<Request[]>([
-    {
-      id: '1',
-      name: 'Priya Sharma',
-      age: 26,
-      location: 'Mumbai, Maharashtra',
-      education: 'MBA',
-      occupation: 'Marketing Manager',
-      image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400',
-      status: 'pending',
-      time: '2 hours ago',
-      type: 'received',
-      compatibility: 94
-    },
-    {
-      id: '2',
-      name: 'Anjali Verma',
-      age: 24,
-      location: 'Delhi, NCR',
-      education: 'B.Tech in CS',
-      occupation: 'Software Engineer',
-      image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400',
-      status: 'pending',
-      time: '5 hours ago',
-      type: 'received',
-      compatibility: 88
-    },
-    {
-      id: '3',
-      name: 'Neha Patel',
-      age: 27,
-      location: 'Ahmedabad, Gujarat',
-      education: 'CA',
-      occupation: 'Chartered Accountant',
-      image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400',
-      status: 'pending',
-      time: '1 day ago',
-      type: 'received',
-      compatibility: 91
-    }
-  ]);
+  const [receivedRequests, setReceivedRequests] = useState<Request[]>([]);
+  const [sentRequests, setSentRequests] = useState<Request[]>([]);
+  const [error, setError] = useState<string>('');
+  const [invalidRequestCount, setInvalidRequestCount] = useState<number>(0);
+  const [requestCounts, setRequestCounts] = useState({
+    received: 0,
+    sent: 0,
+    pending: 0
+  });
 
-  const [sentRequests, setSentRequests] = useState<Request[]>([
-    {
-      id: '4',
-      name: 'Kavya Reddy',
-      age: 25,
-      location: 'Hyderabad, Telangana',
-      education: 'M.Sc',
-      occupation: 'Research Scientist',
-      image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400',
-      status: 'accepted',
-      time: '3 days ago',
-      type: 'sent',
-      compatibility: 92
-    },
-    {
-      id: '5',
-      name: 'Riya Malhotra',
-      age: 23,
-      location: 'Chandigarh, Punjab',
-      education: 'BBA',
-      occupation: 'Business Analyst',
-      image: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400',
-      status: 'rejected',
-      time: '4 days ago',
-      type: 'sent',
-      compatibility: 85
-    },
-    {
-      id: '6',
-      name: 'Divya Iyer',
-      age: 26,
-      location: 'Bangalore, Karnataka',
-      education: 'B.Tech',
-      occupation: 'Product Manager',
-      image: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400',
-      status: 'pending',
-      time: '1 week ago',
-      type: 'sent',
-      compatibility: 89
-    }
-  ]);
+  // API Base URL
+  const API_BASE_URL = 'http://localhost:5000/api/request';
 
+  // Calculate age from date of birth
+  const calculateAge = (dateOfBirth: string): number => {
+    try {
+      const birthDate = new Date(dateOfBirth);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      
+      return age;
+    } catch (error) {
+      return 0;
+    }
+  };
+
+  // Format time ago
+  const getTimeAgo = (createdAt: string): string => {
+    try {
+      const created = new Date(createdAt);
+      const now = new Date();
+      const diffInMs = now.getTime() - created.getTime();
+      const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+      const diffInDays = Math.floor(diffInHours / 24);
+
+      if (diffInHours < 1) return 'Just now';
+      if (diffInHours < 24) return `${diffInHours} hours ago`;
+      if (diffInDays === 1) return '1 day ago';
+      if (diffInDays < 7) return `${diffInDays} days ago`;
+      if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} weeks ago`;
+      return `${Math.floor(diffInDays / 30)} months ago`;
+    } catch (error) {
+      return 'Recently';
+    }
+  };
+
+  // Get default profile image
+  const getDefaultProfileImage = (gender: string): string => {
+    return gender === 'female' 
+      ? 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop&crop=face'
+      : 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face';
+  };
+
+  // Get auth token
+  const getAuthToken = (): string => {
+    return localStorage.getItem('authToken') || '';
+  };
+
+  // Fetch request statistics
+  const fetchRequestStats = async () => {
+    try {
+      const token = getAuthToken();
+      const response = await fetch(`${API_BASE_URL}/stats`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch request statistics');
+      }
+
+      const result = await response.json();
+      if (result.success) {
+        setRequestCounts(result.data);
+      }
+    } catch (err) {
+      console.error('Error fetching request stats:', err);
+    }
+  };
+
+  // Fetch received requests
+  const fetchReceivedRequests = async (retryCount = 0) => {
+    try {
+      setLoading(true);
+      setError('');
+      const token = getAuthToken();
+      
+      const response = await fetch(`${API_BASE_URL}/received`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch received requests');
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        const requestsData = result.data || [];
+        const formattedRequests: Request[] = requestsData
+          .filter((request: any) => request.sender && request.receiver)
+          .map((request: any) => ({
+            ...request,
+            type: 'received' as const,
+          }));
+        
+        if (requestsData.length !== formattedRequests.length) {
+          console.warn(`Filtered out ${requestsData.length - formattedRequests.length} invalid received requests`);
+          setInvalidRequestCount(requestsData.length - formattedRequests.length);
+        }
+        
+        setReceivedRequests(formattedRequests);
+      } else {
+        throw new Error(result.error || 'Failed to fetch requests');
+      }
+    } catch (err) {
+      if (retryCount < 3) {
+        console.warn(`Retrying fetchReceivedRequests (${retryCount + 1}/3)`);
+        setTimeout(() => fetchReceivedRequests(retryCount + 1), 1000);
+        return;
+      }
+      setError(err instanceof Error ? err.message : 'Failed to fetch requests');
+      console.error('Error fetching received requests:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch sent requests
+  const fetchSentRequests = async (retryCount = 0) => {
+    try {
+      setLoading(true);
+      setError('');
+      const token = getAuthToken();
+      
+      const response = await fetch(`${API_BASE_URL}/sent`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch sent requests');
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        const requestsData = result.data || [];
+        const formattedRequests: Request[] = requestsData
+          .filter((request: any) => request.sender && request.receiver)
+          .map((request: any) => ({
+            ...request,
+            type: 'sent' as const,
+          }));
+        
+        if (requestsData.length !== formattedRequests.length) {
+          console.warn(`Filtered out ${requestsData.length - formattedRequests.length} invalid sent requests`);
+          setInvalidRequestCount(requestsData.length - formattedRequests.length);
+        }
+        
+        setSentRequests(formattedRequests);
+      } else {
+        throw new Error(result.error || 'Failed to fetch requests');
+      }
+    } catch (err) {
+      if (retryCount < 3) {
+        console.warn(`Retrying fetchSentRequests (${retryCount + 1}/3)`);
+        setTimeout(() => fetchSentRequests(retryCount + 1), 1000);
+        return;
+      }
+      setError(err instanceof Error ? err.message : 'Failed to fetch requests');
+      console.error('Error fetching sent requests:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update request status
+  const updateRequestStatus = async (requestId: string, status: 'accepted' | 'rejected') => {
+    try {
+      setError('');
+      const token = getAuthToken();
+      
+      const response = await fetch(`${API_BASE_URL}/${requestId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to ${status} request`);
+      }
+
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.error || `Failed to ${status} request`);
+      }
+
+      // Update local state
+      if (activeTab === 'received') {
+        setReceivedRequests(prev => 
+          prev.map(req => 
+            req._id === requestId ? { ...req, status } : req
+          )
+        );
+      } else {
+        setSentRequests(prev => 
+          prev.map(req => 
+            req._id === requestId ? { ...req, status } : req
+          )
+        );
+      }
+
+      // Refresh stats
+      await fetchRequestStats();
+
+      console.log(`${status} request:`, requestId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update request');
+      console.error(`Error ${status}ing request:`, err);
+    }
+  };
+
+  // Delete request
+  const deleteRequest = async (requestId: string) => {
+    try {
+      setError('');
+      const token = getAuthToken();
+      
+      const response = await fetch(`${API_BASE_URL}/${requestId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to delete request');
+      }
+
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to delete request');
+      }
+
+      // Update local state
+      if (activeTab === 'received') {
+        setReceivedRequests(prev => prev.filter(req => req._id !== requestId));
+      } else {
+        setSentRequests(prev => prev.filter(req => req._id !== requestId));
+      }
+
+      // Refresh stats
+      await fetchRequestStats();
+
+      console.log('Deleted request:', requestId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete request');
+      console.error('Error deleting request:', err);
+    }
+  };
+
+  // Handle accept request
   const handleAcceptRequest = (requestId: string) => {
-    setReceivedRequests(prev => 
-      prev.map(req => 
-        req.id === requestId ? { ...req, status: 'accepted' as const } : req
-      )
-    );
-    console.log('Accepted request:', requestId);
+    updateRequestStatus(requestId, 'accepted');
   };
 
+  // Handle reject request
   const handleRejectRequest = (requestId: string) => {
-    setReceivedRequests(prev => 
-      prev.map(req => 
-        req.id === requestId ? { ...req, status: 'rejected' as const } : req
-      )
-    );
-    console.log('Rejected request:', requestId);
+    updateRequestStatus(requestId, 'rejected');
   };
 
-  const handleViewProfile = (requestId: string) => {
-    onNavigate('profile-view', { profileId: requestId });
+  // Handle delete request
+  const handleDeleteRequest = (requestId: string) => {
+    if (window.confirm('Are you sure you want to delete this request?')) {
+      deleteRequest(requestId);
+    }
   };
 
+  const handleViewProfile = (request: Request) => {
+    const profileUser = activeTab === 'received' ? request.sender : request.receiver;
+    if (!profileUser) {
+      setError('Cannot view profile: User data is missing');
+      return;
+    }
+    onNavigate('profile-view', { 
+      profileId: profileUser._id,
+      user: profileUser
+    });
+  };
+
+  // Fetch data when tab changes
+  useEffect(() => {
+    if (activeTab === 'received') {
+      fetchReceivedRequests();
+    } else {
+      fetchSentRequests();
+    }
+    fetchRequestStats();
+  }, [activeTab]);
+
+  // Stats calculations
   const pendingReceived = receivedRequests.filter(r => r.status === 'pending').length;
   const acceptedSent = sentRequests.filter(r => r.status === 'accepted').length;
   const rejectedSent = sentRequests.filter(r => r.status === 'rejected').length;
@@ -140,8 +358,13 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
 
   // Filter requests based on search and status
   const filteredRequests = (activeTab === 'received' ? receivedRequests : sentRequests).filter(req => {
-    const matchesSearch = req.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          req.location.toLowerCase().includes(searchQuery.toLowerCase());
+    const targetUser = activeTab === 'received' ? req.sender : req.receiver;
+    if (!targetUser) {
+      return false;
+    }
+    const matchesSearch =
+      (targetUser.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
+      (targetUser.location?.toLowerCase().includes(searchQuery.toLowerCase()) || false);
     const matchesStatus = filterStatus === 'all' || req.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
@@ -149,6 +372,28 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5" />
+            {error}
+            <button 
+              onClick={() => setError('')} 
+              className="ml-auto text-red-500 hover:text-red-700"
+            >
+              ×
+            </button>
+          </div>
+        )}
+
+        {/* Invalid Requests Warning */}
+        {invalidRequestCount > 0 && (
+          <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-xl flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5" />
+            <span>{invalidRequestCount} invalid request(s) could not be displayed due to missing user data.</span>
+          </div>
+        )}
+
         {/* Hero Header */}
         <div className="relative overflow-hidden bg-gradient-to-r from-rose-600 to-pink-600 rounded-3xl p-8 text-white shadow-2xl">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
@@ -165,10 +410,10 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
               </div>
             </div>
             
-            {pendingReceived > 0 && (
+            {requestCounts.pending > 0 && (
               <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
                 <Sparkles className="h-5 w-5 animate-pulse" />
-                <span className="font-semibold">{pendingReceived} new requests waiting for you!</span>
+                <span className="font-semibold">{requestCounts.pending} new requests waiting for you!</span>
               </div>
             )}
           </div>
@@ -195,7 +440,7 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
                 </p>
               </div>
               <div className="text-right">
-                <div className="text-4xl font-bold text-gray-900">{receivedRequests.length}</div>
+                <div className="text-4xl font-bold text-gray-900">{requestCounts.received}</div>
                 {pendingReceived > 0 && (
                   <span className="inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-rose-600 to-pink-600 text-white">
                     {pendingReceived} New
@@ -224,7 +469,7 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
                 </p>
               </div>
               <div className="text-right">
-                <div className="text-4xl font-bold text-gray-900">{sentRequests.length}</div>
+                <div className="text-4xl font-bold text-gray-900">{requestCounts.sent}</div>
                 {acceptedSent > 0 && (
                   <span className="inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
                     {acceptedSent} Accepted
@@ -234,8 +479,6 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
             </div>
           </button>
         </div>
-
-
 
         {/* Search and Filter Bar */}
         <div className="bg-white rounded-2xl shadow-lg p-6">
@@ -339,129 +582,176 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
               <UserPlus className="h-16 w-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-900 mb-2">No requests found</h3>
               <p className="text-gray-600">
-                {searchQuery ? 'Try adjusting your search' : 'No requests at the moment'}
+                {searchQuery || filterStatus !== 'all' 
+                  ? 'Try adjusting your search or filters' 
+                  : activeTab === 'received' 
+                    ? 'No received requests at the moment' 
+                    : "You haven't sent any requests yet"}
               </p>
             </div>
           ) : (
-            filteredRequests.map((request, index) => (
-              <div
-                key={request.id}
-                className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all overflow-hidden"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                {/* Image Header */}
-                <div className="relative h-48 overflow-hidden">
-                  <img
-                    src={request.image}
-                    alt={request.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-                  
-                  {/* Status Badge */}
-                  {request.status === 'pending' && (
-                    <div className="absolute top-4 right-4">
-                      <span className="bg-gradient-to-r from-rose-600 to-pink-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg animate-pulse flex items-center gap-1">
-                        <Sparkles className="h-3 w-3" />
-                        New
+            filteredRequests.map((request, index) => {
+              const targetUser = activeTab === 'received' ? request.sender : request.receiver;
+              if (!targetUser) {
+                return (
+                  <div
+                    key={request._id}
+                    className="bg-white rounded-2xl shadow-lg p-6 text-center flex items-center justify-center gap-2"
+                    style={{ animationDelay: `${index * 100}ms` }}
+                  >
+                    <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                    <p className="text-yellow-600">Invalid request: User data missing</p>
+                  </div>
+                );
+              }
+              const age = calculateAge(targetUser.dateOfBirth);
+              const profileImage = targetUser.profilePhotos?.[0] || getDefaultProfileImage(targetUser.gender);
+              
+              return (
+                <div
+                  key={request._id}
+                  className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all overflow-hidden animate-fade-in"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  {/* Image Header */}
+                  <div className="relative h-48 overflow-hidden">
+                    <img
+                      src={profileImage}
+                      alt={targetUser.fullName}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      onError={(e) => {
+                        e.currentTarget.src = getDefaultProfileImage(targetUser.gender);
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                    
+                    {/* Status Badge */}
+                    {request.status === 'pending' && activeTab === 'received' && (
+                      <div className="absolute top-4 right-4">
+                        <span className="bg-gradient-to-r from-rose-600 to-pink-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg animate-pulse flex items-center gap-1">
+                          <Sparkles className="h-3 w-3" />
+                          New
+                        </span>
+                      </div>
+                    )}
+                    
+                    {/* Compatibility Badge */}
+                    {request.compatibility && (
+                      <div className="absolute top-4 left-4">
+                        <div className="bg-white/90 backdrop-blur-sm text-gray-900 text-sm font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1">
+                          <Heart className="h-4 w-4 text-rose-600 fill-rose-600" />
+                          {request.compatibility}%
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Time */}
+                    <div className="absolute bottom-4 left-4">
+                      <span className="bg-black/50 backdrop-blur-sm text-white text-xs px-3 py-1 rounded-full flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {getTimeAgo(request.createdAt)}
                       </span>
                     </div>
-                  )}
-                  
-                  {/* Compatibility Badge */}
-                  {request.compatibility && (
-                    <div className="absolute top-4 left-4">
-                      <div className="bg-white/90 backdrop-blur-sm text-gray-900 text-sm font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1">
-                        <Heart className="h-4 w-4 text-rose-600 fill-rose-600" />
-                        {request.compatibility}%
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Time */}
-                  <div className="absolute bottom-4 left-4">
-                    <span className="bg-black/50 backdrop-blur-sm text-white text-xs px-3 py-1 rounded-full flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {request.time}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Content */}
-                <div className="p-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">{request.name}</h3>
-                  <p className="text-sm text-gray-600 mb-3 flex items-center gap-1">
-                    <span className="font-medium">{request.age} years</span>
-                    <span>•</span>
-                    <span>{request.location}</span>
-                  </p>
-                  
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <span className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600">🎓</span>
-                      <span>{request.education}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <span className="w-6 h-6 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600">💼</span>
-                      <span>{request.occupation}</span>
-                    </div>
                   </div>
 
-                  {/* Actions */}
-                  {activeTab === 'received' && request.status === 'pending' ? (
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleViewProfile(request.id)}
-                        className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all font-medium flex items-center justify-center gap-2"
-                      >
-                        <Eye className="h-4 w-4" />
-                        View
-                      </button>
-                      <button
-                        onClick={() => handleAcceptRequest(request.id)}
-                        className="flex-1 py-3 bg-gradient-to-r from-rose-600 to-pink-600 text-white rounded-xl hover:shadow-lg transition-all font-medium flex items-center justify-center gap-2"
-                      >
-                        <CheckCircle className="h-4 w-4" />
-                        Accept
-                      </button>
-                      <button
-                        onClick={() => handleRejectRequest(request.id)}
-                        className="py-3 px-4 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all"
-                      >
-                        <XCircle className="h-5 w-5" />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-between">
-                      <button
-                        onClick={() => handleViewProfile(request.id)}
-                        className="flex items-center gap-2 text-gray-600 hover:text-rose-600 transition-colors font-medium"
-                      >
-                        <Eye className="h-5 w-5" />
-                        View Profile
-                      </button>
-                      <div
-                        className={`px-4 py-2 rounded-xl font-medium flex items-center gap-2 ${
-                          request.status === 'accepted'
-                            ? 'bg-green-100 text-green-700'
-                            : request.status === 'rejected'
-                            ? 'bg-red-100 text-red-700'
-                            : 'bg-amber-100 text-amber-700'
-                        }`}
-                      >
-                        {request.status === 'accepted' && <CheckCircle className="h-4 w-4" />}
-                        {request.status === 'rejected' && <XCircle className="h-4 w-4" />}
-                        {request.status === 'pending' && <Clock className="h-4 w-4" />}
-                        {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                  {/* Content */}
+                  <div className="p-6">
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">{targetUser.fullName}</h3>
+                    <p className="text-sm text-gray-600 mb-3 flex items-center gap-1">
+                      <span className="font-medium">{age} years</span>
+                      <span>•</span>
+                      <span>{targetUser.location || 'Location not specified'}</span>
+                    </p>
+                    
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <span className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600">🎓</span>
+                        <span>{targetUser.education || 'Education not specified'}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <span className="w-6 h-6 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600">💼</span>
+                        <span>{targetUser.occupation || 'Occupation not specified'}</span>
                       </div>
                     </div>
-                  )}
+
+                    {/* Actions */}
+                    {activeTab === 'received' && request.status === 'pending' ? (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleViewProfile(request)}
+                          className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all font-medium flex items-center justify-center gap-2"
+                        >
+                          <Eye className="h-4 w-4" />
+                          View
+                        </button>
+                        <button
+                          onClick={() => handleAcceptRequest(request._id)}
+                          className="flex-1 py-3 bg-gradient-to-r from-rose-600 to-pink-600 text-white rounded-xl hover:shadow-lg transition-all font-medium flex items-center justify-center gap-2"
+                        >
+                          <CheckCircle className="h-4 w-4" />
+                          Accept
+                        </button>
+                        <button
+                          onClick={() => handleRejectRequest(request._id)}
+                          className="py-3 px-4 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all"
+                        >
+                          <XCircle className="h-5 w-5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between">
+                        <button
+                          onClick={() => handleViewProfile(request)}
+                          className="flex items-center gap-2 text-gray-600 hover:text-rose-600 transition-colors font-medium"
+                        >
+                          <Eye className="h-5 w-5" />
+                          View Profile
+                        </button>
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={`px-4 py-2 rounded-xl font-medium flex items-center gap-2 ${
+                              request.status === 'accepted'
+                                ? 'bg-green-100 text-green-700'
+                                : request.status === 'rejected'
+                                ? 'bg-red-100 text-red-700'
+                                : 'bg-amber-100 text-amber-700'
+                            }`}
+                          >
+                            {request.status === 'accepted' && <CheckCircle className="h-4 w-4" />}
+                            {request.status === 'rejected' && <XCircle className="h-4 w-4" />}
+                            {request.status === 'pending' && <Clock className="h-4 w-4" />}
+                            {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                          </div>
+                          {(request.status === 'rejected' || request.status === 'accepted') && (
+                            <button
+                              onClick={() => handleDeleteRequest(request._id)}
+                              className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                              title="Delete request"
+                            >
+                              <XCircle className="h-5 w-5" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>
+
+      {/* Add some custom animations */}
+      <style >{`
+        @keyframes fade-in {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.5s ease-out forwards;
+        }
+      `}</style>
     </div>
   );
 };

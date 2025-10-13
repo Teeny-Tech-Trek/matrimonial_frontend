@@ -271,6 +271,7 @@ export interface Report {
 }
 
 export interface CompleteProfile extends Profile {
+  [x: string]: any;
   personalDetails?: PersonalDetails;
   religiousDetails?: ReligiousDetails;
   educationDetails?: EducationDetails;

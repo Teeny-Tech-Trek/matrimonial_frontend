@@ -11,6 +11,8 @@ interface SearchProps {
 
 export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
   const { currentUser } = useAuth();
+
+  console.log('👤 Current User:', currentUser);
   const [profiles, setProfiles] = useState<CompleteProfile[]>([]);
   const [loading, setLoading] = useState(false);
   const [totalProfiles, setTotalProfiles] = useState(0);
@@ -143,6 +145,51 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
     fetchProfiles(filters, queryString, activeView);
   };
 
+ 
+const handleSendInterest = async (profileId: string) => {
+  if (!currentUser) {
+    alert("Please login to send an interest");
+    return;
+  }
+
+  // Assume your JWT token is stored in localStorage (or state)
+  const token = localStorage.getItem("authToken"); // or from context, redux, etc.
+
+  if (!token) {
+    alert("Authentication token not found. Please login again.");
+    return;
+  }
+
+  try {
+    console.log("💌 Sending interest to:", profileId);
+
+    const response = await fetch("http://localhost:5000/api/request/send", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`, // ✅ send token here
+      },
+      body: JSON.stringify({
+        senderId: currentUser.id,
+        receiverId: profileId,
+      }),
+    });
+
+    const data = await response.json();
+    console.log("📦 Interest Response:", data);
+
+    if (data.success) {
+      alert("Interest sent successfully ❤️");
+    } else {
+      alert(data.message || "Failed to send interest");
+    }
+  } catch (error) {
+    console.error("❌ Failed to send interest:", error);
+    alert("Something went wrong while sending interest");
+  }
+};
+
+
   // Handle search input with debounce
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -251,7 +298,9 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
                   key={profile.id || profile._id}
                   profile={profile}
                   onViewProfile={(id) => onNavigate('profile-view', { profileId: id })}
-                  onSendInterest={(id) => alert('Interest sent!')}
+               onSendInterest={() => handleSendInterest(profile.userId)}
+
+
                   onMessage={(id) => onNavigate('messages', { profileId: id })}
                 />
               ))}

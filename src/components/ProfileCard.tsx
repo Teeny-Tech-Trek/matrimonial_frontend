@@ -109,7 +109,8 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
             </button>
             {onSendInterest && (
               <button
-                onClick={() => onSendInterest(profile.id)}
+               onClick={() => onSendInterest(profile._id || profile.id)}
+
                 className="flex items-center justify-center px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors"
               >
                 <Heart className="h-4 w-4" />
