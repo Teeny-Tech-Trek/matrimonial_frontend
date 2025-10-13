@@ -1,89 +1,23 @@
 // src/pages/Dashboard.tsx
 import React, { useEffect, useState } from 'react';
-import { Heart, Eye, MessageCircle, Star, TrendingUp, Users,UserPlus, Loader2, User, X, AlertCircle, Edit, Search } from 'lucide-react';
+import { Heart, MessageCircle, Star, TrendingUp, Users, UserPlus, Loader2, User, X, AlertCircle, Edit } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { CompleteProfile } from '../types';
 import { ProfileCard } from '../components/ProfileCard';
-import profileService from '../services/profile.service';
-import QuickFilters from '../components/QuickFilters';
-import {ViewRequests } from "../components/ViewRequest"
 
 interface DashboardProps {
   onNavigate: (page: string, data?: any) => void;
 }
 
-// Profile Completion Modal Component (Inline)
+// Profile Completion Modal Component
 const ProfileCompletionModal: React.FC<{
   isOpen: boolean;
   onClose: () => void;
   onComplete: () => void;
-}> = ({ isOpen, onClose, onComplete }) => {
-  const [completionPercentage, setCompletionPercentage] = useState(20);
-  const [missingFields, setMissingFields] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (isOpen) {
-      checkProfileCompletion();
-    }
-  }, [isOpen]);
-
-  const checkProfileCompletion = async () => {
-    try {
-      setLoading(true);
-      const response = await profileService.getMyProfile();
-      
-      if (response.success && response.data) {
-        const profile = response.data;
-        const missing: string[] = [];
-        let completed = 20;
-
-        if (!profile.personalDetails?.heightCm) missing.push('Personal Details');
-        else completed += 15;
-
-        if (!profile.religiousDetails?.religion) missing.push('Religious Background');
-        else completed += 10;
-
-        if (!profile.educationDetails?.highestEducation) missing.push('Education Details');
-        else completed += 15;
-
-        if (!profile.professionalDetails?.occupation) missing.push('Professional Details');
-        else completed += 15;
-
-        if (!profile.familyDetails?.currentResidenceCity) missing.push('Family Details');
-        else completed += 15;
-
-        if (!profile.lifestylePreferences?.aboutMe) missing.push('About & Expectations');
-        else completed += 10;
-
-        setCompletionPercentage(completed);
-        setMissingFields(missing);
-      } else {
-        setCompletionPercentage(20);
-        setMissingFields([
-          'Personal Details',
-          'Religious Background',
-          'Education Details',
-          'Professional Details',
-          'Family Details',
-          'About & Expectations'
-        ]);
-      }
-    } catch (error) {
-      console.log('Profile not found');
-      setCompletionPercentage(20);
-      setMissingFields([
-        'Personal Details',
-        'Religious Background',
-        'Education Details',
-        'Professional Details',
-        'Family Details',
-        'About & Expectations'
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  completionPercentage: number;
+  missingFields: string[];
+}> = ({ isOpen, onClose, onComplete, completionPercentage, missingFields }) => {
+  const [loading, setLoading] = useState(false);
 
   const handleSkip = () => {
     localStorage.setItem('profileCompletionSkipped', 'true');
@@ -97,7 +31,6 @@ const ProfileCompletionModal: React.FC<{
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full overflow-hidden animate-scale-in">
-        {/* Header */}
         <div className="bg-gradient-to-r from-rose-600 to-pink-600 p-6 text-white relative">
           <button
             onClick={onClose}
@@ -105,7 +38,6 @@ const ProfileCompletionModal: React.FC<{
           >
             <X className="h-6 w-6" />
           </button>
-          
           <div className="flex items-center gap-4">
             <div className="flex items-center justify-center w-16 h-16 bg-white/20 rounded-full flex-shrink-0">
               <AlertCircle className="h-8 w-8" />
@@ -116,8 +48,6 @@ const ProfileCompletionModal: React.FC<{
             </div>
           </div>
         </div>
-
-        {/* Content */}
         <div className="p-6">
           {loading ? (
             <div className="text-center py-12">
@@ -126,7 +56,6 @@ const ProfileCompletionModal: React.FC<{
             </div>
           ) : (
             <div className="grid md:grid-cols-3 gap-6">
-              {/* Left: Progress Circle */}
               <div className="flex flex-col items-center justify-center">
                 <div className="relative">
                   <svg className="w-40 h-40 transform -rotate-90">
@@ -161,8 +90,6 @@ const ProfileCompletionModal: React.FC<{
                   Complete all sections to maximize your matches
                 </p>
               </div>
-
-              {/* Middle: Missing Sections */}
               <div>
                 <h3 className="text-sm font-semibold text-gray-700 mb-3">
                   Sections to Complete:
@@ -179,8 +106,6 @@ const ProfileCompletionModal: React.FC<{
                   ))}
                 </div>
               </div>
-
-              {/* Right: Benefits & Actions */}
               <div className="flex flex-col justify-between">
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
                   <h4 className="text-sm font-semibold text-blue-900 mb-2">
@@ -193,8 +118,6 @@ const ProfileCompletionModal: React.FC<{
                     <li>✓ Build trust with matches</li>
                   </ul>
                 </div>
-
-                {/* Action Buttons */}
                 <div className="space-y-2">
                   <button
                     onClick={() => {
@@ -206,14 +129,12 @@ const ProfileCompletionModal: React.FC<{
                     <Edit className="h-5 w-5" />
                     Complete Profile Now
                   </button>
-                  
                   <button
                     onClick={handleSkip}
                     className="w-full bg-gray-100 text-gray-700 py-2 rounded-lg font-semibold hover:bg-gray-200 transition-all text-sm"
                   >
                     Skip for Now
                   </button>
-                  
                   <p className="text-xs text-center text-gray-500 mt-2">
                     You can complete your profile anytime
                   </p>
@@ -223,7 +144,6 @@ const ProfileCompletionModal: React.FC<{
           )}
         </div>
       </div>
-
       <style>{`
         @keyframes scale-in {
           from {
@@ -246,19 +166,19 @@ const ProfileCompletionModal: React.FC<{
 export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const { currentUser } = useAuth();
   const [profiles, setProfiles] = useState<CompleteProfile[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [activeFilter, setActiveFilter] = useState<'all' | 'recentlyJoined' | 'recommended'>('all');
-  const [completionPercentage, setCompletionPercentage] = useState(20);
-  const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [stats, setStats] = useState({
-    profileViews: 0,
     interests: 0,
     messages: 0,
-    matches: 0
+    matches: 0,
+    pendingRequests: 0,
+    profileCompletion: 20,
   });
+  const [missingFields, setMissingFields] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
 
-  // ✅ CHECK IF USER JUST REGISTERED AND SHOW MODAL
+  // Check if user just registered and show modal
   useEffect(() => {
     const justRegistered = localStorage.getItem('justRegistered');
     const skipped = localStorage.getItem('profileCompletionSkipped');
@@ -276,125 +196,98 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     }
   }, []);
 
-  // Check profile completion percentage
+  // Fetch dashboard data on component mount
   useEffect(() => {
-    checkProfileCompletion();
+    fetchDashboardData();
   }, [currentUser]);
 
-  const checkProfileCompletion = async () => {
-    try {
-      const response = await profileService.getMyProfile();
-      
-      if (response.success && response.data) {
-        const profile = response.data;
-        let completed = 20;
-
-        if (profile.personalDetails?.heightCm) completed += 15;
-        if (profile.religiousDetails?.religion) completed += 10;
-        if (profile.educationDetails?.highestEducation) completed += 15;
-        if (profile.professionalDetails?.occupation) completed += 15;
-        if (profile.familyDetails?.currentResidenceCity) completed += 15;
-        if (profile.lifestylePreferences?.aboutMe) completed += 10;
-
-        setCompletionPercentage(completed);
-      }
-    } catch (error) {
-      setCompletionPercentage(20);
-    }
-  };
-
-  // Fetch profiles on component mount
-  useEffect(() => {
-    fetchProfiles();
-    
-    setStats({
-      profileViews: Math.floor(Math.random() * 50) + 10,
-      interests: Math.floor(Math.random() * 15) + 3,
-      messages: Math.floor(Math.random() * 10) + 2,
-      matches: Math.floor(Math.random() * 8) + 1
-    });
-  }, [currentUser]);
-
-  const fetchProfiles = async (filterType?: string) => {
+  const fetchDashboardData = async () => {
     try {
       setLoading(true);
       setError('');
       
-      console.log('📥 Fetching profiles with filter type:', filterType);
-      console.log('👤 Current User ID:', currentUser?.id);
+      console.log('📥 Fetching dashboard data for user:', currentUser?.id);
       
-      // Build query string based on filter
-      let queryString = 'page=1&limit=50&sortBy=createdAt&sortOrder=desc';
-      
-      if (filterType === 'religion' && currentUser?.religiousDetails?.religion) {
-        queryString += `&religion=${currentUser.religiousDetails.religion}`;
-      } else if (filterType === 'city' && currentUser?.familyDetails?.currentResidenceCity) {
-        queryString += `&city=${currentUser.familyDetails.currentResidenceCity}`;
-      } else if (filterType === 'recommended') {
-        if (currentUser?.religiousDetails?.religion && currentUser?.familyDetails?.currentResidenceCity) {
-          queryString += `&religion=${currentUser.religiousDetails.religion}&city=${currentUser.familyDetails.currentResidenceCity}`;
-        }
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        setError('Please log in to view your dashboard');
+        setLoading(false);
+        return;
       }
+
+      // Fetch dashboard stats
+      const statsResponse = await fetch('http://localhost:5000/api/dashboard/stats', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const statsData = await statsResponse.json();
+      console.log('📦 Stats API Response:', statsData);
       
-      const apiUrl = `http://localhost:5000/api/profile/list?${queryString}`;
-      console.log('🌐 API URL:', apiUrl);
-      
-      const response = await fetch(apiUrl);
-      const data = await response.json();
-      
-      console.log('📦 API Response:', data);
-      
-      if (data.success && data.data) {
-        // 🔥 FILTER OUT CURRENT USER'S PROFILE
-        const filteredProfiles = (data.data || []).filter((profile: CompleteProfile) => {
+      if (!statsResponse.ok || !statsData.success) {
+        throw new Error(statsData.message || 'Failed to load stats');
+      }
+
+      // Fetch recommended profiles
+      const profilesResponse = await fetch('http://localhost:5000/api/dashboard/recommended?page=1&limit=50', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const profilesData = await profilesResponse.json();
+      console.log('📦 Profiles API Response:', profilesData);
+
+      if (profilesResponse.ok && profilesData.success) {
+        // Filter out current user's profile
+        const filteredProfiles = profilesData.data.filter((profile: CompleteProfile) => {
           const profileUserId = profile.userId || profile.id || profile._id;
-          const currentUserId = currentUser?.id;
-          
-          console.log('🔍 Comparing profile:', {
-            profileUserId,
-            currentUserId,
-            profileName: profile.personalDetails?.fullName || 'Unknown',
-            isCurrentUser: profileUserId === currentUserId
-          });
-          
-          return profileUserId !== currentUserId;
+          return profileUserId !== currentUser?.id;
         });
         
-        console.log('✅ Total profiles from API:', data.data.length);
-        console.log('✅ Filtered profiles (excluding own):', filteredProfiles.length);
+        console.log('✅ Total profiles:', profilesData.data.length);
+        console.log('✅ Filtered profiles:', filteredProfiles.length);
         
         setProfiles(filteredProfiles);
       } else {
-        console.log('⚠️ No profiles in response');
+        setError(profilesData.message || 'No profiles found');
         setProfiles([]);
       }
+
+      if (statsData.success) {
+        setStats({
+          interests: statsData.data.interests,
+          messages: statsData.data.messages,
+          matches: statsData.data.matches,
+          pendingRequests: statsData.data.pendingRequests,
+          profileCompletion: statsData.data.profileCompletion,
+        });
+        
+        // Calculate missing fields based on profile data
+        const profile = statsData.data;
+        const missing: string[] = [];
+        if (!profile.personalDetails?.heightCm) missing.push('Personal Details');
+        if (!profile.religiousDetails?.religion) missing.push('Religious Background');
+        if (!profile.educationDetails?.highestEducation) missing.push('Education Details');
+        if (!profile.professionalDetails?.occupation) missing.push('Professional Details');
+        if (!profile.familyDetails?.currentResidenceCity) missing.push('Family Details');
+        if (!profile.lifestylePreferences?.aboutMe) missing.push('About & Expectations');
+        setMissingFields(missing);
+      } else {
+        setError(statsData.message || 'Failed to load dashboard data');
+      }
     } catch (err: any) {
-      console.error('❌ Error fetching profiles:', err);
-      setError(err.message || 'Failed to load profiles');
+      console.error('❌ Error fetching dashboard data:', err);
+      setError('Failed to connect to the server');
       setProfiles([]);
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleFilterByRecentlyJoined = async () => {
-    setActiveFilter('recentlyJoined');
-    await fetchProfiles('recentlyJoined');
-  };
-
-  const handleFilterByCity = async () => {
-    setActiveFilter('city');
-    await fetchProfiles('city');
-  };
-
-  const handleShowAll = async () => {
-    setActiveFilter('all');
-    await fetchProfiles('all');
-  };
-
-  const handleRecommended = async () => {
-    setActiveFilter('recommended');
-    await fetchProfiles('recommended');
   };
 
   const handleSendInterest = (profileId: string) => {
@@ -407,11 +300,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
 
   return (
     <div className="space-y-8">
-      {/* ✅ PROFILE COMPLETION MODAL */}
+      {/* Profile Completion Modal */}
       <ProfileCompletionModal
         isOpen={showCompletionModal}
         onClose={() => setShowCompletionModal(false)}
         onComplete={() => onNavigate('profile-setup')}
+        completionPercentage={stats.profileCompletion}
+        missingFields={missingFields}
       />
 
       {/* Welcome Banner */}
@@ -420,27 +315,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           Welcome back, {currentUser?.fullName?.split(' ')[0]}!
         </h1>
         <p className="text-rose-100">
-          Here are your personalized matches based on your preferences
+          Here are your AI-recommended matches based on your preferences
         </p>
         <div className="mt-4 flex items-center gap-4 flex-wrap">
-          {completionPercentage < 100 && (
+          {stats.profileCompletion < 100 && (
             <button
               onClick={() => setShowCompletionModal(true)}
               className="inline-block bg-white/20 px-4 py-2 rounded-full hover:bg-white/30 transition-colors cursor-pointer"
             >
-              Profile Completion: {completionPercentage}%
+              Profile Completion: {stats.profileCompletion}%
             </button>
           )}
-          
-          {completionPercentage === 100 && (
+          {stats.profileCompletion === 100 && (
             <div className="inline-flex items-center gap-2 bg-green-500/20 px-4 py-2 rounded-full">
               <span className="text-sm">✓ Profile Complete</span>
             </div>
           )}
-          
-          {completionPercentage < 100 && (
-            <button 
-              onClick={() => onNavigate("profile-setup")} 
+          {stats.profileCompletion < 100 && (
+            <button
+              onClick={() => onNavigate('profile-setup')}
               className="bg-rose-700 text-white px-6 py-2 rounded-lg font-semibold hover:bg-rose-800 transition-colors"
             >
               Complete Profile
@@ -450,16 +343,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow cursor-pointer">
-          <div className="flex items-center justify-between mb-4">
-            <Eye className="h-8 w-8 text-blue-600" />
-            <TrendingUp className="h-5 w-5 text-green-500" />
-          </div>
-          <div className="text-3xl font-bold text-gray-900 mb-1">{stats.profileViews}</div>
-          <div className="text-sm text-gray-600">Profile Views</div>
-        </div>
-
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow cursor-pointer">
           <div className="flex items-center justify-between mb-4">
             <Heart className="h-8 w-8 text-rose-600 fill-rose-600" />
@@ -468,7 +352,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           <div className="text-3xl font-bold text-gray-900 mb-1">{stats.interests}</div>
           <div className="text-sm text-gray-600">Interests Received</div>
         </div>
-
         <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow cursor-pointer">
           <div className="flex items-center justify-between mb-4">
             <MessageCircle className="h-8 w-8 text-green-600" />
@@ -477,7 +360,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           <div className="text-3xl font-bold text-gray-900 mb-1">{stats.messages}</div>
           <div className="text-sm text-gray-600">New Messages</div>
         </div>
-
         <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow cursor-pointer">
           <div className="flex items-center justify-between mb-4">
             <Star className="h-8 w-8 text-amber-600 fill-amber-600" />
@@ -488,31 +370,29 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      {/* View Requests Card - Clickable */}
-      <div 
+      {/* View Requests Card */}
+      <div
         onClick={() => onNavigate('requests')}
         className="bg-white rounded-xl shadow-lg p-6 hover:shadow-2xl transition-all cursor-pointer group relative overflow-hidden"
       >
-        {/* Background gradient on hover */}
         <div className="absolute inset-0 bg-gradient-to-r from-rose-600 to-pink-600 opacity-0 group-hover:opacity-5 transition-opacity"></div>
-        
         <div className="flex items-center justify-between relative z-10">
           <div>
             <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center gap-2">
               <UserPlus className="h-6 w-6 text-rose-600" />
               View Requests
             </h3>
-            <p className="text-gray-600">3 new connection requests waiting</p>
+            <p className="text-gray-600">{stats.pendingRequests} new connection requests waiting</p>
           </div>
-          
-          {/* Badge */}
           <div className="relative">
             <div className="w-20 h-20 bg-gradient-to-r from-rose-600 to-pink-600 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
               <UserPlus className="h-10 w-10 text-white" />
             </div>
-            <span className="absolute -top-2 -right-2 bg-gradient-to-r from-rose-600 to-pink-600 text-white text-sm font-bold px-3 py-1 rounded-full shadow-lg animate-pulse">
-              3 New
-            </span>
+            {stats.pendingRequests > 0 && (
+              <span className="absolute -top-2 -right-2 bg-gradient-to-r from-rose-600 to-pink-600 text-white text-sm font-bold px-3 py-1 rounded-full shadow-lg animate-pulse">
+                {stats.pendingRequests} New
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -520,12 +400,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       {/* Profiles Section */}
       <div>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">
-            {activeFilter === 'all' && 'All Profiles'}
-            {activeFilter === 'recommended' && 'Recommended Matches'}
-            {activeFilter === 'religion' && 'Same Religion'}
-            {activeFilter === 'city' && 'Same City'}
-          </h2>
+          <h2 className="text-2xl font-bold text-gray-900">AI Recommended Matches</h2>
           <div className="text-sm text-gray-600">
             Showing {profiles.length} profile{profiles.length !== 1 ? 's' : ''}
           </div>
@@ -536,7 +411,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
             <p className="text-red-700">{error}</p>
             <button
-              onClick={() => fetchProfiles()}
+              onClick={() => fetchDashboardData()}
               className="mt-2 text-red-600 font-semibold hover:underline"
             >
               Try Again
@@ -573,26 +448,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                 <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">No matches found</h3>
                 <p className="text-gray-600 mb-4">
-                  {activeFilter === 'all' 
-                    ? 'No profiles available at the moment'
-                    : 'Try different filters to find matches'}
+                  Complete your profile to improve your recommendations
                 </p>
-                <div className="flex justify-center gap-3">
-                  {activeFilter !== 'all' && (
-                    <button
-                      onClick={handleShowAll}
-                      className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-                    >
-                      View All Profiles
-                    </button>
-                  )}
-                  <button
-                    onClick={() => onNavigate('profile-setup')}
-                    className="px-6 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700"
-                  >
-                    Complete Your Profile
-                  </button>
-                </div>
+                <button
+                  onClick={() => onNavigate('profile-setup')}
+                  className="px-6 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700"
+                >
+                  Complete Your Profile
+                </button>
               </div>
             )}
           </>

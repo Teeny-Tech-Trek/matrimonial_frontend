@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, Menu, X, User, Search, MessageCircle, Settings, LogOut, Shield } from 'lucide-react';
+import { Heart, Menu, X, User, Search, MessageCircle, Settings, LogOut, Shield, Home } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 interface LayoutProps {
@@ -29,7 +29,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentPage, onNavigat
             >
               <Heart className="h-8 w-8 text-rose-600 fill-rose-600" />
               <span className="text-2xl font-bold bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent">
-                VivahSangam
+                AristoMatch
               </span>
             </div>
 
@@ -48,37 +48,46 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentPage, onNavigat
                     <span>Matches</span>
                   </button> */}
                   <button
-                    onClick={() => onNavigate('matches')} // ✅ Change from 'dashboard' to 'matches'
-                    className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors ${
-                      currentPage === 'matches' // ✅ Change from 'dashboard' to 'matches'
+                    onClick={() => onNavigate('dashboard')} // ✅ Change from 'dashboard' to 'matches'
+                    className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors ${currentPage === 'matches' // ✅ Change from 'dashboard' to 'matches'
                         ? 'bg-rose-100 text-rose-700'
                         : 'text-gray-700 hover:bg-gray-100'
-                    }`}
+                      }`}
                   >
-                    <Heart className="h-4 w-4" />
-                    <span>Matches</span>
+                    <Home className="h-4 w-4" />
+                    <span>Dashboard</span>
                   </button>
 
-               
-                 
+
+
                   <button
                     onClick={() => onNavigate('search')}
-                    className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors ${
-                      currentPage === 'search'
+                    className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors ${currentPage === 'search'
                         ? 'bg-rose-100 text-rose-700'
                         : 'text-gray-700 hover:bg-gray-100'
-                    }`}
+                      }`}
                   >
                     <Search className="h-4 w-4" />
                     <span>Search</span>
                   </button>
+
                   <button
-                    onClick={() => onNavigate('messages')}
-                    className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors ${
-                      currentPage === 'messages'
+                    onClick={() => onNavigate('requests')}
+                    className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors ${currentPage === 'requests'
                         ? 'bg-rose-100 text-rose-700'
                         : 'text-gray-700 hover:bg-gray-100'
-                    }`}
+                      }`}
+                  >
+                    <Heart className="h-4 w-4" />
+                    <span>Requests</span>
+                  </button>
+
+                  <button
+                    onClick={() => onNavigate('messages')}
+                    className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors ${currentPage === 'messages'
+                        ? 'bg-rose-100 text-rose-700'
+                        : 'text-gray-700 hover:bg-gray-100'
+                      }`}
                   >
                     <MessageCircle className="h-4 w-4" />
                     <span>Messages</span>
@@ -86,11 +95,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentPage, onNavigat
                   {isAdmin && (
                     <button
                       onClick={() => onNavigate('admin')}
-                      className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors ${
-                        currentPage === 'admin'
+                      className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors ${currentPage === 'admin'
                           ? 'bg-rose-100 text-rose-700'
                           : 'text-gray-700 hover:bg-gray-100'
-                      }`}
+                        }`}
                     >
                       <Shield className="h-4 w-4" />
                       <span>Admin</span>
@@ -98,11 +106,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentPage, onNavigat
                   )}
                   <button
                     onClick={() => onNavigate('my-profile')}
-                    className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors ${
-                      currentPage === 'my-profile'
+                    className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors ${currentPage === 'my-profile'
                         ? 'bg-rose-100 text-rose-700'
                         : 'text-gray-700 hover:bg-gray-100'
-                    }`}
+                      }`}
                   >
                     <User className="h-4 w-4" />
                     <span>{currentUser?.fullName?.split(' ')[0]}</span>
@@ -196,7 +203,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentPage, onNavigat
             <div>
               <div className="flex items-center space-x-2 mb-4">
                 <Heart className="h-6 w-6 fill-rose-600 text-rose-600" />
-                <span className="text-xl font-bold">VivahSangam</span>
+                <span className="text-xl font-bold">AristoMatch</span>
               </div>
               <p className="text-gray-400 text-sm">
                 India's trusted matrimonial platform connecting hearts and families.
@@ -228,7 +235,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentPage, onNavigat
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400 text-sm">
-            <p>&copy; 2024 VivahSangam. All rights reserved.</p>
+            <p>&copy; 2024 AristoMatch. All rights reserved.</p>
           </div>
         </div>
       </footer>
