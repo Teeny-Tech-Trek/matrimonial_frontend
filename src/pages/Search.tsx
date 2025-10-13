@@ -66,7 +66,7 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
         console.log('🔍 Added search term:', searchTerm);
       }
       
-      const apiUrl = `http://localhost:5000/api/profile/list?${finalQuery}`;
+      const apiUrl = `https://matrimonial-backend-14t2.onrender.com/api/profile/list?${finalQuery}`;
       console.log('🌐 API URL:', apiUrl);
       console.log('⏳ Fetching data from API...');
       
@@ -176,7 +176,7 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
     try {
       console.log("💌 Sending interest to:", profileId);
 
-      const response = await fetch("http://localhost:5000/api/request/send", {
+      const response = await fetch("https://matrimonial-backend-14t2.onrender.com/api/request/send", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
