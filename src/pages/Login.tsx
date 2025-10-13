@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Heart, Phone, Lock, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext'; // ✅ NEW IMPORT
 
 // Google SVG Icon Component
 const GoogleIcon = () => (
@@ -19,23 +20,25 @@ interface LoginProps {
 
 export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
   const { login, loginWithOTP, sendOTP, loginWithGoogle } = useAuth();
+  const { showToast } = useToast(); // ✅ NEW: Use toast hook
+  
   const [method, setMethod] = useState<'password' | 'otp'>('password');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
   const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
+    
     try {
       await sendOTP(phoneNumber);
       setOtpSent(true);
+      showToast('OTP sent successfully to your phone!', 'success'); // ✅ Success toast
     } catch (err) {
-      setError('Failed to send OTP');
+      showToast('Failed to send OTP. Please try again.', 'error'); // ✅ Error toast
     } finally {
       setLoading(false);
     }
@@ -43,37 +46,34 @@ export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
     
     try {
       if (method === 'password') {
-        // Call backend login API
         await login(phoneNumber, password);
+        showToast('Login successful! Welcome back.', 'success'); // ✅ Success toast
         onNavigate('dashboard');
       } else {
-        // OTP login
         await loginWithOTP(phoneNumber, otp);
+        showToast('Login successful! Welcome back.', 'success'); // ✅ Success toast
         onNavigate('dashboard');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      const errorMessage = err instanceof Error ? err.message : 'Login failed. Please try again.';
+      showToast(errorMessage, 'error'); // ✅ Error toast
     } finally {
       setLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
-    setError('');
     setLoading(true);
+    
     try {
-      // Note: You need to implement Google OAuth flow to get idToken
-      // For now, showing error message
-      setError('Google login requires Google OAuth setup. Please use password login for now.');
-      // await loginWithGoogle(idToken);
-      // onNavigate('dashboard');
+      showToast('Google login requires OAuth setup. Use password login for now.', 'warning'); // ✅ Warning toast
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Google login failed');
+      const errorMessage = err instanceof Error ? err.message : 'Google login failed';
+      showToast(errorMessage, 'error'); // ✅ Error toast
     } finally {
       setLoading(false);
     }
@@ -90,9 +90,13 @@ export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
           <p className="text-gray-600 mt-2">Login to find your perfect match</p>
         </div>
 
+        {/* Method Toggle */}
         <div className="flex gap-2 mb-6">
           <button
-            onClick={() => { setMethod('password'); setError(''); setOtpSent(false); }}
+            onClick={() => { 
+              setMethod('password'); 
+              setOtpSent(false); 
+            }}
             className={`flex-1 py-2 rounded-lg font-medium transition-all ${
               method === 'password'
                 ? 'bg-rose-600 text-white'
@@ -102,7 +106,10 @@ export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
             Password
           </button>
           <button
-            onClick={() => { setMethod('otp'); setError(''); setPassword(''); }}
+            onClick={() => { 
+              setMethod('otp'); 
+              setPassword(''); 
+            }}
             className={`flex-1 py-2 rounded-lg font-medium transition-all ${
               method === 'otp'
                 ? 'bg-rose-600 text-white'
@@ -113,7 +120,9 @@ export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
           </button>
         </div>
 
+        {/* Login Form */}
         <form onSubmit={method === 'otp' && !otpSent ? handleSendOTP : handleLogin} className="space-y-4">
+          {/* Phone Number Input */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Phone Number
@@ -132,7 +141,8 @@ export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
             <p className="text-xs text-gray-500 mt-1">Enter with or without +91 prefix</p>
           </div>
 
-          {method === 'password' ? (
+          {/* Password Input (for password method) */}
+          {method === 'password' && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Password
@@ -149,7 +159,10 @@ export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
                 />
               </div>
             </div>
-          ) : otpSent ? (
+          )}
+
+          {/* OTP Input (for OTP method after OTP is sent) */}
+          {method === 'otp' && otpSent && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Enter OTP
@@ -167,14 +180,9 @@ export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
                 OTP sent to {phoneNumber}
               </p>
             </div>
-          ) : null}
-
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-              {error}
-            </div>
           )}
 
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={loading}
@@ -191,6 +199,7 @@ export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
           </button>
         </form>
 
+        {/* Divider */}
         <div className="relative my-6">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-gray-300"></div>
@@ -200,6 +209,7 @@ export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
           </div>
         </div>
 
+        {/* Google Login Button */}
         <button
           onClick={handleGoogleLogin}
           disabled={loading}
@@ -209,6 +219,7 @@ export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
           <span>Continue with Google</span>
         </button>
 
+        {/* Register Link */}
         <div className="mt-6 text-center">
           <p className="text-gray-600">
             Don't have an account?{' '}
@@ -221,6 +232,7 @@ export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
           </p>
         </div>
 
+        {/* Demo Credentials */}
         <div className="mt-6 p-4 bg-blue-50 rounded-lg">
           <p className="text-sm font-medium text-blue-900 mb-2">💡 Demo Credentials:</p>
           <p className="text-xs text-blue-800">Phone: 7018620563</p>

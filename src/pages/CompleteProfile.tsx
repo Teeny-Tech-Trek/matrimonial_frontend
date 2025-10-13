@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User, Heart, Briefcase, GraduationCap, Home, Activity, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import profileService from '../services/profile.service';
+import { useToast } from '../context/ToastContext';
 
 interface CompleteProfileProps {
   onNavigate: (page: string) => void;
@@ -9,7 +10,7 @@ interface CompleteProfileProps {
 
 export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
   const { refreshProfile } = useAuth();
-  
+
   const [formData, setFormData] = useState({
     name: '',
     age: '',
@@ -50,7 +51,8 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
   const [availableHobbies] = useState(['Drawing', 'Shopping', 'Dancing', 'Cooking', 'Reading', 'Traveling', 'Music', 'Sports']);
   const [loading, setLoading] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
-  const [error, setError] = useState('');
+  const { showToast } = useToast();
+  // const [error, setError] = useState('');
 
   // Load existing profile on mount
   useEffect(() => {
@@ -144,90 +146,96 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
+  e.preventDefault();
+  setLoading(true);
 
-    try {
-      // Validate required fields
-      if (!formData.name || !formData.age || !formData.height) {
-        throw new Error('Please fill in all required fields');
-      }
-
-      // Transform form data to match backend schema
-      const currentYear = new Date().getFullYear();
-      const birthYear = currentYear - parseInt(formData.age);
-      
-      const profileData = {
-        fullName: formData.name,
-        gender: 'male', // You should capture this from user or auth context
-        dateOfBirth: new Date(birthYear, 0, 1).toISOString(),
-        profileCreatedFor: formData.createdFor,
-        personalDetails: {
-          heightCm: parseInt(formData.height),
-          maritalStatus: formData.maritalStatus.toLowerCase().replace(/\s+/g, '_'),
-          motherTongue: formData.language,
-        },
-        religiousDetails: {
-          religion: formData.religion,
-          caste: formData.caste,
-          subCaste: formData.subCaste,
-          manglik: formData.manglik === 'Yes',
-        },
-        educationDetails: {
-          highestEducation: formData.degree,
-          educationField: formData.field,
-          institutionName: formData.institution,
-        },
-        professionalDetails: {
-          occupation: formData.occupation,
-          organizationName: formData.company,
-          annualIncomeMin: formData.annualIncomeMin ? parseInt(formData.annualIncomeMin) : undefined,
-          annualIncomeMax: formData.annualIncomeMax ? parseInt(formData.annualIncomeMax) : undefined,
-        },
-        familyDetails: {
-          fatherName: formData.fatherName,
-          fatherOccupation: formData.fatherOccupation,
-          motherName: formData.motherName,
-          motherOccupation: formData.motherOccupation,
-          brothers: formData.brothers ? parseInt(formData.brothers) : 0,
-          sisters: formData.sisters ? parseInt(formData.sisters) : 0,
-          familyType: formData.familyType,
-          currentResidenceCity: formData.city,
-          currentResidenceState: formData.state,
-        },
-        lifestylePreferences: {
-          diet: formData.diet,
-          smoking: formData.smoking === 'Yes',
-          drinking: formData.drinking === 'Yes',
-          hobbies: formData.hobbies,
-          aboutMe: formData.about,
-          partnerExpectations: formData.partnerExpectations,
-        },
-      };
-
-      console.log('Submitting profile data:', profileData);
-      
-      const response = await profileService.saveProfile(profileData);
-      
-      console.log('Profile saved successfully:', response);
-      
-      // Refresh profile completion status in auth context
-      await refreshProfile();
-      
-      alert('Profile completed successfully!');
-      
-      // Navigate to dashboard or profile view
-      if (onNavigate) {
-        onNavigate('dashboard');
-      }
-    } catch (err: any) {
-      console.error('Error saving profile:', err);
-      setError(err.message || 'Failed to save profile. Please try again.');
-    } finally {
+  try {
+    // Validate required fields
+    if (!formData.name || !formData.age || !formData.height) {
+      showToast('Please fill in all required fields', 'error'); // ✅ CHANGED
       setLoading(false);
+      return;
     }
-  };
+
+    // Transform form data to match backend schema
+    const currentYear = new Date().getFullYear();
+    const birthYear = currentYear - parseInt(formData.age);
+    
+    const profileData = {
+      fullName: formData.name,
+      gender: 'male',
+      dateOfBirth: new Date(birthYear, 0, 1).toISOString(),
+      profileCreatedFor: formData.createdFor,
+      personalDetails: {
+        heightCm: parseInt(formData.height),
+        maritalStatus: formData.maritalStatus.toLowerCase().replace(/\s+/g, '_'),
+        motherTongue: formData.language,
+      },
+      religiousDetails: {
+        religion: formData.religion,
+        caste: formData.caste,
+        subCaste: formData.subCaste,
+        manglik: formData.manglik === 'Yes',
+      },
+      educationDetails: {
+        highestEducation: formData.degree,
+        educationField: formData.field,
+        institutionName: formData.institution,
+      },
+      professionalDetails: {
+        occupation: formData.occupation,
+        organizationName: formData.company,
+        annualIncomeMin: formData.annualIncomeMin ? parseInt(formData.annualIncomeMin) : undefined,
+        annualIncomeMax: formData.annualIncomeMax ? parseInt(formData.annualIncomeMax) : undefined,
+      },
+      familyDetails: {
+        fatherName: formData.fatherName,
+        fatherOccupation: formData.fatherOccupation,
+        motherName: formData.motherName,
+        motherOccupation: formData.motherOccupation,
+        brothers: formData.brothers ? parseInt(formData.brothers) : 0,
+        sisters: formData.sisters ? parseInt(formData.sisters) : 0,
+        familyType: formData.familyType,
+        currentResidenceCity: formData.city,
+        currentResidenceState: formData.state,
+      },
+      lifestylePreferences: {
+        diet: formData.diet,
+        smoking: formData.smoking === 'Yes',
+        drinking: formData.drinking === 'Yes',
+        hobbies: formData.hobbies,
+        aboutMe: formData.about,
+        partnerExpectations: formData.partnerExpectations,
+      },
+    };
+
+    console.log('Submitting profile data:', profileData);
+    
+    const response = await profileService.saveProfile(profileData);
+    
+    console.log('Profile saved successfully:', response);
+    
+    // Refresh profile completion status in auth context
+    await refreshProfile();
+    
+    // ✅ CHANGED: Use toast instead of alert
+    showToast('✨ Profile completed successfully! Redirecting to dashboard...', 'success');
+    
+    // Small delay before redirect
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Navigate to dashboard or profile view
+    if (onNavigate) {
+      onNavigate('dashboard');
+    }
+  } catch (err: any) {
+    console.error('Error saving profile:', err);
+    // ✅ CHANGED: Use toast instead of setError
+    showToast(err.message || 'Failed to save profile. Please try again.', 'error');
+  } finally {
+    setLoading(false);
+  }
+};
 
   const sections = [
     { id: 0, title: 'Basic Information', icon: User },
@@ -287,11 +295,11 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
             handleSubmit(e);
           }
         }} className="bg-white shadow-lg rounded-b-2xl p-8">
-          {error && (
+          {/* {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-red-700 text-sm">{error}</p>
             </div>
-          )}
+          )} */}
 
           {currentSection === 0 && (
             <div className="space-y-6">
