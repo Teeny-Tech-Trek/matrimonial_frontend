@@ -1,34 +1,36 @@
-import React, { useState } from 'react';
-import { User, Heart, Briefcase, GraduationCap, Home, Activity } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, Heart, Briefcase, GraduationCap, Home, Activity, Loader2 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import profileService from '../services/profile.service';
 
-export default function CompleteProfile({onNavigate}) {
+interface CompleteProfileProps {
+  onNavigate: (page: string) => void;
+}
+
+export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
+  const { refreshProfile } = useAuth();
+  
   const [formData, setFormData] = useState({
-    // Basic Information
     name: '',
     age: '',
     height: '',
     maritalStatus: '',
     language: '',
     createdFor: '',
-    
-    // Religious Background
     religion: '',
     caste: '',
     subCaste: '',
     manglik: '',
-    
-    // Education
     degree: '',
     field: '',
     institution: '',
-    
-    // Professional Details
     occupation: '',
     company: '',
-    annualIncome: '',
-    
-    // Family Details
+    annualIncomeMin: '',
+    annualIncomeMax: '',
     location: '',
+    city: '',
+    state: '',
     familyType: '',
     fatherName: '',
     fatherOccupation: '',
@@ -36,29 +38,103 @@ export default function CompleteProfile({onNavigate}) {
     motherOccupation: '',
     brothers: '',
     sisters: '',
-    
-    // Lifestyle
     diet: '',
     smoking: '',
     drinking: '',
-    hobbies: [],
-    
-    // Partner Expectations
+    hobbies: [] as string[],
     partnerExpectations: '',
-    
-    // About
     about: ''
   });
 
   const [currentSection, setCurrentSection] = useState(0);
   const [availableHobbies] = useState(['Drawing', 'Shopping', 'Dancing', 'Cooking', 'Reading', 'Traveling', 'Music', 'Sports']);
+  const [loading, setLoading] = useState(false);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [error, setError] = useState('');
 
-  const handleChange = (e) => {
+  // Load existing profile on mount
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  const loadProfile = async () => {
+    try {
+      setLoadingProfile(true);
+      const response = await profileService.getMyProfile();
+      
+      if (response.success && response.data) {
+        const profile = response.data;
+        
+        // Map backend data to form fields
+        setFormData({
+          name: profile.fullName || '',
+          age: profile.dateOfBirth ? calculateAge(profile.dateOfBirth) : '',
+          height: profile.personalDetails?.heightCm?.toString() || '',
+          maritalStatus: formatMaritalStatus(profile.personalDetails?.maritalStatus) || '',
+          language: profile.personalDetails?.motherTongue || '',
+          createdFor: profile.profileCreatedFor || '',
+          religion: profile.religiousDetails?.religion || '',
+          caste: profile.religiousDetails?.caste || '',
+          subCaste: profile.religiousDetails?.subCaste || '',
+          manglik: profile.religiousDetails?.manglik ? 'Yes' : 'No',
+          degree: profile.educationDetails?.highestEducation || '',
+          field: profile.educationDetails?.educationField || '',
+          institution: profile.educationDetails?.institutionName || '',
+          occupation: profile.professionalDetails?.occupation || '',
+          company: profile.professionalDetails?.organizationName || '',
+          annualIncomeMin: profile.professionalDetails?.annualIncomeMin?.toString() || '',
+          annualIncomeMax: profile.professionalDetails?.annualIncomeMax?.toString() || '',
+          city: profile.familyDetails?.currentResidenceCity || '',
+          state: profile.familyDetails?.currentResidenceState || '',
+          familyType: profile.familyDetails?.familyType || '',
+          fatherName: profile.familyDetails?.fatherName || '',
+          fatherOccupation: profile.familyDetails?.fatherOccupation || '',
+          motherName: profile.familyDetails?.motherName || '',
+          motherOccupation: profile.familyDetails?.motherOccupation || '',
+          brothers: profile.familyDetails?.brothers?.toString() || '',
+          sisters: profile.familyDetails?.sisters?.toString() || '',
+          diet: profile.lifestylePreferences?.diet || '',
+          smoking: profile.lifestylePreferences?.smoking ? 'Yes' : 'No',
+          drinking: profile.lifestylePreferences?.drinking ? 'Yes' : 'No',
+          hobbies: profile.lifestylePreferences?.hobbies || [],
+          about: profile.lifestylePreferences?.aboutMe || '',
+          partnerExpectations: profile.lifestylePreferences?.partnerExpectations || '',
+          location: ''
+        });
+      }
+    } catch (err: any) {
+      console.log('No existing profile found or error loading:', err.message);
+      // It's okay if no profile exists yet
+    } finally {
+      setLoadingProfile(false);
+    }
+  };
+
+  const calculateAge = (dateOfBirth: string) => {
+    const today = new Date();
+    const birthDate = new Date(dateOfBirth);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age.toString();
+  };
+
+  const formatMaritalStatus = (status: string) => {
+    if (!status) return '';
+    // Convert from snake_case to Title Case
+    return status.split('_').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    ).join(' ');
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const toggleHobby = (hobby) => {
+  const toggleHobby = (hobby: string) => {
     setFormData(prev => ({
       ...prev,
       hobbies: prev.hobbies.includes(hobby)
@@ -67,10 +143,90 @@ export default function CompleteProfile({onNavigate}) {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Profile Data:', formData);
-    alert('Profile completed successfully!');
+    setLoading(true);
+    setError('');
+
+    try {
+      // Validate required fields
+      if (!formData.name || !formData.age || !formData.height) {
+        throw new Error('Please fill in all required fields');
+      }
+
+      // Transform form data to match backend schema
+      const currentYear = new Date().getFullYear();
+      const birthYear = currentYear - parseInt(formData.age);
+      
+      const profileData = {
+        fullName: formData.name,
+        gender: 'male', // You should capture this from user or auth context
+        dateOfBirth: new Date(birthYear, 0, 1).toISOString(),
+        profileCreatedFor: formData.createdFor,
+        personalDetails: {
+          heightCm: parseInt(formData.height),
+          maritalStatus: formData.maritalStatus.toLowerCase().replace(/\s+/g, '_'),
+          motherTongue: formData.language,
+        },
+        religiousDetails: {
+          religion: formData.religion,
+          caste: formData.caste,
+          subCaste: formData.subCaste,
+          manglik: formData.manglik === 'Yes',
+        },
+        educationDetails: {
+          highestEducation: formData.degree,
+          educationField: formData.field,
+          institutionName: formData.institution,
+        },
+        professionalDetails: {
+          occupation: formData.occupation,
+          organizationName: formData.company,
+          annualIncomeMin: formData.annualIncomeMin ? parseInt(formData.annualIncomeMin) : undefined,
+          annualIncomeMax: formData.annualIncomeMax ? parseInt(formData.annualIncomeMax) : undefined,
+        },
+        familyDetails: {
+          fatherName: formData.fatherName,
+          fatherOccupation: formData.fatherOccupation,
+          motherName: formData.motherName,
+          motherOccupation: formData.motherOccupation,
+          brothers: formData.brothers ? parseInt(formData.brothers) : 0,
+          sisters: formData.sisters ? parseInt(formData.sisters) : 0,
+          familyType: formData.familyType,
+          currentResidenceCity: formData.city,
+          currentResidenceState: formData.state,
+        },
+        lifestylePreferences: {
+          diet: formData.diet,
+          smoking: formData.smoking === 'Yes',
+          drinking: formData.drinking === 'Yes',
+          hobbies: formData.hobbies,
+          aboutMe: formData.about,
+          partnerExpectations: formData.partnerExpectations,
+        },
+      };
+
+      console.log('Submitting profile data:', profileData);
+      
+      const response = await profileService.saveProfile(profileData);
+      
+      console.log('Profile saved successfully:', response);
+      
+      // Refresh profile completion status in auth context
+      await refreshProfile();
+      
+      alert('Profile completed successfully!');
+      
+      // Navigate to dashboard or profile view
+      if (onNavigate) {
+        onNavigate('dashboard');
+      }
+    } catch (err: any) {
+      console.error('Error saving profile:', err);
+      setError(err.message || 'Failed to save profile. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const sections = [
@@ -83,16 +239,25 @@ export default function CompleteProfile({onNavigate}) {
     { id: 6, title: 'About & Expectations', icon: User }
   ];
 
+  if (loadingProfile) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 animate-spin text-rose-600 mx-auto mb-4" />
+          <p className="text-gray-600">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
         <div className="bg-gradient-to-r from-rose-600 to-pink-600 rounded-t-2xl p-8 text-white">
           <h1 className="text-3xl font-bold mb-2">Complete Your Profile</h1>
           <p className="text-rose-100">Fill in all the details to help us find your perfect match</p>
         </div>
 
-        {/* Section Navigation */}
         <div className="bg-white shadow-sm p-4 overflow-x-auto">
           <div className="flex gap-2 min-w-max">
             {sections.map((section) => {
@@ -115,9 +280,19 @@ export default function CompleteProfile({onNavigate}) {
           </div>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="bg-white shadow-lg rounded-b-2xl p-8">
-          {/* Section 0: Basic Information */}
+        <form onSubmit={(e) => {
+          e.preventDefault();
+          // Only submit if on last section
+          if (currentSection === sections.length - 1) {
+            handleSubmit(e);
+          }
+        }} className="bg-white shadow-lg rounded-b-2xl p-8">
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-700 text-sm">{error}</p>
+            </div>
+          )}
+
           {currentSection === 0 && (
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-gray-800 mb-6">Basic Information</h2>
@@ -155,16 +330,16 @@ export default function CompleteProfile({onNavigate}) {
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Height <span className="text-rose-600">*</span>
+                    Height (cm) <span className="text-rose-600">*</span>
                   </label>
                   <input
-                    type="text"
+                    type="number"
                     name="height"
                     value={formData.height}
                     onChange={handleChange}
                     required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                    placeholder="5'2''"
+                    placeholder="170"
                   />
                 </div>
 
@@ -226,7 +401,6 @@ export default function CompleteProfile({onNavigate}) {
             </div>
           )}
 
-          {/* Section 1: Religious Background */}
           {currentSection === 1 && (
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-gray-800 mb-6">Religious Background</h2>
@@ -256,14 +430,13 @@ export default function CompleteProfile({onNavigate}) {
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Caste <span className="text-rose-600">*</span>
+                    Caste
                   </label>
                   <input
                     type="text"
                     name="caste"
                     value={formData.caste}
                     onChange={handleChange}
-                    required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                     placeholder="Patel"
                   />
@@ -285,26 +458,23 @@ export default function CompleteProfile({onNavigate}) {
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Manglik <span className="text-rose-600">*</span>
+                    Manglik
                   </label>
                   <select
                     name="manglik"
                     value={formData.manglik}
                     onChange={handleChange}
-                    required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                   >
                     <option value="">Select</option>
                     <option value="Yes">Yes</option>
                     <option value="No">No</option>
-                    <option value="Don't Know">Don't Know</option>
                   </select>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Section 2: Education */}
           {currentSection === 2 && (
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-gray-800 mb-6">Education</h2>
@@ -347,14 +517,13 @@ export default function CompleteProfile({onNavigate}) {
 
                 <div className="md:col-span-2">
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Institution <span className="text-rose-600">*</span>
+                    Institution
                   </label>
                   <input
                     type="text"
                     name="institution"
                     value={formData.institution}
                     onChange={handleChange}
-                    required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                     placeholder="NIFT Delhi"
                   />
@@ -363,7 +532,6 @@ export default function CompleteProfile({onNavigate}) {
             </div>
           )}
 
-          {/* Section 3: Professional Details */}
           {currentSection === 3 && (
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-gray-800 mb-6">Professional Details</h2>
@@ -386,55 +554,81 @@ export default function CompleteProfile({onNavigate}) {
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Company/Organization <span className="text-rose-600">*</span>
+                    Company/Organization
                   </label>
                   <input
                     type="text"
                     name="company"
                     value={formData.company}
                     onChange={handleChange}
-                    required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                     placeholder="Fashion Studio"
                   />
                 </div>
 
-                <div className="md:col-span-2">
+                <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Annual Income <span className="text-rose-600">*</span>
+                    Annual Income (Min)
                   </label>
                   <input
-                    type="text"
-                    name="annualIncome"
-                    value={formData.annualIncome}
+                    type="number"
+                    name="annualIncomeMin"
+                    value={formData.annualIncomeMin}
                     onChange={handleChange}
-                    required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                    placeholder="₹6.0L - ₹8L per year"
+                    placeholder="600000"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Annual Income (Max)
+                  </label>
+                  <input
+                    type="number"
+                    name="annualIncomeMax"
+                    value={formData.annualIncomeMax}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                    placeholder="800000"
                   />
                 </div>
               </div>
             </div>
           )}
 
-          {/* Section 4: Family Details */}
           {currentSection === 4 && (
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-gray-800 mb-6">Family Details</h2>
               
               <div className="grid md:grid-cols-2 gap-6">
-                <div className="md:col-span-2">
+                <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Location <span className="text-rose-600">*</span>
+                    City <span className="text-rose-600">*</span>
                   </label>
                   <input
                     type="text"
-                    name="location"
-                    value={formData.location}
+                    name="city"
+                    value={formData.city}
                     onChange={handleChange}
                     required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                    placeholder="Ahmedabad, Gujarat"
+                    placeholder="Ahmedabad"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    State <span className="text-rose-600">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="state"
+                    value={formData.state}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                    placeholder="Gujarat"
                   />
                 </div>
 
@@ -457,14 +651,13 @@ export default function CompleteProfile({onNavigate}) {
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Father's Name <span className="text-rose-600">*</span>
+                    Father's Name
                   </label>
                   <input
                     type="text"
                     name="fatherName"
                     value={formData.fatherName}
                     onChange={handleChange}
-                    required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                     placeholder="Ashok Patel"
                   />
@@ -472,14 +665,13 @@ export default function CompleteProfile({onNavigate}) {
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Father's Occupation <span className="text-rose-600">*</span>
+                    Father's Occupation
                   </label>
                   <input
                     type="text"
                     name="fatherOccupation"
                     value={formData.fatherOccupation}
                     onChange={handleChange}
-                    required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                     placeholder="Business"
                   />
@@ -487,14 +679,13 @@ export default function CompleteProfile({onNavigate}) {
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Mother's Name <span className="text-rose-600">*</span>
+                    Mother's Name
                   </label>
                   <input
                     type="text"
                     name="motherName"
                     value={formData.motherName}
                     onChange={handleChange}
-                    required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                     placeholder="Hansa Patel"
                   />
@@ -502,14 +693,13 @@ export default function CompleteProfile({onNavigate}) {
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Mother's Occupation <span className="text-rose-600">*</span>
+                    Mother's Occupation
                   </label>
                   <input
                     type="text"
                     name="motherOccupation"
                     value={formData.motherOccupation}
                     onChange={handleChange}
-                    required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                     placeholder="Homemaker"
                   />
@@ -517,14 +707,13 @@ export default function CompleteProfile({onNavigate}) {
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Number of Brothers <span className="text-rose-600">*</span>
+                    Number of Brothers
                   </label>
                   <input
                     type="number"
                     name="brothers"
                     value={formData.brothers}
                     onChange={handleChange}
-                    required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                     placeholder="1"
                   />
@@ -532,14 +721,13 @@ export default function CompleteProfile({onNavigate}) {
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Number of Sisters <span className="text-rose-600">*</span>
+                    Number of Sisters
                   </label>
                   <input
                     type="number"
                     name="sisters"
                     value={formData.sisters}
                     onChange={handleChange}
-                    required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                     placeholder="0"
                   />
@@ -548,7 +736,6 @@ export default function CompleteProfile({onNavigate}) {
             </div>
           )}
 
-          {/* Section 5: Lifestyle & Interests */}
           {currentSection === 5 && (
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-gray-800 mb-6">Lifestyle & Interests</h2>
@@ -556,13 +743,12 @@ export default function CompleteProfile({onNavigate}) {
               <div className="grid md:grid-cols-3 gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Diet <span className="text-rose-600">*</span>
+                    Diet
                   </label>
                   <select
                     name="diet"
                     value={formData.diet}
                     onChange={handleChange}
-                    required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                   >
                     <option value="">Select</option>
@@ -575,13 +761,12 @@ export default function CompleteProfile({onNavigate}) {
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Smoking <span className="text-rose-600">*</span>
+                    Smoking
                   </label>
                   <select
                     name="smoking"
                     value={formData.smoking}
                     onChange={handleChange}
-                    required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                   >
                     <option value="">Select</option>
@@ -593,13 +778,12 @@ export default function CompleteProfile({onNavigate}) {
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Drinking <span className="text-rose-600">*</span>
+                    Drinking
                   </label>
                   <select
                     name="drinking"
                     value={formData.drinking}
                     onChange={handleChange}
-                    required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                   >
                     <option value="">Select</option>
@@ -612,7 +796,7 @@ export default function CompleteProfile({onNavigate}) {
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-3">
-                  Hobbies & Interests <span className="text-rose-600">*</span>
+                  Hobbies & Interests
                 </label>
                 <div className="flex flex-wrap gap-3">
                   {availableHobbies.map(hobby => (
@@ -634,21 +818,19 @@ export default function CompleteProfile({onNavigate}) {
             </div>
           )}
 
-          {/* Section 6: About & Expectations */}
           {currentSection === 6 && (
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-gray-800 mb-6">About & Expectations</h2>
               
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  About Yourself <span className="text-rose-600">*</span>
+                  About Yourself
                 </label>
                 <textarea
                   name="about"
                   value={formData.about}
                   onChange={handleChange}
-                  required
-                  rows="4"
+                  rows={4}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                   placeholder="Creative fashion designer with traditional values. Love art and culture. Looking for a supportive life partner."
                 ></textarea>
@@ -656,14 +838,13 @@ export default function CompleteProfile({onNavigate}) {
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Partner Expectations <span className="text-rose-600">*</span>
+                  Partner Expectations
                 </label>
                 <textarea
                   name="partnerExpectations"
                   value={formData.partnerExpectations}
                   onChange={handleChange}
-                  required
-                  rows="4"
+                  rows={4}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                   placeholder="Looking for someone from similar community who values family and traditions. Should be well-settled and respectful."
                 ></textarea>
@@ -671,14 +852,13 @@ export default function CompleteProfile({onNavigate}) {
             </div>
           )}
 
-          {/* Navigation Buttons */}
           <div className="flex justify-between mt-8 pt-6 border-t">
             <button
               type="button"
               onClick={() => setCurrentSection(Math.max(0, currentSection - 1))}
-              disabled={currentSection === 0}
+              disabled={currentSection === 0 || loading}
               className={`px-6 py-3 rounded-lg font-semibold transition-all ${
-                currentSection === 0
+                currentSection === 0 || loading
                   ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
@@ -690,22 +870,31 @@ export default function CompleteProfile({onNavigate}) {
               <button
                 type="button"
                 onClick={() => setCurrentSection(currentSection + 1)}
-                className="px-6 py-3 bg-gradient-to-r from-rose-600 to-pink-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all"
+                disabled={loading}
+                className="px-6 py-3 bg-gradient-to-r from-rose-600 to-pink-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50"
               >
                 Next Section
               </button>
             ) : (
               <button
-                type="submit"
-                className="px-8 py-3 bg-gradient-to-r from-rose-600 to-pink-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all"
+                type="button"
+                onClick={handleSubmit}
+                disabled={loading}
+                className="px-8 py-3 bg-gradient-to-r from-rose-600 to-pink-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 flex items-center gap-2"
               >
-                Complete Profile
+                {loading ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Complete Profile'
+                )}
               </button>
             )}
           </div>
         </form>
 
-        {/* Progress Indicator */}
         <div className="mt-6 bg-white rounded-lg p-4 shadow">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-semibold text-gray-700">Profile Completion</span>

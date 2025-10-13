@@ -38,7 +38,6 @@ export const Register: React.FC<RegisterProps> = ({ onNavigate }) => {
       return;
     }
 
-    // Validate phone number
     if (!formData.phoneNumber) {
       setError('Phone number is required');
       return;
@@ -47,7 +46,6 @@ export const Register: React.FC<RegisterProps> = ({ onNavigate }) => {
     setLoading(true);
     
     try {
-      // Prepare data for backend API
       const registrationData = {
         fullName: formData.fullName,
         phoneNumber: formData.phoneNumber,
@@ -63,6 +61,10 @@ export const Register: React.FC<RegisterProps> = ({ onNavigate }) => {
       await register(registrationData);
       
       setSuccess('Account created successfully! Redirecting...');
+      
+      // ✅ SET FLAG TO SHOW PROFILE COMPLETION MODAL
+      localStorage.setItem('justRegistered', 'true');
+      console.log('✅ Registration flag set');
       
       // Redirect to dashboard after short delay
       setTimeout(() => {
@@ -248,11 +250,12 @@ export const Register: React.FC<RegisterProps> = ({ onNavigate }) => {
           </p>
         </div>
 
-        <div className="mt-6 p-4 bg-green-50 rounded-lg">
-          <p className="text-sm font-medium text-green-900 mb-2">📝 Registration Info:</p>
-          <p className="text-xs text-green-800">• Phone can be with or without +91</p>
-          <p className="text-xs text-green-800">• Password minimum 6 characters</p>
-          <p className="text-xs text-green-800">• All fields are required</p>
+        <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+          <p className="text-sm font-medium text-blue-900 mb-2">📝 What happens next:</p>
+          <p className="text-xs text-blue-800 mb-1">• You'll be redirected to your dashboard</p>
+          <p className="text-xs text-blue-800 mb-1">• A popup will guide you to complete your profile</p>
+          <p className="text-xs text-blue-800 mb-1">• You can skip and complete it later anytime</p>
+          <p className="text-xs text-blue-800">• Complete profile gets 10x more visibility!</p>
         </div>
       </div>
     </div>

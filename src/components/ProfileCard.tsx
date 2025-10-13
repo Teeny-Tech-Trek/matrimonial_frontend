@@ -101,7 +101,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
         {showActions && (
           <div className="flex gap-2">
             <button
-              onClick={() => onViewProfile(profile.id)}
+              onClick={() => onViewProfile(profile._id || profile.id)}
               className="flex-1 flex items-center justify-center space-x-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
             >
               <Eye className="h-4 w-4" />

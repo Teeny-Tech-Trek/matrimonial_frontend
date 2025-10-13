@@ -2,11 +2,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Profile } from '../types';
 import authService from '../services/auth.service';
+import profileService from '../services/profile.service';
 
 interface AuthContextType {
   currentUser: Profile | null;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  profileComplete: boolean;
   login: (phoneNumber: string, password: string) => Promise<void>;
   loginWithOTP: (phoneNumber: string, otp: string) => Promise<void>;
   sendOTP: (phoneNumber: string) => Promise<void>;
@@ -14,6 +16,7 @@ interface AuthContextType {
   logout: () => void;
   updateProfile: (profile: Partial<Profile>) => void;
   loginWithGoogle: (idToken: string) => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 interface RegisterData {
@@ -38,6 +41,7 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<Profile | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [profileComplete, setProfileComplete] = useState(false);
 
   // Load user from localStorage on mount
   useEffect(() => {
@@ -47,17 +51,80 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     if (storedUser && token) {
       setCurrentUser(JSON.parse(storedUser));
+      // Check if profile is complete
+      checkProfileCompletion();
     }
     if (storedAdmin === 'true') {
       setIsAdmin(true);
     }
   }, []);
 
+  // Check if user has completed their detailed profile
+  const checkProfileCompletion = async () => {
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        console.log('No auth token found');
+        return;
+      }
+
+      const response = await profileService.getMyProfile();
+      if (response.success && response.data) {
+        // Check if essential profile sections are filled
+        const profile = response.data;
+        const hasPersonalDetails = !!profile.personalDetails?.heightCm;
+        const hasEducation = !!profile.educationDetails?.highestEducation;
+        const hasProfessional = !!profile.professionalDetails?.occupation;
+        const hasFamily = !!profile.familyDetails?.currentResidenceCity;
+        
+        const isComplete = hasPersonalDetails && hasEducation && hasProfessional && hasFamily;
+        setProfileComplete(isComplete);
+        
+        console.log('Profile completion status:', {
+          hasPersonalDetails,
+          hasEducation,
+          hasProfessional,
+          hasFamily,
+          isComplete
+        });
+      }
+    } catch (error) {
+      console.log('Profile not found or incomplete:', error);
+      setProfileComplete(false);
+    }
+  };
+
+  // Refresh profile data
+  const refreshProfile = async () => {
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        console.error('No auth token found');
+        return;
+      }
+
+      const response = await profileService.getMyProfile();
+      if (response.success && response.data) {
+        // Update user profile with latest data
+        const updatedUser = {
+          ...currentUser!,
+          profileCompletionPercentage: 100,
+        };
+        setCurrentUser(updatedUser);
+        localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+        await checkProfileCompletion();
+        console.log('✅ Profile refreshed successfully');
+      }
+    } catch (error) {
+      console.error('Failed to refresh profile:', error);
+    }
+  };
+
   // Send OTP (Mock - implement backend endpoint if needed)
   const sendOTP = async (phoneNumber: string): Promise<void> => {
     await new Promise(resolve => setTimeout(resolve, 1000));
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    localStorage.setItem(`otp_${phoneNumber}`, otp);
+    // In production, this would be handled by backend
     console.log(`🔐 OTP for ${phoneNumber}: ${otp}`);
     alert(`OTP sent! For demo: ${otp}`);
   };
@@ -65,13 +132,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Login with OTP (Mock - implement backend endpoint if needed)
   const loginWithOTP = async (phoneNumber: string, otp: string): Promise<void> => {
     await new Promise(resolve => setTimeout(resolve, 1000));
-    const storedOTP = localStorage.getItem(`otp_${phoneNumber}`);
-
-    if (storedOTP !== otp) {
-      throw new Error('Invalid OTP');
-    }
-
-    // For now using mock data - you can create a backend endpoint for OTP login
     throw new Error('OTP login not implemented in backend yet. Please use password login.');
   };
 
@@ -105,6 +165,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setCurrentUser(userProfile);
       localStorage.setItem('currentUser', JSON.stringify(userProfile));
+
+      // Check profile completion status
+      await checkProfileCompletion();
 
       // Check if admin
       if (phoneNumber === '+919999999999' || phoneNumber === '9999999999') {
@@ -148,6 +211,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setCurrentUser(userProfile);
       localStorage.setItem('currentUser', JSON.stringify(userProfile));
       
+      // Profile is not complete after registration
+      setProfileComplete(false);
+      
       console.log('✅ User profile created:', userProfile);
     } catch (error: any) {
       console.error('❌ Registration error:', error);
@@ -185,6 +251,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setCurrentUser(userProfile);
       localStorage.setItem('currentUser', JSON.stringify(userProfile));
+      
+      // Check profile completion
+      await checkProfileCompletion();
     } catch (error: any) {
       console.error('❌ Google login error:', error);
       throw error;
@@ -195,6 +264,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     setCurrentUser(null);
     setIsAdmin(false);
+    setProfileComplete(false);
     localStorage.removeItem('currentUser');
     localStorage.removeItem('isAdmin');
     localStorage.removeItem('authToken');
@@ -215,6 +285,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     currentUser,
     isAuthenticated: !!currentUser,
     isAdmin,
+    profileComplete,
     login,
     loginWithOTP,
     sendOTP,
@@ -222,6 +293,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout,
     updateProfile,
     loginWithGoogle,
+    refreshProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

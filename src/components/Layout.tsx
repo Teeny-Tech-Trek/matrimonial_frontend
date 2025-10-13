@@ -36,7 +36,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentPage, onNavigat
             {isAuthenticated ? (
               <>
                 <div className="hidden md:flex items-center space-x-6">
-                  <button
+                  {/* <button
                     onClick={() => onNavigate('dashboard')}
                     className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors ${
                       currentPage === 'dashboard'
@@ -46,7 +46,21 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentPage, onNavigat
                   >
                     <Heart className="h-4 w-4" />
                     <span>Matches</span>
+                  </button> */}
+                  <button
+                    onClick={() => onNavigate('matches')} // ✅ Change from 'dashboard' to 'matches'
+                    className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors ${
+                      currentPage === 'matches' // ✅ Change from 'dashboard' to 'matches'
+                        ? 'bg-rose-100 text-rose-700'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <Heart className="h-4 w-4" />
+                    <span>Matches</span>
                   </button>
+
+               
+                 
                   <button
                     onClick={() => onNavigate('search')}
                     className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors ${
@@ -83,9 +97,9 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentPage, onNavigat
                     </button>
                   )}
                   <button
-                    onClick={() => onNavigate('profile')}
+                    onClick={() => onNavigate('my-profile')}
                     className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors ${
-                      currentPage === 'profile'
+                      currentPage === 'my-profile'
                         ? 'bg-rose-100 text-rose-700'
                         : 'text-gray-700 hover:bg-gray-100'
                     }`}
@@ -156,7 +170,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentPage, onNavigat
                 </button>
               )}
               <button
-                onClick={() => { onNavigate('profile'); setMobileMenuOpen(false); }}
+                onClick={() => { onNavigate('my-profile'); setMobileMenuOpen(false); }}
                 className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded"
               >
                 My Profile
