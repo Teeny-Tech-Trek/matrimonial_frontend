@@ -266,10 +266,13 @@
 // };
 
 // src/pages/AdminPanel.tsx
+
+// src/pages/AdminPanel.tsx - FIXED VERSION
+// src/pages/AdminPanel.tsx - COMPLETE VERSION
 import React, { useState, useEffect } from 'react';
 import { 
   Users, FileText, MessageSquare, UserCheck, 
-  Download, Shield, TrendingUp, ArrowLeft 
+  Download, Shield, TrendingUp, ArrowLeft, X, Search as SearchIcon
 } from 'lucide-react';
 import adminService from '../services/admin.service';
 import { useAuth } from '../context/AuthContext';
@@ -322,15 +325,23 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
   const [conversationsTotal, setConversationsTotal] = useState(0);
   const [conversationsPages, setConversationsPages] = useState(0);
 
-  // Loading states
+  // ⭐ NEW: User Details Modal
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [loadingUserDetails, setLoadingUserDetails] = useState(false);
+
+  // ⭐ NEW: Global Search
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any>({ users: [], profiles: [] });
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+
   const [loading, setLoading] = useState(false);
 
-  // Fetch stats on mount
   useEffect(() => {
     fetchStats();
   }, []);
 
-  // Fetch data based on active tab
   useEffect(() => {
     if (activeTab === 'users') fetchUsers();
     if (activeTab === 'profiles') fetchProfiles();
@@ -338,7 +349,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
     if (activeTab === 'conversations') fetchConversations();
   }, [activeTab, usersPage, usersFilter, profilesPage, profilesFilter, requestsPage, requestsFilter, conversationsPage]);
 
-  // API: GET /api/admin/stats
   const fetchStats = async () => {
     try {
       const response = await adminService.getStats();
@@ -350,15 +360,20 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
     }
   };
 
-  // API: GET /api/admin/users
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await adminService.listUsers({
+      const params: any = {
         page: usersPage,
         limit: 20,
-        ...usersFilter,
-      });
+      };
+      
+      if (usersFilter.role) params.role = usersFilter.role;
+      if (usersFilter.search) params.search = usersFilter.search;
+      if (usersFilter.isActive) params.isActive = usersFilter.isActive;
+      
+      const response = await adminService.listUsers(params);
+      
       if (response.success) {
         setUsers(response.data);
         setUsersTotal(response.total);
@@ -371,15 +386,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
     }
   };
 
-  // API: GET /api/admin/profiles
   const fetchProfiles = async () => {
     setLoading(true);
     try {
-      const response = await adminService.listProfiles({
+      const params: any = {
         page: profilesPage,
         limit: 20,
-        ...profilesFilter,
-      });
+      };
+      
+      if (profilesFilter.status) params.status = profilesFilter.status;
+      if (profilesFilter.search) params.search = profilesFilter.search;
+      
+      const response = await adminService.listProfiles(params);
+      
       if (response.success) {
         setProfiles(response.data);
         setProfilesTotal(response.total);
@@ -392,15 +411,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
     }
   };
 
-  // API: GET /api/admin/requests
   const fetchRequests = async () => {
     setLoading(true);
     try {
-      const response = await adminService.listRequests({
+      const params: any = {
         page: requestsPage,
         limit: 20,
-        ...requestsFilter,
-      });
+      };
+      
+      if (requestsFilter.status) params.status = requestsFilter.status;
+      if (requestsFilter.search) params.search = requestsFilter.search;
+      
+      const response = await adminService.listRequests(params);
+      
       if (response.success) {
         setRequests(response.data);
         setRequestsTotal(response.total);
@@ -413,7 +436,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
     }
   };
 
-  // API: GET /api/admin/conversations
   const fetchConversations = async () => {
     setLoading(true);
     try {
@@ -421,6 +443,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
         page: conversationsPage,
         limit: 20,
       });
+      
       if (response.success) {
         setConversations(response.data);
         setConversationsTotal(response.total);
@@ -433,7 +456,47 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
     }
   };
 
-  // API: PUT /api/admin/users/:userId
+  // ⭐ NEW: Fetch Single User Details
+  const handleViewUserDetails = async (userId: string) => {
+    setLoadingUserDetails(true);
+    setShowUserModal(true);
+    try {
+      const response = await adminService.getUser(userId);
+      if (response.success) {
+        setSelectedUser(response.data);
+      }
+    } catch (error: any) {
+      showToast(error.message, 'error');
+      setShowUserModal(false);
+    } finally {
+      setLoadingUserDetails(false);
+    }
+  };
+
+  // ⭐ NEW: Global Search
+  const handleSearch = async (query: string) => {
+    setSearchQuery(query);
+    
+    if (query.length < 2) {
+      setShowSearchResults(false);
+      return;
+    }
+
+    setSearchLoading(true);
+    setShowSearchResults(true);
+    
+    try {
+      const response = await adminService.quickSearch(query);
+      if (response.success) {
+        setSearchResults(response.data);
+      }
+    } catch (error: any) {
+      showToast(error.message, 'error');
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
   const handleUpdateUser = async (userId: string, updates: any) => {
     try {
       const response = await adminService.updateUser(userId, updates);
@@ -446,21 +509,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
     }
   };
 
-  // API: DELETE /api/admin/users/:userId
-  const handleDeleteUser = async (userId: string) => {
-    if (!confirm('Are you sure you want to deactivate this user?')) return;
-    try {
-      const response = await adminService.deleteUser(userId);
-      if (response.success) {
-        fetchUsers();
-        showToast(response.message || 'User deactivated', 'success');
-      }
-    } catch (error: any) {
-      showToast(error.message, 'error');
-    }
-  };
-
-  // API: PUT /api/admin/profiles/:profileId/verify
   const handleVerifyProfile = async (profileId: string, isVerified: boolean) => {
     try {
       const response = await adminService.verifyProfile(profileId, isVerified);
@@ -473,10 +521,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
     }
   };
 
-  // API: GET /api/admin/users/export
   const handleExportUsers = async () => {
     try {
-      const blob = await adminService.exportUsers(usersFilter);
+      const params: any = {};
+      if (usersFilter.role) params.role = usersFilter.role;
+      
+      const blob = await adminService.exportUsers(params);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -489,6 +539,203 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
     } catch (error: any) {
       showToast('Failed to export users', 'error');
     }
+  };
+
+  // ⭐ NEW: User Details Modal Component
+  const UserDetailsModal = () => {
+    if (!showUserModal) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          {/* Modal Header */}
+          <div className="flex justify-between items-center p-6 border-b">
+            <h2 className="text-2xl font-bold">User Details</h2>
+            <button
+              onClick={() => {
+                setShowUserModal(false);
+                setSelectedUser(null);
+              }}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <X size={24} />
+            </button>
+          </div>
+
+          {/* Modal Content */}
+          <div className="p-6">
+            {loadingUserDetails ? (
+              <div className="text-center py-8">Loading user details...</div>
+            ) : selectedUser ? (
+              <div className="space-y-4">
+                {/* Basic Info */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Full Name</label>
+                    <p className="text-lg font-semibold">{selectedUser.fullName}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Phone Number</label>
+                    <p className="text-lg font-semibold">{selectedUser.phoneNumber}</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Gender</label>
+                    <p className="text-lg capitalize">{selectedUser.gender}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Date of Birth</label>
+                    <p className="text-lg">
+                      {selectedUser.dateOfBirth ? new Date(selectedUser.dateOfBirth).toLocaleDateString() : 'N/A'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Role</label>
+                    <p className="text-lg">
+                      <span className={`px-3 py-1 rounded-full text-sm ${
+                        selectedUser.role === 'admin' ? 'bg-purple-100 text-purple-800' :
+                        selectedUser.role === 'moderator' ? 'bg-blue-100 text-blue-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {selectedUser.role}
+                      </span>
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Status</label>
+                    <p className="text-lg">
+                      <span className={`px-3 py-1 rounded-full text-sm ${
+                        selectedUser.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {selectedUser.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Profile Created For</label>
+                  <p className="text-lg capitalize">{selectedUser.profileCreatedFor || 'N/A'}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Joined Date</label>
+                    <p className="text-lg">{new Date(selectedUser.createdAt).toLocaleDateString()}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Last Updated</label>
+                    <p className="text-lg">{new Date(selectedUser.updatedAt).toLocaleDateString()}</p>
+                  </div>
+                </div>
+
+                {/* Quick Actions */}
+                <div className="pt-4 border-t">
+                  <label className="text-sm font-medium text-gray-500 mb-2 block">Quick Actions</label>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        handleUpdateUser(selectedUser._id, { isActive: !selectedUser.isActive });
+                        setShowUserModal(false);
+                      }}
+                      className={`px-4 py-2 rounded-lg ${
+                        selectedUser.isActive 
+                          ? 'bg-red-100 text-red-700 hover:bg-red-200' 
+                          : 'bg-green-100 text-green-700 hover:bg-green-200'
+                      }`}
+                    >
+                      {selectedUser.isActive ? 'Deactivate User' : 'Activate User'}
+                    </button>
+                    <select
+                      value={selectedUser.role}
+                      onChange={(e) => {
+                        handleUpdateUser(selectedUser._id, { role: e.target.value });
+                        setSelectedUser({ ...selectedUser, role: e.target.value });
+                      }}
+                      className="px-4 py-2 border rounded-lg"
+                    >
+                      <option value="user">User</option>
+                      <option value="admin">Admin</option>
+                      <option value="moderator">Moderator</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8">No user data available</div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // ⭐ NEW: Search Results Dropdown
+  const SearchResults = () => {
+    if (!showSearchResults) return null;
+
+    return (
+      <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg border max-h-96 overflow-y-auto z-50">
+        {searchLoading ? (
+          <div className="p-4 text-center">Searching...</div>
+        ) : (
+          <>
+            {/* Users Results */}
+            {searchResults.users.length > 0 && (
+              <div className="p-4 border-b">
+                <h3 className="text-sm font-semibold text-gray-500 mb-2">USERS ({searchResults.users.length})</h3>
+                {searchResults.users.map((user: any) => (
+                  <button
+                    key={user._id}
+                    onClick={() => {
+                      handleViewUserDetails(user._id);
+                      setShowSearchResults(false);
+                      setSearchQuery('');
+                    }}
+                    className="w-full text-left p-3 hover:bg-gray-50 rounded-lg mb-2"
+                  >
+                    <div className="font-medium">{user.fullName}</div>
+                    <div className="text-sm text-gray-500">{user.phoneNumber}</div>
+                    <div className="text-xs text-gray-400 mt-1">
+                      Role: {user.role} • Status: {user.isActive ? 'Active' : 'Inactive'}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Profiles Results */}
+            {searchResults.profiles.length > 0 && (
+              <div className="p-4">
+                <h3 className="text-sm font-semibold text-gray-500 mb-2">PROFILES ({searchResults.profiles.length})</h3>
+                {searchResults.profiles.map((profile: any) => (
+                  <div
+                    key={profile._id}
+                    className="p-3 hover:bg-gray-50 rounded-lg mb-2"
+                  >
+                    <div className="font-medium">{profile.fullName}</div>
+                    <div className="text-sm text-gray-500">
+                      {profile.familyDetails?.currentResidenceCity || 'Location not specified'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {searchResults.users.length === 0 && searchResults.profiles.length === 0 && (
+              <div className="p-4 text-center text-gray-500">
+                No results found for "{searchQuery}"
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    );
   };
 
   const renderDashboard = () => (
@@ -672,17 +919,20 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
                       {new Date(user.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+                      {/* ⭐ NEW: View Details Button */}
                       <button
-                        onClick={() => handleUpdateUser(user._id, { isActive: !user.isActive })}
-                        className="text-blue-600 hover:text-blue-900"
+                        onClick={() => handleViewUserDetails(user._id)}
+                        className="text-purple-600 hover:text-purple-900 font-medium"
                       >
-                        {user.isActive ? 'Deactivate' : 'Activate'}
+                        View Details
                       </button>
                       <button
-                        onClick={() => handleDeleteUser(user._id)}
-                        className="text-red-600 hover:text-red-900"
+                        onClick={() => handleUpdateUser(user._id, { isActive: !user.isActive })}
+                        className={`${
+                          user.isActive ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'
+                        }`}
                       >
-                        Delete
+                        {user.isActive ? 'Deactivate' : 'Activate'}
                       </button>
                     </td>
                   </tr>
@@ -931,6 +1181,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
@@ -938,6 +1189,23 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
               <Shield className="text-rose-600" size={32} />
               <h1 className="text-2xl font-bold">Admin Panel</h1>
             </div>
+
+            {/* ⭐ NEW: Global Search Bar */}
+            <div className="flex-1 max-w-md mx-8 relative">
+              <div className="relative">
+                <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <input
+                  type="text"
+                  placeholder="Search users and profiles..."
+                  value={searchQuery}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  onFocus={() => searchQuery.length >= 2 && setShowSearchResults(true)}
+                  className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                />
+              </div>
+              <SearchResults />
+            </div>
+
             <div className="flex items-center gap-3">
               <button
                 onClick={() => onNavigate('dashboard')}
@@ -957,6 +1225,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
         </div>
       </div>
 
+      {/* Tabs */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex gap-1 overflow-x-auto">
@@ -983,6 +1252,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
         </div>
       </div>
 
+      {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === 'dashboard' && renderDashboard()}
         {activeTab === 'users' && renderUsers()}
@@ -990,6 +1260,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
         {activeTab === 'requests' && renderRequests()}
         {activeTab === 'conversations' && renderConversations()}
       </div>
+
+      {/* ⭐ NEW: User Details Modal */}
+      <UserDetailsModal />
     </div>
   );
 };
