@@ -66,7 +66,8 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
         console.log('🔍 Added search term:', searchTerm);
       }
       
-      const apiUrl = `https://matrimonial-backend-14t2.onrender.com/api/profile/list?${finalQuery}`;
+      // const apiUrl = `https://matrimonial-backend-14t2.onrender.com/api/profile/list?${finalQuery}`;
+      const apiUrl = `http://localhost:5000/api/profile/list?${finalQuery}`;
       console.log('🌐 API URL:', apiUrl);
       console.log('⏳ Fetching data from API...');
       
@@ -85,15 +86,25 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
         console.log('✅ Total Pages:', data.pages);
         
         // 🔥 FILTER OUT CURRENT USER'S PROFILE
-        const filteredProfiles = (data.data || []).filter((profile: CompleteProfile) => {
-          // Compare using userId or id, depending on your data structure
-          const profileUserId = profile.userId || profile.id || profile._id;
-          const currentUserId = currentUser?.id;
-          
-          console.log('🔍 Comparing:', { profileUserId, currentUserId });
-          
-          return profileUserId !== currentUserId;
-        });
+        // 🔥 FILTER OUT CURRENT USER'S PROFILE AND SAME GENDER PROFILES
+          const filteredProfiles = (data.data || []).filter((profile: CompleteProfile) => {
+            const profileUserId = profile.userId || profile.id || profile._id;
+            const currentUserId = currentUser?.id;
+            
+            // 🧍 Exclude current user's own profile
+            if (profileUserId === currentUserId) return false;
+
+            // 🚻 Show only opposite gender profiles
+            const userGender = currentUser?.gender?.toLowerCase();
+            const profileGender = profile.gender?.toLowerCase();
+
+            if (userGender && profileGender && userGender === profileGender) {
+              return false; // same gender → hide
+            }
+
+            return true; // opposite gender → show
+          });
+
         
         console.log('✅ Filtered Profiles Count (excluding own):', filteredProfiles.length);
         
@@ -176,7 +187,8 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
     try {
       console.log("💌 Sending interest to:", profileId);
 
-      const response = await fetch("https://matrimonial-backend-14t2.onrender.com/api/request/send", {
+      // const response = await fetch("https://matrimonial-backend-14t2.onrender.com/api/request/send", {
+      const response = await fetch("http://localhost:5000/api/request/send", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -290,9 +302,41 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
       {/* Results Section */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-gray-900">
+          {/* <h2 className="text-xl font-bold text-gray-900">
             {totalProfiles} {activeView === 'all' ? 'Profiles' : activeView === 'recommended' ? 'Recommended Profiles' : 'Recently Joined'} Found
+          </h2> */}
+              {(() => {
+      const displayedCount = profiles.length;
+      const totalCount = totalProfiles;
+      const viewLabel =
+        activeView === 'all'
+          ? 'Profiles'
+          : activeView === 'recommended'
+          ? 'Recommended Profiles'
+          : 'Recently Joined Profiles';
+
+      if (displayedCount === 0) {
+        return (
+          <h2 className="text-xl font-bold text-gray-900">
+            No {viewLabel} Found
           </h2>
+        );
+      } else if (displayedCount < totalCount) {
+        return (
+          <h2 className="text-xl font-bold text-gray-900">
+            Showing {displayedCount} of {totalCount}{' '}
+            {totalCount === 1 ? 'Profile' : 'Profiles'}
+          </h2>
+        );
+      } else {
+        return (
+          <h2 className="text-xl font-bold text-gray-900">
+            {displayedCount} {displayedCount === 1 ? 'Profile' : 'Profiles'} Found
+          </h2>
+        );
+      }
+    })()}
+
         </div>
 
         {loading ? (

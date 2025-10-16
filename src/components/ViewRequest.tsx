@@ -43,7 +43,8 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
   });
 
   // API Base URL
-  const API_BASE_URL = 'https://matrimonial-backend-14t2.onrender.com/api/request';
+  // const API_BASE_URL = 'https://matrimonial-backend-14t2.onrender.com/api/request';
+  const API_BASE_URL = 'http://localhost:5000/api/request';
 
   // Calculate age from date of birth
   const calculateAge = (dateOfBirth: string): number => {
@@ -364,7 +365,7 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
     }
     const matchesSearch =
       (targetUser.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
-      (targetUser.location?.toLowerCase().includes(searchQuery.toLowerCase()) || false);
+     (targetUser.gender?.toLowerCase().includes(searchQuery.toLowerCase()) || false);
     const matchesStatus = filterStatus === 'all' || req.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
@@ -656,7 +657,7 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
 
                   {/* Content */}
                   <div className="p-6">
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">{targetUser.fullName}</h3>
+                    {/* <h3 className="text-xl font-bold text-gray-900 mb-2">{targetUser.fullName}</h3>
                     <p className="text-sm text-gray-600 mb-3 flex items-center gap-1">
                       <span className="font-medium">{age} years</span>
                       <span>•</span>
@@ -671,19 +672,36 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <span className="w-6 h-6 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600">💼</span>
                         <span>{targetUser.occupation || 'Occupation not specified'}</span>
-                      </div>
+                      </div> */}
+                      <h3 className="text-xl font-bold text-gray-900 mb-2">{targetUser.fullName}</h3>
+                      <p className="text-sm text-gray-600 mb-3 flex items-center gap-1">
+                        <span className="font-medium">{age} years</span> 
+                        <span>•</span>
+                        <span className="capitalize">{targetUser.gender}</span>  
+                      </p>
+
+                      <div className="space-y-2 mb-4">
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <span>👤</span>
+                          <span className="capitalize">Profile for: {targetUser.profileCreatedFor}</span>  
+                        </div>
+                        {/* <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <span>📱</span>
+                          <span>{targetUser.phoneNumber || 'Phone not provided'}</span> 
+                        </div> */}
+                    
                     </div>
 
                     {/* Actions */}
                     {activeTab === 'received' && request.status === 'pending' ? (
                       <div className="flex gap-2">
-                        <button
+                        {/* <button
                           onClick={() => handleViewProfile(request)}
                           className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all font-medium flex items-center justify-center gap-2"
                         >
                           <Eye className="h-4 w-4" />
                           View
-                        </button>
+                        </button> */}
                         <button
                           onClick={() => handleAcceptRequest(request._id)}
                           className="flex-1 py-3 bg-gradient-to-r from-rose-600 to-pink-600 text-white rounded-xl hover:shadow-lg transition-all font-medium flex items-center justify-center gap-2"
@@ -700,13 +718,13 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
                       </div>
                     ) : (
                       <div className="flex items-center justify-between">
-                        <button
+                        {/* <button
                           onClick={() => handleViewProfile(request)}
                           className="flex items-center gap-2 text-gray-600 hover:text-rose-600 transition-colors font-medium"
                         >
                           <Eye className="h-5 w-5" />
                           View Profile
-                        </button>
+                        </button> */}
                         <div className="flex items-center gap-2">
                           <div
                             className={`px-4 py-2 rounded-xl font-medium flex items-center gap-2 ${
@@ -723,13 +741,15 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
                             {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
                           </div>
                           {(request.status === 'rejected' || request.status === 'accepted') && (
-                            <button
-                              onClick={() => handleDeleteRequest(request._id)}
-                              className="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                              title="Delete request"
-                            >
-                              <XCircle className="h-5 w-5" />
-                            </button>
+                           <button
+                            onClick={() => handleDeleteRequest(request._id)}
+                            className="flex items-center gap-2 px-4 py-2 rounded-md border border-gray-300 text-gray-600 hover:text-red-600 hover:border-red-600 transition-colors duration-200"
+                            title="Delete request"
+                          >
+                            Delete
+                            <XCircle className="h-5 w-5" />
+                          </button>
+
                           )}
                         </div>
                       </div>

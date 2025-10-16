@@ -1,4 +1,4 @@
-// src/pages/Dashboard.tsx
+
 import React, { useEffect, useState } from 'react';
 import { Heart, MessageCircle, Star, TrendingUp, Users, UserPlus, Loader2, User, X, AlertCircle, Edit } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -17,12 +17,14 @@ const ProfileCompletionModal: React.FC<{
   completionPercentage: number;
   missingFields: string[];
 }> = ({ isOpen, onClose, onComplete, completionPercentage, missingFields }) => {
-  const [loading, setLoading] = useState(false);
-
   const handleSkip = () => {
-    localStorage.setItem('profileCompletionSkipped', 'true');
-    localStorage.setItem('profileCompletionSkippedAt', new Date().toISOString());
-    console.log('✅ Profile completion skipped');
+    const skipData = {
+      skipped: true,
+      skippedAt: new Date().toISOString(),
+      profileCompletion: completionPercentage
+    };
+    localStorage.setItem('profileCompletionSkipped', JSON.stringify(skipData));
+    console.log('✅ Profile completion skipped:', skipData);
     onClose();
   };
 
@@ -49,53 +51,48 @@ const ProfileCompletionModal: React.FC<{
           </div>
         </div>
         <div className="p-6">
-          {loading ? (
-            <div className="text-center py-12">
-              <Loader2 className="h-12 w-12 animate-spin text-rose-600 mx-auto mb-4" />
-              <p className="text-gray-600">Checking profile...</p>
-            </div>
-          ) : (
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="flex flex-col items-center justify-center">
-                <div className="relative">
-                  <svg className="w-40 h-40 transform -rotate-90">
-                    <circle
-                      cx="80"
-                      cy="80"
-                      r="70"
-                      stroke="#FEE2E2"
-                      strokeWidth="12"
-                      fill="none"
-                    />
-                    <circle
-                      cx="80"
-                      cy="80"
-                      r="70"
-                      stroke="#E11D48"
-                      strokeWidth="12"
-                      fill="none"
-                      strokeDasharray={`${(completionPercentage / 100) * 440} 440`}
-                      strokeLinecap="round"
-                      className="transition-all duration-1000"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="text-4xl font-bold text-gray-900">{completionPercentage}%</div>
-                      <div className="text-sm text-gray-600">Complete</div>
-                    </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="flex flex-col items-center justify-center">
+              <div className="relative">
+                <svg className="w-40 h-40 transform -rotate-90">
+                  <circle
+                    cx="80"
+                    cy="80"
+                    r="70"
+                    stroke="#FEE2E2"
+                    strokeWidth="12"
+                    fill="none"
+                  />
+                  <circle
+                    cx="80"
+                    cy="80"
+                    r="70"
+                    stroke="#E11D48"
+                    strokeWidth="12"
+                    fill="none"
+                    strokeDasharray={`${(completionPercentage / 100) * 440} 440`}
+                    strokeLinecap="round"
+                    className="transition-all duration-1000"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-4xl font-bold text-gray-900">{completionPercentage}%</div>
+                    <div className="text-sm text-gray-600">Complete</div>
                   </div>
                 </div>
-                <p className="text-sm text-gray-500 mt-4 text-center">
-                  Complete all sections to maximize your matches
-                </p>
               </div>
-              <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-3">
-                  Sections to Complete:
-                </h3>
-                <div className="space-y-2">
-                  {missingFields.map((field, index) => (
+              <p className="text-sm text-gray-500 mt-4 text-center">
+                Complete all sections to maximize your matches
+              </p>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                Sections to Complete:
+              </h3>
+              <div className="space-y-2">
+                {missingFields.length > 0 ? (
+                  missingFields.map((field, index) => (
                     <div
                       key={index}
                       className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 p-2 rounded-lg"
@@ -103,45 +100,49 @@ const ProfileCompletionModal: React.FC<{
                       <div className="w-2 h-2 bg-rose-500 rounded-full flex-shrink-0"></div>
                       <span>{field}</span>
                     </div>
-                  ))}
-                </div>
-              </div>
-              <div className="flex flex-col justify-between">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                  <h4 className="text-sm font-semibold text-blue-900 mb-2">
-                    Why complete?
-                  </h4>
-                  <ul className="space-y-1 text-xs text-blue-800">
-                    <li>✓ Better match recommendations</li>
-                    <li>✓ 10x more profile visibility</li>
-                    <li>✓ Receive more interests</li>
-                    <li>✓ Build trust with matches</li>
-                  </ul>
-                </div>
-                <div className="space-y-2">
-                  <button
-                    onClick={() => {
-                      onComplete();
-                      onClose();
-                    }}
-                    className="w-full bg-gradient-to-r from-rose-600 to-pink-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-2"
-                  >
-                    <Edit className="h-5 w-5" />
-                    Complete Profile Now
-                  </button>
-                  <button
-                    onClick={handleSkip}
-                    className="w-full bg-gray-100 text-gray-700 py-2 rounded-lg font-semibold hover:bg-gray-200 transition-all text-sm"
-                  >
-                    Skip for Now
-                  </button>
-                  <p className="text-xs text-center text-gray-500 mt-2">
-                    You can complete your profile anytime
-                  </p>
-                </div>
+                  ))
+                ) : (
+                  <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+                    Please complete your profile to see missing sections
+                  </div>
+                )}
               </div>
             </div>
-          )}
+            <div className="flex flex-col justify-between">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <h4 className="text-sm font-semibold text-blue-900 mb-2">
+                  Why complete?
+                </h4>
+                <ul className="space-y-1 text-xs text-blue-800">
+                  <li>✓ Better match recommendations</li>
+                  <li>✓ 10x more profile visibility</li>
+                  <li>✓ Receive more interests</li>
+                  <li>✓ Build trust with matches</li>
+                </ul>
+              </div>
+              <div className="space-y-2">
+                <button
+                  onClick={() => {
+                    onComplete();
+                    onClose();
+                  }}
+                  className="w-full bg-gradient-to-r from-rose-600 to-pink-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                >
+                  <Edit className="h-5 w-5" />
+                  Complete Profile Now
+                </button>
+                <button
+                  onClick={handleSkip}
+                  className="w-full bg-gray-100 text-gray-700 py-2 rounded-lg font-semibold hover:bg-gray-200 transition-all text-sm"
+                >
+                  Skip for Now
+                </button>
+                <p className="text-xs text-center text-gray-500 mt-2">
+                  You can complete your profile anytime
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       <style>{`
@@ -171,35 +172,95 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     messages: 0,
     matches: 0,
     pendingRequests: 0,
-    profileCompletion: 20,
+    profileCompletion: 0,
   });
   const [missingFields, setMissingFields] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showCompletionModal, setShowCompletionModal] = useState(false);
-
-  // Check if user just registered and show modal
-  useEffect(() => {
-    const justRegistered = localStorage.getItem('justRegistered');
-    const skipped = localStorage.getItem('profileCompletionSkipped');
-    
-    console.log('🔍 Checking registration flag:', justRegistered);
-    console.log('🔍 Skip status:', skipped);
-    
-    if (justRegistered === 'true' && !skipped) {
-      console.log('✅ Showing profile completion modal in 1 second...');
-      setTimeout(() => {
-        setShowCompletionModal(true);
-      }, 1000);
-      
-      localStorage.removeItem('justRegistered');
-    }
-  }, []);
+  const [dataFetched, setDataFetched] = useState(false);
 
   // Fetch dashboard data on component mount
   useEffect(() => {
     fetchDashboardData();
   }, [currentUser]);
+
+  // Check if modal should open AFTER data is fetched
+  useEffect(() => {
+    if (!dataFetched || loading) {
+      return;
+    }
+
+    console.log('🔍 Checking if modal should open...');
+    console.log('📊 Profile completion:', stats.profileCompletion);
+    
+    // Don't show modal if profile is 100% complete
+    if (stats.profileCompletion >= 100) {
+      console.log('✅ Profile is complete, not showing modal');
+      // Clean up any old flags
+      localStorage.removeItem('justRegistered');
+      localStorage.removeItem('justLoggedIn');
+      return;
+    }
+
+    // Check if user should see the modal
+    const justRegistered = localStorage.getItem('justRegistered');
+    const justLoggedIn = localStorage.getItem('justLoggedIn');
+    
+    console.log('🔍 Just registered:', justRegistered);
+    console.log('🔍 Just logged in:', justLoggedIn);
+    
+    // Check if user has skipped the modal recently
+    const skipDataStr = localStorage.getItem('profileCompletionSkipped');
+    let shouldSkip = false;
+    
+    if (skipDataStr) {
+      try {
+        const skipData = JSON.parse(skipDataStr);
+        const skippedAt = new Date(skipData.skippedAt);
+        const hoursSinceSkip = (Date.now() - skippedAt.getTime()) / (1000 * 60 * 60);
+        
+        // For regular logins, show modal again after 24 hours
+        // For new registrations, always show regardless of skip
+        if (justRegistered !== 'true' && hoursSinceSkip < 24) {
+          shouldSkip = true;
+          console.log('⏭️ User skipped within 24 hours (login), not showing modal');
+        } else {
+          console.log('🔄 Skip expired or new registration, will show modal');
+          localStorage.removeItem('profileCompletionSkipped');
+        }
+      } catch (e) {
+        console.error('Error parsing skip data:', e);
+        localStorage.removeItem('profileCompletionSkipped');
+      }
+    }
+
+    if (shouldSkip) {
+      // Still clean up the flags
+      localStorage.removeItem('justRegistered');
+      localStorage.removeItem('justLoggedIn');
+      return;
+    }
+
+    // Show modal if:
+    // 1. User just registered OR just logged in
+    // 2. Profile is incomplete (< 100%)
+    // 3. Haven't skipped recently (or it's a new registration)
+    if ((justRegistered === 'true' || justLoggedIn === 'true') && stats.profileCompletion < 100) {
+      console.log('✅ Showing profile completion modal in 1 second...');
+      console.log('📋 Reason:', justRegistered === 'true' ? 'New registration' : 'Login with incomplete profile');
+      
+      setTimeout(() => {
+        setShowCompletionModal(true);
+      }, 1000);
+      
+      // Remove the flags after showing modal
+      localStorage.removeItem('justRegistered');
+      localStorage.removeItem('justLoggedIn');
+    } else {
+      console.log('⏭️ Not showing modal - no trigger flag or profile complete');
+    }
+  }, [dataFetched, loading, stats.profileCompletion]);
 
   const fetchDashboardData = async () => {
     try {
@@ -216,7 +277,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       }
 
       // Fetch dashboard stats
-      const statsResponse = await fetch('https://matrimonial-backend-14t2.onrender.com/api/dashboard/stats', {
+      //  const statsResponse = await fetch('https://matrimonial-backend-14t2.onrender.com/api/dashboard/stats', {
+      const statsResponse = await fetch('http://localhost:5000/api/dashboard/stats', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -232,19 +294,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       }
 
       // Fetch recommended profiles
-      const profilesResponse = await fetch('https://matrimonial-backend-14t2.onrender.com/api/dashboard/recommended?page=1&limit=50', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+ 
+      // const profilesResponse = await fetch('https://matrimonial-backend-14t2.onrender.com/api/dashboard/recommended?page=1&limit=50', {
+      const profilesResponse = await fetch(
+        'http://localhost:5000/api/dashboard/recommended?page=1&limit=50',
+        {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
 
       const profilesData = await profilesResponse.json();
       console.log('📦 Profiles API Response:', profilesData);
 
       if (profilesResponse.ok && profilesData.success) {
-        // Filter out current user's profile
         const filteredProfiles = profilesData.data.filter((profile: CompleteProfile) => {
           const profileUserId = profile.userId || profile.id || profile._id;
           return profileUserId !== currentUser?.id;
@@ -255,36 +321,53 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         
         setProfiles(filteredProfiles);
       } else {
-        setError(profilesData.message || 'No profiles found');
         setProfiles([]);
       }
 
       if (statsData.success) {
+        const profileCompletion = statsData.data.profileCompletion || 0;
+        
         setStats({
-          interests: statsData.data.interests,
-          messages: statsData.data.messages,
-          matches: statsData.data.matches,
-          pendingRequests: statsData.data.pendingRequests,
-          profileCompletion: statsData.data.profileCompletion,
+          interests: statsData.data.interests || 0,
+          messages: statsData.data.messages || 0,
+          matches: statsData.data.matches || 0,
+          pendingRequests: statsData.data.pendingRequests || 0,
+          profileCompletion: profileCompletion,
         });
         
-        // Calculate missing fields based on profile data
+        console.log('📊 Profile completion set to:', profileCompletion);
+        
+        // Calculate missing fields
         const profile = statsData.data;
         const missing: string[] = [];
-        if (!profile.personalDetails?.heightCm) missing.push('Personal Details');
+        
+        if (!profile.personalDetails?.heightCm) missing.push('Personal Details (Height, Body Type, etc.)');
         if (!profile.religiousDetails?.religion) missing.push('Religious Background');
         if (!profile.educationDetails?.highestEducation) missing.push('Education Details');
         if (!profile.professionalDetails?.occupation) missing.push('Professional Details');
-        if (!profile.familyDetails?.currentResidenceCity) missing.push('Family Details');
-        if (!profile.lifestylePreferences?.aboutMe) missing.push('About & Expectations');
+        if (!profile.familyDetails?.fatherOccupation) missing.push('Family Details');
+        if (!profile.lifestylePreferences?.aboutMe || profile.lifestylePreferences?.aboutMe?.length < 50) {
+          missing.push('About Me & Partner Expectations');
+        }
+        
+        if (missing.length === 0 && profileCompletion < 100) {
+          missing.push('Complete your profile information');
+          missing.push('Add photos to your profile');
+          missing.push('Fill in all required details');
+        }
+        
         setMissingFields(missing);
+        console.log('📋 Missing fields:', missing);
+        
+        setDataFetched(true);
       } else {
         setError(statsData.message || 'Failed to load dashboard data');
       }
     } catch (err: any) {
       console.error('❌ Error fetching dashboard data:', err);
-      setError('Failed to connect to the server');
+      setError('Failed to connect to the server. Please check your connection.');
       setProfiles([]);
+      setDataFetched(true);
     } finally {
       setLoading(false);
     }
