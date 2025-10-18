@@ -207,7 +207,7 @@ export const Register: React.FC<RegisterProps> = ({ onNavigate }) => {
                     disabled={loading}
                   />
                 </div>
-                <p className="text-xs text-gray-500 mt-1">Enter with or without +91 prefix</p>
+                <p className="text-xs text-gray-500 mt-1">Ex:9XXXX</p>
               </div>
 
               {/* Gender */}
