@@ -25,7 +25,7 @@ interface MessagesProps {
   onNavigate: (page: string) => void;
 }
 
-const API_BASE_URL = "http://localhost:5000/api";
+const API_BASE_URL = "https://matrimonial-backend-14t2.onrender.com/api";
 
 // Helper function to format time
 const formatTime = (date: Date) => {

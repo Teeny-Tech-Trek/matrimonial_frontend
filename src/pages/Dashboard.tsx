@@ -278,7 +278,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
 
       // Fetch dashboard stats
       //  const statsResponse = await fetch('https://matrimonial-backend-14t2.onrender.com/api/dashboard/stats', {
-      const statsResponse = await fetch('http://localhost:5000/api/dashboard/stats', {
+      const statsResponse = await fetch('https://matrimonial-backend-14t2.onrender.com/api/dashboard/stats', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
