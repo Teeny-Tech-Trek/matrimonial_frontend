@@ -297,7 +297,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
  
       // const profilesResponse = await fetch('https://matrimonial-backend-14t2.onrender.com/api/dashboard/recommended?page=1&limit=50', {
       const profilesResponse = await fetch(
-        'http://localhost:5000/api/dashboard/recommended?page=1&limit=50',
+        'https://matrimonial-backend-14t2.onrender.com/api/dashboard/recommended?page=1&limit=50',
         {
           method: 'GET',
           headers: {
