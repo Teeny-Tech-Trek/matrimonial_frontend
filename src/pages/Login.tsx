@@ -451,12 +451,12 @@ export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="+91 9876543210"
+                placeholder="9876543210"
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                 disabled={loading}
               />
             </div>
-            <p className="text-xs text-gray-500 mt-1">Enter with or without +91 prefix</p>
+         {/* <p className="text-xs text-gray-500 mt-1">Enter with or without +91 prefix</p> */}
           </div>
 
           <div>

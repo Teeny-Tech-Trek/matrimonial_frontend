@@ -201,13 +201,13 @@ export const Register: React.FC<RegisterProps> = ({ onNavigate }) => {
                     type="tel"
                     value={formData.phoneNumber}
                     onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                    placeholder="+91 9876543210"
+                    placeholder="9876543210"
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                     required
                     disabled={loading}
                   />
                 </div>
-                <p className="text-xs text-gray-500 mt-1">Ex:9XXXX</p>
+                <p className="text-xs text-gray-500 mt-1">Ex : 9876543210 </p>
               </div>
 
               {/* Gender */}
