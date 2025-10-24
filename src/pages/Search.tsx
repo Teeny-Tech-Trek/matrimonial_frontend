@@ -67,7 +67,7 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
       }
       
        const apiUrl = `https://matrimonial-backend-14t2.onrender.com/api/profile/list?${finalQuery}`;
-     // const apiUrl = `http://localhost:5000/api/profile/list?${finalQuery}`;
+    //  const apiUrl = `http://localhost:5000/api/profile/list?${finalQuery}`;
       console.log('🌐 API URL:', apiUrl);
       console.log('⏳ Fetching data from API...');
       
