@@ -10,7 +10,7 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-});
+}); 
 
 // Add token to requests if available
 apiClient.interceptors.request.use((config) => {

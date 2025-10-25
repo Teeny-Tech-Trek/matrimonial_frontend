@@ -597,7 +597,7 @@ import React, { useEffect, useState } from 'react';
     SEND_INTEREST_API: 'https://matrimonial-backend-14t2.onrender.com/api/request/send',
   };
 
-  // Profile Completion Modal Component
+// Profile Completion Modal Component
   const ProfileCompletionModal: React.FC<{
     isOpen: boolean;
     onClose: () => void;
@@ -612,120 +612,125 @@ import React, { useEffect, useState } from 'react';
         profileCompletion: completionPercentage
       };
       localStorage.setItem('profileCompletionSkipped', JSON.stringify(skipData));
-      console.log('✅ Profile completion skipped:', skipData);
       onClose();
     };
 
     if (!isOpen || completionPercentage === 100) return null;
 
     return (
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full overflow-hidden animate-scale-in">
-          <div className="bg-gradient-to-r from-rose-600 to-pink-600 p-6 text-white relative">
+        <div
+          className="
+            fixed inset-0 bg-black/50 backdrop-blur-sm z-50 
+            p-2 sm:p-4 
+            pt-20 pl-6 sm:pt-0 
+            sm:flex sm:items-center sm:justify-center"
+        >
+        <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl max-w-[95%] sm:max-w-4xl w-full overflow-hidden animate-scale-in max-h-[90vh] flex flex-col">
+          <div className="bg-gradient-to-r from-rose-600 to-pink-600 p-4 sm:p-6 text-white relative flex-shrink-0">
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors"
+              className="absolute top-3 right-3 sm:top-4 sm:right-4 text-white/80 hover:text-white transition-colors"
             >
-              <X className="h-6 w-6" />
+              <X className="h-5 w-5 sm:h-6 sm:w-6" />
             </button>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center justify-center w-16 h-16 bg-white/20 rounded-full flex-shrink-0">
-                <AlertCircle className="h-8 w-8" />
+            <div className="flex items-center gap-3 sm:gap-4 pr-8 sm:pr-0">
+              <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-full flex-shrink-0">
+                <AlertCircle className="h-6 w-6 sm:h-8 sm:w-8" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold mb-1">Complete Your Profile</h2>
-                <p className="text-rose-100">Help us find your perfect match by completing your profile</p>
+                <h2 className="text-lg sm:text-2xl font-bold mb-0.5 sm:mb-1">Complete Your Profile</h2>
+                <p className="text-xs sm:text-base text-rose-100">Help us find your perfect match by completing your profile</p>
               </div>
             </div>
           </div>
-          <div className="p-6">
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="flex flex-col items-center justify-center">
+          <div className="px-2 pb-2 pt-4 sm:p-6 overflow-y-auto flex-1 ">
+            <div className="flex flex-col gap-2 sm:gap-6 md:grid md:grid-cols-3 -mt-2 sm:mt-0">
+              <div className="flex flex-col items-center justify-center md:col-span-3 lg:col-span-1">
                 <div className="relative">
-                  <svg className="w-40 h-40 transform -rotate-90">
+                  <svg className="w-14 h-14 sm:w-32 sm:h-32 md:w-40 md:h-40 transform -rotate-90" viewBox="0 0 100 100">
                     <circle
-                      cx="80"
-                      cy="80"
-                      r="70"
+                      cx="50"
+                      cy="50"
+                      r="40"
                       stroke="#FEE2E2"
-                      strokeWidth="12"
+                      strokeWidth="8"
                       fill="none"
                     />
                     <circle
-                      cx="80"
-                      cy="80"
-                      r="70"
+                      cx="50"
+                      cy="50"
+                      r="40"
                       stroke="#E11D48"
-                      strokeWidth="12"
+                      strokeWidth="8"
                       fill="none"
-                      strokeDasharray={`${(completionPercentage / 100) * 440} 440`}
+                      strokeDasharray={`${((completionPercentage || 20) / 100) * 251.2} 251.2`}
                       strokeLinecap="round"
                       className="transition-all duration-1000"
                     />
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="text-center">
-                      <div className="text-4xl font-bold text-gray-900">{completionPercentage}%</div>
-                      <div className="text-sm text-gray-600">Complete</div>
+                      <div className="text-base sm:text-3xl md:text-4xl font-bold text-gray-900">{completionPercentage || 20}%</div>
+                      <div className="text-[7px] sm:text-xs md:text-sm text-gray-600">Complete</div>
                     </div>
                   </div>
                 </div>
-                <p className="text-sm text-gray-500 mt-4 text-center">
+                <p className="text-[7px] sm:text-xs md:text-sm text-gray-500 mt-1 sm:mt-3 md:mt-4 text-center px-2">
                   Complete all sections to maximize your matches
                 </p>
               </div>
-              <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-3">
-                  Sections to Complete:
-                </h3>
-                <div className="space-y-2">
-                  {missingFields.length > 0 ? (
-                    missingFields.map((field, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 p-2 rounded-lg"
-                      >
-                        <div className="w-2 h-2 bg-rose-500 rounded-full flex-shrink-0"></div>
-                        <span>{field}</span>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-                      Please complete your profile to see missing sections
+               <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                 Sections to Complete:
+               </h3>
+               <div className="space-y-2">
+                 {missingFields.length > 0 ? (
+                  missingFields.map((field, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 p-2 rounded-lg"
+                    >
+                      <div className="w-2 h-2 bg-rose-500 rounded-full flex-shrink-0"></div>
+                      <span>{field}</span>
                     </div>
-                  )}
-                </div>
+                  ))
+                ) : (
+                  <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+                    Please complete your profile to see missing sections
+                  </div>
+                )}
               </div>
-              <div className="flex flex-col justify-between">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                  <h4 className="text-sm font-semibold text-blue-900 mb-2">
+            </div>
+              <div className="flex flex-col justify-between md:col-span-3 lg:col-span-1">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-1.5 sm:p-4 mb-1.5 sm:mb-4">
+                  <h4 className="text-[9px] sm:text-sm font-semibold text-blue-900 mb-0.5 sm:mb-2">
                     Why complete?
                   </h4>
-                  <ul className="space-y-1 text-xs text-blue-800">
+                  <ul className="space-y-0.5 sm:space-y-1 text-[7px] sm:text-xs text-blue-800">
                     <li>✓ Better match recommendations</li>
                     <li>✓ 10x more profile visibility</li>
                     <li>✓ Receive more interests</li>
                     <li>✓ Build trust with matches</li>
                   </ul>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1 sm:space-y-2">
                   <button
                     onClick={() => {
                       onComplete();
                       onClose();
                     }}
-                    className="w-full bg-gradient-to-r from-rose-600 to-pink-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                    className="w-full bg-gradient-to-r from-rose-600 to-pink-600 text-white py-1.5 sm:py-3 rounded-lg text-[10px] sm:text-base font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-1 sm:gap-2"
                   >
-                    <Edit className="h-5 w-5" />
+                    <Edit className="h-2.5 w-2.5 sm:h-5 sm:w-5" />
                     Complete Profile Now
                   </button>
                   <button
                     onClick={handleSkip}
-                    className="w-full bg-gray-100 text-gray-700 py-2 rounded-lg font-semibold hover:bg-gray-200 transition-all text-sm"
+                    className="w-full bg-gray-100 text-gray-700 py-1 sm:py-2 rounded-lg font-semibold hover:bg-gray-200 transition-all text-[9px] sm:text-sm"
                   >
                     Skip for Now
                   </button>
-                  <p className="text-xs text-center text-gray-500 mt-2">
+                  <p className="text-[7px] sm:text-xs text-center text-gray-500">
                     You can complete your profile anytime
                   </p>
                 </div>
@@ -779,8 +784,6 @@ import React, { useEffect, useState } from 'react';
         return;
       }
 
-      console.log('🔍 Checking if modal should open...');
-      console.log('📊 Profile completion:', stats.profileCompletion);
       
       if (stats.profileCompletion >= 100) {
         console.log('✅ Profile is complete, not showing modal');
@@ -792,8 +795,6 @@ import React, { useEffect, useState } from 'react';
       const justRegistered = localStorage.getItem('justRegistered');
       const justLoggedIn = localStorage.getItem('justLoggedIn');
       
-      console.log('🔍 Just registered:', justRegistered);
-      console.log('🔍 Just logged in:', justLoggedIn);
       
       const skipDataStr = localStorage.getItem('profileCompletionSkipped');
       let shouldSkip = false;
@@ -824,36 +825,21 @@ import React, { useEffect, useState } from 'react';
       }
 
       if ((justRegistered === 'true' || justLoggedIn === 'true') && stats.profileCompletion < 100) {
-        console.log('✅ Showing profile completion modal in 1 second...');
-        console.log('📋 Reason:', justRegistered === 'true' ? 'New registration' : 'Login with incomplete profile');
-        
+      
         setTimeout(() => {
           setShowCompletionModal(true);
         }, 1000);
         
         localStorage.removeItem('justRegistered');
         localStorage.removeItem('justLoggedIn');
-      } else {
-        console.log('⏭️ Not showing modal - no trigger flag or profile complete');
-      }
+      } 
     }, [dataFetched, loading, stats.profileCompletion]);
 
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
         setError('');
-        
-        console.log('═══════════════════════════════════════════');
-        console.log('🚀 DASHBOARD DATA FETCH STARTED');
-        console.log('═══════════════════════════════════════════');
-        console.log('📥 Fetching dashboard data for user:', currentUser?.id);
-        console.log('👤 User Details:', {
-          id: currentUser?.id,
-          name: currentUser?.fullName,
-          gender: currentUser?.gender,
-          religion: currentUser?.religiousDetails?.religion,
-          city: currentUser?.familyDetails?.currentResidenceCity
-        });
+      
         
         const token = localStorage.getItem('authToken');
         if (!token) {
@@ -865,8 +851,7 @@ import React, { useEffect, useState } from 'react';
         // ========================================
         // 1. FETCH DASHBOARD STATS
         // ========================================
-        console.log('\n📊 STEP 1: Fetching Dashboard Stats');
-        console.log('🌐 API:', API_CONFIG.STATS_API);
+        
         
         const statsResponse = await fetch(API_CONFIG.STATS_API, {
           method: 'GET',
@@ -877,7 +862,6 @@ import React, { useEffect, useState } from 'react';
         });
 
         const statsData = await statsResponse.json();
-        console.log('✅ Stats Response:', statsData);
         
         if (!statsResponse.ok || !statsData.success) {
           throw new Error(statsData.message || 'Failed to load stats');
@@ -886,8 +870,7 @@ import React, { useEffect, useState } from 'react';
         // ========================================
         // 2. BUILD MATCH CRITERIA (EXACT LOGIC FROM BACKEND)
         // ========================================
-        console.log('\n🧠 STEP 2: Building Match Criteria');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
         
         // 🎯 Match opposite gender + same religion + same city
         const matchCriteria: string[] = [];
@@ -896,19 +879,12 @@ import React, { useEffect, useState } from 'react';
         const userGender = currentUser?.gender?.toLowerCase();
         const oppositeGender = userGender === 'male' ? 'female' : 'male';
         matchCriteria.push(`gender=${oppositeGender}`);
-        console.log('🚻 Gender Filter:', {
-          userGender: userGender,
-          lookingFor: oppositeGender,
-          logic: 'Opposite gender only'
-        });
+      
         
         // ✅ 2. SAME RELIGION (IF USER HAS IT)
         if (currentUser?.religiousDetails?.religion) {
           matchCriteria.push(`religion=${encodeURIComponent(currentUser.religiousDetails.religion)}`);
-          console.log('🕉️ Religion Filter:', {
-            userReligion: currentUser.religiousDetails.religion,
-            logic: 'Same religion only'
-          });
+         
         } else {
           console.log('⚠️ Religion Filter: SKIPPED (user has no religion set)');
         }
@@ -916,10 +892,7 @@ import React, { useEffect, useState } from 'react';
         // ✅ 3. SAME CITY (IF USER HAS IT)
         if (currentUser?.familyDetails?.currentResidenceCity) {
           matchCriteria.push(`city=${encodeURIComponent(currentUser.familyDetails.currentResidenceCity)}`);
-          console.log('📍 City Filter:', {
-            userCity: currentUser.familyDetails.currentResidenceCity,
-            logic: 'Same city only'
-          });
+         
         } else {
           console.log('⚠️ City Filter: SKIPPED (user has no city set)');
         }
@@ -933,62 +906,45 @@ import React, { useEffect, useState } from 'react';
         const queryString = matchCriteria.join('&');
         const profileApiUrl = `${API_CONFIG.PROFILE_LIST_API}?${queryString}`;
         
-        console.log('\n🔍 Final Match Criteria Summary:');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('1️⃣ Gender: Opposite only (' + oppositeGender + ')');
-        console.log('2️⃣ Religion:', currentUser?.religiousDetails?.religion || 'Not filtered');
-        console.log('3️⃣ City:', currentUser?.familyDetails?.currentResidenceCity || 'Not filtered');
-        console.log('🌐 Full API URL:', profileApiUrl);
-        
+       
         // ========================================
         // 3. FETCH RECOMMENDED PROFILES
         // ========================================
-        console.log('\n👥 STEP 3: Fetching Matched Profiles');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  
         
         const profilesResponse = await fetch(profileApiUrl);
         const profilesData = await profilesResponse.json();
         
-        console.log('📦 Profiles API Response:', {
-          success: profilesData.success,
-          totalReceived: profilesData.data?.length || 0,
-          total: profilesData.total,
-          page: profilesData.page,
-          pages: profilesData.pages
-        });
 
         if (profilesResponse.ok && profilesData.success) {
           // ========================================
           // 4. CLIENT-SIDE FILTERING (EXTRA SAFETY)
           // ========================================
-          console.log('\n🔍 STEP 4: Client-Side Safety Filtering');
-          console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        
           
           const filteredProfiles = (profilesData.data || []).filter((profile: CompleteProfile, index: number) => {
             const profileUserId = profile.userId || profile.id || profile._id;
             const currentUserId = currentUser?.id;
             
-            // Log first 3 profiles for debugging
-            if (index < 3) {
-              console.log(`\n📋 Profile #${index + 1}:`, {
-                name: profile.fullName,
-                userId: profileUserId,
-                gender: profile.gender,
-                religion: profile.religiousDetails?.religion,
-                city: profile.familyDetails?.currentResidenceCity
-              });
-            }
+            // // Log first 3 profiles for debugging
+            // if (index < 3) {
+            //   console.log(`\n📋 Profile #${index + 1}:`, {
+            //     name: profile.fullName,
+            //     userId: profileUserId,
+            //     gender: profile.gender,
+            //     religion: profile.religiousDetails?.religion,
+            //     city: profile.familyDetails?.currentResidenceCity
+            //   });
+            // }
             
             // 🚫 1. Exclude current user's own profile
             if (profileUserId === currentUserId) {
-              console.log(`❌ Filtered Profile #${index + 1}: Own profile (${profile.fullName})`);
               return false;
             }
 
             // 🚫 2. Double-check gender (should already be filtered by backend)
             const profileGender = profile.gender?.toLowerCase();
             if (userGender && profileGender && userGender === profileGender) {
-              console.log(`❌ Filtered Profile #${index + 1}: Same gender (${profile.fullName} - ${profileGender})`);
               return false;
             }
             
@@ -996,7 +952,7 @@ import React, { useEffect, useState } from 'react';
             if (currentUser?.religiousDetails?.religion) {
               const profileReligion = profile.religiousDetails?.religion;
               if (profileReligion !== currentUser.religiousDetails.religion) {
-                console.log(`❌ Filtered Profile #${index + 1}: Different religion (${profile.fullName} - ${profileReligion})`);
+              
                 return false;
               }
             }
@@ -1005,35 +961,26 @@ import React, { useEffect, useState } from 'react';
             if (currentUser?.familyDetails?.currentResidenceCity) {
               const profileCity = profile.familyDetails?.currentResidenceCity;
               if (profileCity !== currentUser.familyDetails.currentResidenceCity) {
-                console.log(`❌ Filtered Profile #${index + 1}: Different city (${profile.fullName} - ${profileCity})`);
                 return false;
               }
             }
 
-            // ✅ Profile passes all filters
-            if (index < 3) {
-              console.log(`✅ Profile #${index + 1} PASSED: ${profile.fullName}`);
-            }
+          
             return true;
           });
           
-          console.log('\n📊 FILTERING RESULTS:');
-          console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-          console.log('📥 Total profiles received:', profilesData.data?.length || 0);
-          console.log('✅ Profiles after filtering:', filteredProfiles.length);
-          console.log('🚫 Profiles filtered out:', (profilesData.data?.length || 0) - filteredProfiles.length);
           
-          if (filteredProfiles.length === 0) {
-            console.log('\n⚠️ WARNING: No profiles match your criteria!');
-            console.log('💡 Suggestions:');
-            console.log('   1. Check if you have religion/city set in your profile');
-            console.log('   2. There might be no profiles with matching criteria in database');
-            console.log('   3. Try adding more diverse test profiles to your database');
-          }
+          
+          // if (filteredProfiles.length === 0) {
+          //   console.log('\n⚠️ WARNING: No profiles match your criteria!');
+          //   console.log('💡 Suggestions:');
+          //   console.log('   1. Check if you have religion/city set in your profile');
+          //   console.log('   2. There might be no profiles with matching criteria in database');
+          //   console.log('   3. Try adding more diverse test profiles to your database');
+          // }
           
           setProfiles(filteredProfiles);
         } else {
-          console.log('⚠️ No profiles found or API failed');
           setProfiles([]);
         }
 
@@ -1050,15 +997,7 @@ import React, { useEffect, useState } from 'react';
             pendingRequests: statsData.data.pendingRequests || 0,
             profileCompletion: profileCompletion,
           });
-          
-          console.log('\n📊 Stats Updated:', {
-            interests: statsData.data.interests || 0,
-            messages: statsData.data.messages || 0,
-            matches: statsData.data.matches || 0,
-            pendingRequests: statsData.data.pendingRequests || 0,
-            profileCompletion: profileCompletion,
-          });
-          
+       
           // Calculate missing fields
           const profile = statsData.data;
           const missing: string[] = [];
@@ -1079,24 +1018,14 @@ import React, { useEffect, useState } from 'react';
           }
           
           setMissingFields(missing);
-          console.log('📋 Missing fields:', missing);
           
           setDataFetched(true);
         } else {
           setError(statsData.message || 'Failed to load dashboard data');
         }
         
-        console.log('\n═══════════════════════════════════════════');
-        console.log('✅ DASHBOARD DATA FETCH COMPLETED');
-        console.log('═══════════════════════════════════════════\n');
         
       } catch (err: any) {
-        console.error('\n❌❌❌ ERROR FETCHING DASHBOARD DATA ❌❌❌');
-        console.error('Error details:', {
-          name: err.name,
-          message: err.message,
-          stack: err.stack
-        });
         
         if (err.message.includes('Failed to fetch')) {
           setError('Cannot connect to server. Please make sure your backend is running on http://localhost:5000');
@@ -1130,7 +1059,6 @@ import React, { useEffect, useState } from 'react';
       }
 
       try {
-        console.log("💌 Sending interest to:", profileId);
 
         const response = await fetch(API_CONFIG.SEND_INTEREST_API, {
           method: "POST",
@@ -1145,7 +1073,6 @@ import React, { useEffect, useState } from 'react';
         });
 
         const data = await response.json();
-        console.log("📦 Interest Response:", data);
 
         if (data.success) {
           alert("Interest sent successfully ❤️");
@@ -1153,7 +1080,6 @@ import React, { useEffect, useState } from 'react';
           alert(data.message || "Failed to send interest");
         }
       } catch (error) {
-        console.error("❌ Failed to send interest:", error);
         alert("Something went wrong while sending interest. Make sure your backend is running.");
       }
     };
@@ -1165,7 +1091,7 @@ import React, { useEffect, useState } from 'react';
     return (
       <div className="space-y-8">
         {/* Profile Completion Modal */}
-        <ProfileCompletionModal
+        <ProfileCompletionModal 
           isOpen={showCompletionModal}
           onClose={() => setShowCompletionModal(false)}
           onComplete={() => onNavigate('profile-setup')}
