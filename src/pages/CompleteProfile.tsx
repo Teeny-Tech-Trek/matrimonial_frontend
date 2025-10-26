@@ -32,7 +32,7 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
     annualIncomeMax: '',
     location: '',
     city: '',
-    state: '',
+    state: 'Punjab',
     familyType: '',
     fatherName: '',
     fatherOccupation: '',
@@ -53,6 +53,45 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
   const [loading, setLoading] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const { showToast } = useToast();
+  const PUNJAB_CITIES = [
+  'Amritsar',
+  'Ludhiana',
+  'Jalandhar',
+  'Patiala',
+  'Bathinda',
+  'Pathankot',
+  'Hoshiarpur',
+  'Mohali',
+  'Batala',
+  'Moga',
+  'Malerkotla',
+  'Khanna',
+  'Phagwara',
+  'Muktsar',
+  'Barnala',
+  'Rajpura',
+  'Firozpur',
+  'Kapurthala',
+  'Faridkot',
+  'Sunam',
+  'Sangrur',
+  'Fazilka',
+  'Gurdaspur',
+  'Kharar',
+  'Gobindgarh',
+  'Mansa',
+  'Malout',
+  'Nabha',
+  'Tarn Taran',
+  'Jagraon',
+  'Abohar',
+  'Budhlada',
+  'Zirakpur',
+  'Kot Kapura',
+  'Nawanshahr',
+  'Rupnagar',
+  'Fatehgarh Sahib'
+].sort(); // Sort alphabetically
   // const [error, setError] = useState('');
 
   // Load existing profile on mount
@@ -89,7 +128,7 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
           annualIncomeMin: profile.professionalDetails?.annualIncomeMin?.toString() || '',
           annualIncomeMax: profile.professionalDetails?.annualIncomeMax?.toString() || '',
           city: profile.familyDetails?.currentResidenceCity || '',
-          state: profile.familyDetails?.currentResidenceState || '',
+          state: profile.familyDetails?.currentResidenceState || 'Punjab',
           familyType: profile.familyDetails?.familyType || '',
           fatherName: profile.familyDetails?.fatherName || '',
           fatherOccupation: profile.familyDetails?.fatherOccupation || '',
@@ -211,11 +250,8 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
       },
     };
 
-    console.log('Submitting profile data:', profileData);
     
     const response = await profileService.saveProfile(profileData);
-    
-    console.log('Profile saved successfully:', response);
     
     // Refresh profile completion status in auth context
     await refreshProfile();
@@ -630,7 +666,7 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
               <h2 className="text-2xl font-bold text-gray-800 mb-6">Family Details</h2>
               
               <div className="grid md:grid-cols-2 gap-6">
-                <div>
+                {/* <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     City <span className="text-rose-600">*</span>
                   </label>
@@ -643,9 +679,29 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                     placeholder="Ahmedabad"
                   />
-                </div>
+                </div> */}
 
                 <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      City <span className="text-rose-600">*</span>
+                    </label>
+                    <select
+                      name="city"
+                      value={formData.city}
+                      onChange={handleChange}
+                      required
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                    >
+                      <option value="">Select City</option>
+                      {PUNJAB_CITIES.map(city => (
+                        <option key={city} value={city}>
+                          {city}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                {/* <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     State <span className="text-rose-600">*</span>
                   </label>
@@ -658,7 +714,36 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                     placeholder="Gujarat"
                   />
+                </div> */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    State <span className="text-rose-600">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="state"
+                    value={formData.state}
+                    readOnly
+                    placeholder='Punjab'
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
+                  />
+              
                 </div>
+                {/* <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    State <span className="text-rose-600">*</span>
+                  </label>
+                  <select
+                    name="state"
+                    value={formData.state}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                  >
+                    <option value="Punjab">Punjab</option>
+                    {/* Add other states if needed */}
+                  {/* </select>
+                </div> */}
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">

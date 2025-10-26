@@ -605,6 +605,9 @@ import React, { useEffect, useState } from 'react';
     completionPercentage: number;
     missingFields: string[];
   }> = ({ isOpen, onClose, onComplete, completionPercentage, missingFields }) => {
+      // Treat 98% or higher as 100% complete
+    const isProfileComplete = completionPercentage >= 98;
+
     const handleSkip = () => {
       const skipData = {
         skipped: true,
@@ -615,7 +618,8 @@ import React, { useEffect, useState } from 'react';
       onClose();
     };
 
-    if (!isOpen || completionPercentage === 100) return null;
+    // if (!isOpen || completionPercentage === 100) return null;
+    if (!isOpen || isProfileComplete) return null;
 
     return (
         <div

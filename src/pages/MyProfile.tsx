@@ -280,12 +280,13 @@ export const MyProfile: React.FC<MyProfileProps> = ({ onNavigate }) => {
                 <p className="text-gray-600">Profile ID: {profile._id?.slice(-8)}</p>
               </div>
             </div>
-            <button
+           <button
               onClick={() => onNavigate('profile-setup')}
-              className="flex items-center gap-2 px-6 py-3 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors"
+              className="flex items-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-6 sm:py-3 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors text-sm sm:text-base"
             >
-              <Edit className="h-5 w-5" />
-              Edit Profile
+              <Edit className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="hidden xs:inline sm:inline">Edit Profile</span>
+              <span className="inline xs:hidden sm:hidden">Edit</span>
             </button>
           </div>
         </div>
