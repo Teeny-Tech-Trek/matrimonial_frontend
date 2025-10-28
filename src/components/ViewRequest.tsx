@@ -43,8 +43,9 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
   });
 
   // API Base URL
-   const API_BASE_URL = 'https://matrimonial-backend-14t2.onrender.com/api/request';
+  //  const API_BASE_URL = 'https://matrimonial-backend-14t2.onrender.com/api/request';
   // const API_BASE_URL = 'http://localhost:5000/api/request';
+  const API_BASE_URL = 'https://api.rsaristomatch.com/api/request';
 
   // Calculate age from date of birth
   const calculateAge = (dateOfBirth: string): number => {

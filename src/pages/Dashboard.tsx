@@ -586,15 +586,18 @@ import React, { useEffect, useState } from 'react';
   // 🔧 API CONFIGURATION
   // ========================================
   const API_CONFIG = {
-    // For local development
+  //  For local development
     // STATS_API: 'http://localhost:5000/api/dashboard/stats',
     // PROFILE_LIST_API: 'http://localhost:5000/api/profile/list',
     // SEND_INTEREST_API: 'http://localhost:5000/api/request/send',
+    // // ✅ NEW: Add accepted connections API
+    // ACCEPTED_CONNECTIONS_API: 'http://localhost:5000/api/request/connections/accepted',
     
     // For production, uncomment these:
-    STATS_API: 'https://matrimonial-backend-14t2.onrender.com/api/dashboard/stats',
-    PROFILE_LIST_API: 'https://matrimonial-backend-14t2.onrender.com/api/profile/list',
-    SEND_INTEREST_API: 'https://matrimonial-backend-14t2.onrender.com/api/request/send',
+    STATS_API: 'https://api.rsaristomatch.com/api/dashboard/stats',
+    PROFILE_LIST_API: 'https://api.rsaristomatch.com/api/profile/list',
+    SEND_INTEREST_API: 'https://api.rsaristomatch.com/api/request/send',
+    ACCEPTED_CONNECTIONS_API: 'https://api.rsaristomatch.com/api/request/connections/accepted',
   };
 
 // Profile Completion Modal Component
@@ -776,6 +779,8 @@ import React, { useEffect, useState } from 'react';
     const [error, setError] = useState('');
     const [showCompletionModal, setShowCompletionModal] = useState(false);
     const [dataFetched, setDataFetched] = useState(false);
+    // ✅ NEW: State to store accepted connection IDs
+    const [acceptedConnectionIds, setAcceptedConnectionIds] = useState<string[]>([]);
 
     // Fetch dashboard data on component mount
     useEffect(() => {
@@ -789,7 +794,7 @@ import React, { useEffect, useState } from 'react';
       }
 
       
-      if (stats.profileCompletion >= 100) {
+      if (stats.profileCompletion >= 98) {
         console.log('✅ Profile is complete, not showing modal');
         localStorage.removeItem('justRegistered');
         localStorage.removeItem('justLoggedIn');
@@ -839,212 +844,387 @@ import React, { useEffect, useState } from 'react';
       } 
     }, [dataFetched, loading, stats.profileCompletion]);
 
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
-        setError('');
+    // ✅ NEW FUNCTION: Fetch accepted connections
+ const fetchAcceptedConnections = async (token: string) => {
+  try {
+    console.log('🔍 Fetching accepted connections...');
+    
+    const response = await fetch(API_CONFIG.ACCEPTED_CONNECTIONS_API, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      console.log('✅ Accepted Connections Response:', result);
       
-        
-        const token = localStorage.getItem('authToken');
-        if (!token) {
-          setError('Please log in to view your dashboard');
-          setLoading(false);
-          return;
-        }
-
-        // ========================================
-        // 1. FETCH DASHBOARD STATS
-        // ========================================
-        
-        
-        const statsResponse = await fetch(API_CONFIG.STATS_API, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        const statsData = await statsResponse.json();
-        
-        if (!statsResponse.ok || !statsData.success) {
-          throw new Error(statsData.message || 'Failed to load stats');
-        }
-
-        // ========================================
-        // 2. BUILD MATCH CRITERIA (EXACT LOGIC FROM BACKEND)
-        // ========================================
-
-        
-        // 🎯 Match opposite gender + same religion + same city
-        const matchCriteria: string[] = [];
-        
-        // ✅ 1. OPPOSITE GENDER (REQUIRED)
-        const userGender = currentUser?.gender?.toLowerCase();
-        const oppositeGender = userGender === 'male' ? 'female' : 'male';
-        matchCriteria.push(`gender=${oppositeGender}`);
+      // ✅ FIX 1: Your API returns connections in 'data' field, NOT 'connections'
+      const connections = result.data || [];
       
-        
-        // ✅ 2. SAME RELIGION (IF USER HAS IT)
-        if (currentUser?.religiousDetails?.religion) {
-          matchCriteria.push(`religion=${encodeURIComponent(currentUser.religiousDetails.religion)}`);
-         
-        } else {
-          console.log('⚠️ Religion Filter: SKIPPED (user has no religion set)');
-        }
-        
-        // ✅ 3. SAME CITY (IF USER HAS IT)
-        if (currentUser?.familyDetails?.currentResidenceCity) {
-          matchCriteria.push(`city=${encodeURIComponent(currentUser.familyDetails.currentResidenceCity)}`);
-         
-        } else {
-          console.log('⚠️ City Filter: SKIPPED (user has no city set)');
-        }
-        
-        // Add pagination and sorting
-        matchCriteria.push('page=1');
-        matchCriteria.push('limit=50');
-        matchCriteria.push('sortBy=createdAt');
-        matchCriteria.push('sortOrder=desc');
-        
-        const queryString = matchCriteria.join('&');
-        const profileApiUrl = `${API_CONFIG.PROFILE_LIST_API}?${queryString}`;
-        
-       
-        // ========================================
-        // 3. FETCH RECOMMENDED PROFILES
-        // ========================================
-  
-        
-        const profilesResponse = await fetch(profileApiUrl);
-        const profilesData = await profilesResponse.json();
-        
-
-        if (profilesResponse.ok && profilesData.success) {
-          // ========================================
-          // 4. CLIENT-SIDE FILTERING (EXTRA SAFETY)
-          // ========================================
-        
-          
-          const filteredProfiles = (profilesData.data || []).filter((profile: CompleteProfile, index: number) => {
-            const profileUserId = profile.userId || profile.id || profile._id;
-            const currentUserId = currentUser?.id;
-            
-            // // Log first 3 profiles for debugging
-            // if (index < 3) {
-            //   console.log(`\n📋 Profile #${index + 1}:`, {
-            //     name: profile.fullName,
-            //     userId: profileUserId,
-            //     gender: profile.gender,
-            //     religion: profile.religiousDetails?.religion,
-            //     city: profile.familyDetails?.currentResidenceCity
-            //   });
-            // }
-            
-            // 🚫 1. Exclude current user's own profile
-            if (profileUserId === currentUserId) {
-              return false;
-            }
-
-            // 🚫 2. Double-check gender (should already be filtered by backend)
-            const profileGender = profile.gender?.toLowerCase();
-            if (userGender && profileGender && userGender === profileGender) {
-              return false;
-            }
-            
-            // 🚫 3. Double-check religion if user has one
-            if (currentUser?.religiousDetails?.religion) {
-              const profileReligion = profile.religiousDetails?.religion;
-              if (profileReligion !== currentUser.religiousDetails.religion) {
-              
-                return false;
-              }
-            }
-            
-            // 🚫 4. Double-check city if user has one
-            if (currentUser?.familyDetails?.currentResidenceCity) {
-              const profileCity = profile.familyDetails?.currentResidenceCity;
-              if (profileCity !== currentUser.familyDetails.currentResidenceCity) {
-                return false;
-              }
-            }
-
-          
-            return true;
-          });
-          
-          
-          
-          // if (filteredProfiles.length === 0) {
-          //   console.log('\n⚠️ WARNING: No profiles match your criteria!');
-          //   console.log('💡 Suggestions:');
-          //   console.log('   1. Check if you have religion/city set in your profile');
-          //   console.log('   2. There might be no profiles with matching criteria in database');
-          //   console.log('   3. Try adding more diverse test profiles to your database');
-          // }
-          
-          setProfiles(filteredProfiles);
-        } else {
-          setProfiles([]);
-        }
-
-        // ========================================
-        // 5. SET STATS DATA
-        // ========================================
-        if (statsData.success) {
-          const profileCompletion = statsData.data.profileCompletion || 0;
-          
-          setStats({
-            interests: statsData.data.interests || 0,
-            messages: statsData.data.messages || 0,
-            matches: statsData.data.matches || 0,
-            pendingRequests: statsData.data.pendingRequests || 0,
-            profileCompletion: profileCompletion,
-          });
-       
-          // Calculate missing fields
-          const profile = statsData.data;
-          const missing: string[] = [];
-          
-          if (!profile.personalDetails?.heightCm) missing.push('Personal Details (Height, Body Type, etc.)');
-          if (!profile.religiousDetails?.religion) missing.push('Religious Background');
-          if (!profile.educationDetails?.highestEducation) missing.push('Education Details');
-          if (!profile.professionalDetails?.occupation) missing.push('Professional Details');
-          if (!profile.familyDetails?.fatherOccupation) missing.push('Family Details');
-          if (!profile.lifestylePreferences?.aboutMe || profile.lifestylePreferences?.aboutMe?.length < 50) {
-            missing.push('About Me & Partner Expectations');
-          }
-          
-          if (missing.length === 0 && profileCompletion < 100) {
-            missing.push('Complete your profile information');
-            missing.push('Add photos to your profile');
-            missing.push('Fill in all required details');
-          }
-          
-          setMissingFields(missing);
-          
-          setDataFetched(true);
-        } else {
-          setError(statsData.message || 'Failed to load dashboard data');
-        }
-        
-        
-      } catch (err: any) {
-        
-        if (err.message.includes('Failed to fetch')) {
-          setError('Cannot connect to server. Please make sure your backend is running on http://localhost:5000');
-        } else if (err.message.includes('CORS')) {
-          setError('CORS error: Backend needs to allow requests from localhost:5173');
-        } else {
-          setError(err.message || 'Failed to connect to the server. Please check your connection.');
-        }
-        
-        setProfiles([]);
-        setDataFetched(true);
-      } finally {
-        setLoading(false);
+      if (connections.length === 0) {
+        console.log('⚠️ No accepted connections found');
+        setAcceptedConnectionIds([]);
+        return;
       }
-    };
+      
+      console.log(`📊 Found ${connections.length} accepted connection(s)`);
+      
+      // Debug: Show the structure of the first connection
+      if (connections[0]) {
+        console.log('🔍 First connection object:', connections[0]);
+        console.log('🔍 Connection keys:', Object.keys(connections[0]));
+      }
+      
+      // Get current user ID to exclude it
+      const currentUserId = currentUser?.id || currentUser?.userId;
+      console.log('👤 Current user ID:', currentUserId);
+      
+      // ✅ FIX 2: Extract user IDs from connections
+      // Try multiple fields to handle different API response structures
+      const connectedUserIds = connections.map((conn: any) => {
+        // Collect all possible user IDs from the connection object
+        const possibleIds = [
+          conn.userId,           // Direct userId field
+          conn.senderId,         // If connection has senderId
+          conn.receiverId,       // If connection has receiverId
+          conn.sender?._id,      // Nested sender object with _id
+          conn.sender?.userId,   // Nested sender object with userId
+          conn.receiver?._id,    // Nested receiver object with _id
+          conn.receiver?.userId, // Nested receiver object with userId
+          conn.user?._id,        // Nested user object with _id
+          conn.user?.userId,     // Nested user object with userId
+          conn.profile?._id,     // Nested profile object with _id
+          conn.profile?.userId,  // Nested profile object with userId
+          conn.profileId,        // Direct profileId field
+          conn._id,              // MongoDB _id field
+          conn.id,               // Standard id field
+        ].filter(id => id && id !== currentUserId); // Remove undefined and current user's ID
+        
+        // Log what we found
+        console.log('🔍 Possible IDs from connection:', possibleIds);
+        
+        // Return all valid IDs (not just the first one)
+        return possibleIds;
+      }).flat() // Flatten the array of arrays
+        .filter((id, index, self) => self.indexOf(id) === index); // Remove duplicates
+      
+      setAcceptedConnectionIds(connectedUserIds);
+      console.log('✅ Connected User IDs to filter out:', connectedUserIds);
+      console.log('✅ Total unique connection IDs:', connectedUserIds.length);
+      
+    } else {
+      console.error('❌ Failed to fetch accepted connections:', response.status);
+      const errorText = await response.text();
+      console.error('❌ Error details:', errorText);
+    }
+  } catch (error) {
+    console.error('❌ Error fetching accepted connections:', error);
+  }
+};
+
+   const fetchDashboardData = async () => {
+  try {
+    setLoading(true);
+    setError('');
+  
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      setError('Please log in to view your dashboard');
+      setLoading(false);
+      return;
+    }
+
+    // ========================================
+    // 1. FETCH DASHBOARD STATS
+    // ========================================
+    const statsResponse = await fetch(API_CONFIG.STATS_API, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const statsData = await statsResponse.json();
+    
+    if (!statsResponse.ok || !statsData.success) {
+      throw new Error(statsData.message || 'Failed to load stats');
+    }
+
+    // ========================================
+    // 1.5. FETCH ACCEPTED CONNECTIONS
+    // ========================================
+    console.log('🔍 Fetching accepted connections...');
+    
+    const connectionsResponse = await fetch(API_CONFIG.ACCEPTED_CONNECTIONS_API, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    let connectedUserIds: string[] = [];
+    
+    if (connectionsResponse.ok) {
+      const result = await connectionsResponse.json();
+      console.log('✅ Accepted Connections Response:', result);
+      
+      const connections = result.data || [];
+      
+      if (connections.length > 0) {
+        console.log(`📊 Found ${connections.length} accepted connection(s)`);
+        
+        const currentUserId = currentUser?.id || currentUser?.userId;
+        
+        connectedUserIds = connections.map((conn: any) => {
+          const possibleIds = [
+            conn.userId,
+            conn.senderId,
+            conn.receiverId,
+            conn.sender?._id,
+            conn.sender?.userId,
+            conn.receiver?._id,
+            conn.receiver?.userId,
+            conn.user?._id,
+            conn.user?.userId,
+            conn.profile?._id,
+            conn.profile?.userId,
+            conn.profileId,
+            conn._id,
+            conn.id,
+          ].filter(id => id && id !== currentUserId);
+          
+          return possibleIds;
+        }).flat()
+          .filter((id, index, self) => self.indexOf(id) === index);
+        
+        console.log('✅ Connected User IDs to filter out:', connectedUserIds);
+      }
+    }
+    
+    setAcceptedConnectionIds(connectedUserIds);
+
+    // ========================================
+    // 2. BUILD MATCH CRITERIA (✅ FIXED GENDER LOGIC)
+    // ========================================
+    const matchCriteria: string[] = [];
+    
+    // ✅ IMPROVED: Better gender handling with logging
+    console.log('\n🚹🚺 GENDER FILTER SETUP:');
+    console.log('Current user:', currentUser?.fullName);
+    console.log('Current user gender (raw):', currentUser?.gender);
+    
+    const userGender = currentUser?.gender?.toLowerCase()?.trim();
+    console.log('Current user gender (processed):', userGender);
+    
+    let oppositeGender: string;
+    if (userGender === 'male') {
+      oppositeGender = 'female';
+      console.log('✅ User is MALE → Looking for FEMALE profiles');
+    } else if (userGender === 'female') {
+      oppositeGender = 'male';
+      console.log('✅ User is FEMALE → Looking for MALE profiles');
+    } else {
+      console.warn('⚠️ User gender not set or invalid:', userGender);
+      oppositeGender = 'female';
+      console.log('⚠️ Defaulting to FEMALE profiles');
+    }
+    
+    matchCriteria.push(`gender=${oppositeGender}`);
+    console.log('📋 Gender filter added:', `gender=${oppositeGender}`);
+    
+    if (currentUser?.religiousDetails?.religion) {
+      matchCriteria.push(`religion=${encodeURIComponent(currentUser.religiousDetails.religion)}`);
+      console.log('📋 Religion filter added:', currentUser.religiousDetails.religion);
+    } else {
+      console.log('⚠️ Religion Filter: SKIPPED');
+    }
+    
+    if (currentUser?.familyDetails?.currentResidenceCity) {
+      matchCriteria.push(`city=${encodeURIComponent(currentUser.familyDetails.currentResidenceCity)}`);
+      console.log('📋 City filter added:', currentUser.familyDetails.currentResidenceCity);
+    } else {
+      console.log('⚠️ City Filter: SKIPPED');
+    }
+    
+    matchCriteria.push('page=1');
+    matchCriteria.push('limit=50');
+    matchCriteria.push('sortBy=createdAt');
+    matchCriteria.push('sortOrder=desc');
+    
+    const queryString = matchCriteria.join('&');
+    const profileApiUrl = `${API_CONFIG.PROFILE_LIST_API}?${queryString}`;
+    
+    console.log('🔗 Final API URL:', profileApiUrl);
+
+    // ========================================
+    // 3. FETCH RECOMMENDED PROFILES
+    // ========================================
+    const profilesResponse = await fetch(profileApiUrl);
+    const profilesData = await profilesResponse.json();
+
+    if (profilesResponse.ok && profilesData.success) {
+      console.log('\n📦 Profiles received from API:', profilesData.data?.length || 0);
+      
+      // Log first profile to check gender
+      if (profilesData.data && profilesData.data.length > 0) {
+        console.log('🔍 First profile from API:', {
+          name: profilesData.data[0].fullName,
+          gender: profilesData.data[0].gender
+        });
+      }
+      
+      // ========================================
+      // 4. CLIENT-SIDE FILTERING
+      // ========================================
+      console.log('\n🎯 Starting profile filtering...');
+      console.log('📋 Connection IDs we will filter:', connectedUserIds);
+      
+      const filteredProfiles = (profilesData.data || []).filter((profile: CompleteProfile, index: number) => {
+        const possibleProfileIds = [
+          profile.userId,
+          profile.id,
+          profile._id,
+          profile.user?._id,
+          profile.user?.userId,
+          profile.user?.id,
+        ].filter(id => id);
+        
+        const currentUserId = currentUser?.id;
+        
+        if (index < 3 || profile.fullName?.toLowerCase().includes('rekha')) {
+          console.log(`\n🔍 CHECKING PROFILE #${index + 1}:`, {
+            name: profile.fullName,
+            allPossibleProfileIds: possibleProfileIds,
+            connectedUserIds: connectedUserIds,
+            hasMatch: possibleProfileIds.some(id => connectedUserIds.includes(id))
+          });
+        }
+        
+        // 🚫 1. Exclude current user's own profile
+        if (possibleProfileIds.includes(currentUserId)) {
+          console.log('🚫 Filtering out: Current user');
+          return false;
+        }
+
+        // 🚫 2. Double-check gender (✅ IMPROVED)
+        const profileGender = profile.gender?.toLowerCase()?.trim();
+        const userGenderNormalized = currentUser?.gender?.toLowerCase()?.trim();
+        
+        if (index < 3) {
+          console.log(`🔍 Gender check for ${profile.fullName}:`, {
+            profileGender: profileGender,
+            userGender: userGenderNormalized,
+            sameGender: profileGender === userGenderNormalized
+          });
+        }
+        
+        if (userGenderNormalized && profileGender) {
+          if (userGenderNormalized === profileGender) {
+            console.log('🚫 Filtering out: Same gender -', profile.fullName);
+            return false;
+          }
+        }
+        
+        // 🚫 3. Double-check religion if user has one
+        if (currentUser?.religiousDetails?.religion) {
+          const profileReligion = profile.religiousDetails?.religion;
+          if (profileReligion !== currentUser.religiousDetails.religion) {
+            console.log('🚫 Filtering out: Different religion -', profile.fullName);
+            return false;
+          }
+        }
+        
+        // 🚫 4. Double-check city if user has one
+        if (currentUser?.familyDetails?.currentResidenceCity) {
+          const profileCity = profile.familyDetails?.currentResidenceCity;
+          if (profileCity !== currentUser.familyDetails.currentResidenceCity) {
+            console.log('🚫 Filtering out: Different city -', profile.fullName);
+            return false;
+          }
+        }
+
+        // 🚫 5. Filter out accepted connections
+        const isConnected = possibleProfileIds.some(profileId => 
+          connectedUserIds.includes(profileId)
+        );
+        
+        if (isConnected) {
+          console.log('✅ 🚫 FILTERING OUT CONNECTED USER:', profile.fullName);
+          return false;
+        }
+
+        return true;
+      });
+      
+      console.log('\n📊 FILTERING SUMMARY:');
+      console.log('📋 Total profiles from API:', profilesData.data?.length || 0);
+      console.log('✅ Profiles after filtering:', filteredProfiles.length);
+      console.log('🚫 Filtered out:', (profilesData.data?.length || 0) - filteredProfiles.length);
+      
+      setProfiles(filteredProfiles);
+    } else {
+      console.error('❌ Failed to fetch profiles');
+      setProfiles([]);
+    }
+
+    // ========================================
+    // 5. SET STATS DATA
+    // ========================================
+    if (statsData.success) {
+      const profileCompletion = statsData.data.profileCompletion || 0;
+      
+      setStats({
+        interests: statsData.data.interests || 0,
+        messages: statsData.data.messages || 0,
+        matches: statsData.data.matches || 0,
+        pendingRequests: statsData.data.pendingRequests || 0,
+        profileCompletion: profileCompletion,
+      });
+   
+      const profile = statsData.data;
+      const missing: string[] = [];
+      
+      if (!profile.personalDetails?.heightCm) missing.push('Personal Details (Height, Body Type, etc.)');
+      if (!profile.religiousDetails?.religion) missing.push('Religious Background');
+      if (!profile.educationDetails?.highestEducation) missing.push('Education Details');
+      if (!profile.professionalDetails?.occupation) missing.push('Professional Details');
+      if (!profile.familyDetails?.fatherOccupation) missing.push('Family Details');
+      if (!profile.lifestylePreferences?.aboutMe || profile.lifestylePreferences?.aboutMe?.length < 50) {
+        missing.push('About Me & Partner Expectations');
+      }
+      
+      if (missing.length === 0 && profileCompletion < 100) {
+        missing.push('Complete your profile information');
+        missing.push('Add photos to your profile');
+        missing.push('Fill in all required details');
+      }
+      
+      setMissingFields(missing);
+      setDataFetched(true);
+    } else {
+      setError(statsData.message || 'Failed to load dashboard data');
+    }
+    
+  } catch (err: any) {
+    if (err.message.includes('Failed to fetch')) {
+      setError('Cannot connect to server. Please make sure your backend is running on http://localhost:5000');
+    } else if (err.message.includes('CORS')) {
+      setError('CORS error: Backend needs to allow requests from localhost:5173');
+    } else {
+      setError(err.message || 'Failed to connect to the server. Please check your connection.');
+    }
+    
+    setProfiles([]);
+    setDataFetched(true);
+  } finally {
+    setLoading(false);
+  }
+};
 
     // ========================================
     // SEND INTEREST HANDLER

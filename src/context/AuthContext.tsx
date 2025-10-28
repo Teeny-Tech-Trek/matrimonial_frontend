@@ -432,7 +432,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         phoneNumber: response.user.phoneNumber,
         phoneVerified: true,
         fullName: response.user.fullName,
-        gender: (response.user.gender || 'male') as any,
+         gender: response.user.gender as any,
         dateOfBirth: response.user.dateOfBirth || '',
         profileCreatedFor: response.user.profileCreatedFor || '',
         profileCompletionPercentage: 20,

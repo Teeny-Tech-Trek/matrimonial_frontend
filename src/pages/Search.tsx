@@ -22,11 +22,70 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
   const [currentFilters, setCurrentFilters] = useState<any>({});
   const [currentQueryString, setCurrentQueryString] = useState('');
   
+  // ✅ NEW: State for accepted connection IDs
+  const [acceptedConnectionIds, setAcceptedConnectionIds] = useState<string[]>([]);
+  
   // Use ref to prevent double API calls
   const isFirstRender = useRef(true);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
 
-  // Fetch profiles from API
+  // ✅ NEW: Fetch accepted connections
+  const fetchAcceptedConnections = async () => {
+    const token = localStorage.getItem('authToken');
+    if (!token) return [];
+
+    try {
+      console.log('🔗 Fetching accepted connections...');
+      
+      const response = await fetch('https://api.rsaristomatch.com/api/request/connections/accepted', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Accepted Connections Response:', result);
+        
+        const connections = result.data || [];
+        const currentUserId = currentUser?.id || currentUser?.userId;
+        
+        // Extract all possible user IDs from connections
+        const connectedUserIds = connections.map((conn: any) => {
+          const possibleIds = [
+            conn.userId,
+            conn.senderId,
+            conn.receiverId,
+            conn.sender?._id,
+            conn.sender?.userId,
+            conn.receiver?._id,
+            conn.receiver?.userId,
+            conn.user?._id,
+            conn.user?.userId,
+            conn.profile?._id,
+            conn.profile?.userId,
+            conn.profileId,
+            conn._id,
+            conn.id,
+          ].filter(id => id && id !== currentUserId);
+          
+          return possibleIds;
+        }).flat()
+          .filter((id, index, self) => self.indexOf(id) === index);
+        
+        console.log('✅ Connected User IDs:', connectedUserIds);
+        return connectedUserIds;
+      }
+    } catch (error) {
+      console.error('❌ Error fetching connections:', error);
+    }
+    
+    return [];
+  };
+
+  // ✅ MODIFIED: Fetch profiles with connection filtering
   const fetchProfiles = async (filters: any = {}, queryString: string = '', view: string = 'all') => {
     setLoading(true);
     console.log('🚀 Starting API call...');
@@ -35,6 +94,10 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
     console.log('📋 Query String:', queryString);
     
     try {
+      // ✅ NEW: Fetch accepted connections first
+      const connectedIds = await fetchAcceptedConnections();
+      setAcceptedConnectionIds(connectedIds); // Update state for future use
+      
       let finalQuery = '';
 
       if (view === 'all') {
@@ -66,8 +129,7 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
         console.log('🔍 Added search term:', searchTerm);
       }
       
-       const apiUrl = `https://matrimonial-backend-14t2.onrender.com/api/profile/list?${finalQuery}`;
-    //  const apiUrl = `http://localhost:5000/api/profile/list?${finalQuery}`;
+      const apiUrl = `https://api.rsaristomatch.com/api/profile/list?${finalQuery}`;
       console.log('🌐 API URL:', apiUrl);
       console.log('⏳ Fetching data from API...');
       
@@ -85,32 +147,54 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
         console.log('✅ Current Page:', data.page);
         console.log('✅ Total Pages:', data.pages);
         
-        // 🔥 FILTER OUT CURRENT USER'S PROFILE
-        // 🔥 FILTER OUT CURRENT USER'S PROFILE AND SAME GENDER PROFILES
-          const filteredProfiles = (data.data || []).filter((profile: CompleteProfile) => {
-            const profileUserId = profile.userId || profile.id || profile._id;
-            const currentUserId = currentUser?.id;
-            
-            // 🧍 Exclude current user's own profile
-            if (profileUserId === currentUserId) return false;
+        // ✅ ENHANCED: Filter out current user, same gender, AND accepted connections
+        const filteredProfiles = (data.data || []).filter((profile: CompleteProfile) => {
+          // Get all possible profile IDs
+          const possibleProfileIds = [
+            profile.userId,
+            profile.id,
+            profile._id,
+            profile.user?._id,
+            profile.user?.userId,
+            profile.user?.id,
+          ].filter(id => id);
+          
+          const currentUserId = currentUser?.id;
+          
+          // 🚫 1. Exclude current user's own profile
+          if (possibleProfileIds.includes(currentUserId)) {
+            console.log('🚫 Filtered: Own profile');
+            return false;
+          }
 
-            // 🚻 Show only opposite gender profiles
-            const userGender = currentUser?.gender?.toLowerCase();
-            const profileGender = profile.gender?.toLowerCase();
+          // 🚫 2. Exclude same gender profiles (your existing logic)
+          // const userGender = currentUser?.gender?.toLowerCase();
+          // const profileGender = profile.gender?.toLowerCase();
 
-            if (userGender && profileGender && userGender === profileGender) {
-              return false; // same gender → hide
-            }
+          // if (userGender && profileGender && userGender === profileGender) {
+          //   console.log('🚫 Filtered: Same gender -', profile.fullName);
+          //   return false;
+          // }
 
-            return true; // opposite gender → show
-          });
+          // ✅ NEW: 3. Exclude accepted connections
+          const isConnected = possibleProfileIds.some(profileId => 
+            connectedIds.includes(profileId)
+          );
+          
+          if (isConnected) {
+            console.log('🚫 Filtered: Already connected -', profile.fullName);
+            return false;
+          }
 
-        
-        console.log('✅ Filtered Profiles Count (excluding own):', filteredProfiles.length);
+          return true; // Show this profile
+        });
+
+        console.log('✅ Filtered Profiles Count (excluding own & connections):', filteredProfiles.length);
+        console.log('🚫 Total filtered out:', (data.data?.length || 0) - filteredProfiles.length);
         
         setProfiles(filteredProfiles);
-        // Adjust total count to exclude current user
-        setTotalProfiles(filteredProfiles.length > 0 ? data.total - 1 : 0);
+        // Adjust total count
+        setTotalProfiles(filteredProfiles.length > 0 ? data.total - connectedIds.length - 1 : 0);
       } else {
         console.error('❌ API returned success: false');
         console.error('❌ Error Message:', data.message);
@@ -170,7 +254,6 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
     fetchProfiles(filters, queryString, activeView);
   };
 
- 
   const handleSendInterest = async (profileId: string) => {
     if (!currentUser) {
       alert("Please login to send an interest");
@@ -187,8 +270,7 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
     try {
       console.log("💌 Sending interest to:", profileId);
 
-      // const response = await fetch("https://matrimonial-backend-14t2.onrender.com/api/request/send", {
-      const response = await fetch("https://matrimonial-backend-14t2.onrender.com/api/request/send", {
+      const response = await fetch("https://api.rsaristomatch.com/api/request/send", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -205,6 +287,9 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
 
       if (data.success) {
         alert("Interest sent successfully ❤️");
+        // ✅ NEW: Refresh profiles after sending interest
+        // This will update the connection list and remove the profile
+        fetchProfiles(currentFilters, currentQueryString, activeView);
       } else {
         alert(data.message || "Failed to send interest");
       }
@@ -302,41 +387,37 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
       {/* Results Section */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          {/* <h2 className="text-xl font-bold text-gray-900">
-            {totalProfiles} {activeView === 'all' ? 'Profiles' : activeView === 'recommended' ? 'Recommended Profiles' : 'Recently Joined'} Found
-          </h2> */}
-              {(() => {
-      const displayedCount = profiles.length;
-      const totalCount = totalProfiles;
-      const viewLabel =
-        activeView === 'all'
-          ? 'Profiles'
-          : activeView === 'recommended'
-          ? 'Recommended Profiles'
-          : 'Recently Joined Profiles';
+          {(() => {
+            const displayedCount = profiles.length;
+            const totalCount = totalProfiles;
+            const viewLabel =
+              activeView === 'all'
+                ? 'Profiles'
+                : activeView === 'recommended'
+                ? 'Recommended Profiles'
+                : 'Recently Joined Profiles';
 
-      if (displayedCount === 0) {
-        return (
-          <h2 className="text-xl font-bold text-gray-900">
-            No {viewLabel} Found
-          </h2>
-        );
-      } else if (displayedCount < totalCount) {
-        return (
-          <h2 className="text-xl font-bold text-gray-900">
-            Showing {displayedCount} of {totalCount}{' '}
-            {totalCount === 1 ? 'Profile' : 'Profiles'}
-          </h2>
-        );
-      } else {
-        return (
-          <h2 className="text-xl font-bold text-gray-900">
-            {displayedCount} {displayedCount === 1 ? 'Profile' : 'Profiles'} Found
-          </h2>
-        );
-      }
-    })()}
-
+            if (displayedCount === 0) {
+              return (
+                <h2 className="text-xl font-bold text-gray-900">
+                  No {viewLabel} Found
+                </h2>
+              );
+            } else if (displayedCount < totalCount) {
+              return (
+                <h2 className="text-xl font-bold text-gray-900">
+                  Showing {displayedCount} of {totalCount}{' '}
+                  {totalCount === 1 ? 'Profile' : 'Profiles'}
+                </h2>
+              );
+            } else {
+              return (
+                <h2 className="text-xl font-bold text-gray-900">
+                  {displayedCount} {displayedCount === 1 ? 'Profile' : 'Profiles'} Found
+                </h2>
+              );
+            }
+          })()}
         </div>
 
         {loading ? (

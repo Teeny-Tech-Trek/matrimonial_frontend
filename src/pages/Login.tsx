@@ -452,7 +452,8 @@ export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="9876543210"
+                // placeholder="9876543210"
+                    placeholder="+91 Phone Number"
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                 disabled={loading}
               />

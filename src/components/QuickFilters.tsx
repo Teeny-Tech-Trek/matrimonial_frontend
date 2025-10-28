@@ -150,9 +150,9 @@ const QuickFilters = ({ onFilterChange, initialFilters = {} }) => {
   // Apply filters ONLY when called explicitly
   const applyFilters = () => {
     const queryString = buildQueryString();
-    console.log('✅ Applying Filters');
-    console.log('📋 Filters:', filters);
-    console.log('🔗 Query String:', queryString);
+    // console.log('✅ Applying Filters');
+    // console.log('📋 Filters:', filters);
+    // console.log('🔗 Query String:', queryString);
     
     if (onFilterChange) {
       onFilterChange(filters, queryString);
