@@ -235,7 +235,7 @@ const SafetyTips: React.FC<SafetyTipsProps> = ({ onNavigate }) => {
                 </p>
                 <div className="text-sm text-gray-700 space-y-1 mb-3">
                   <p className="font-medium">Prof. R.S. Singla</p>
-                  <p>info@rsaristomatch.com</p>
+                  <p>rsaristomatch@gmail.com</p>
                   <p>Bathinda, Punjab, India</p>
                 </div>
               </div>

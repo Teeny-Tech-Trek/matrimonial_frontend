@@ -190,7 +190,7 @@ const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onNavigate }) => {
       content: [
         'For any questions, concerns, or requests regarding this Privacy Policy or our data practices, please contact us:',
         'Grievance Officer: Prof. R.S. Singla',
-        'Email: info@rsaristomatch.com',
+        'Email: rsaristomatch@gmail.com',
         'Location: Bathinda, Punjab, India',
         'We are committed to addressing your privacy concerns promptly and effectively.'
       ]

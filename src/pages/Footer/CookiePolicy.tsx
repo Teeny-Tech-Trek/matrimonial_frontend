@@ -309,7 +309,7 @@ const CookiePolicy: React.FC<CookiePolicyProps> = ({ onNavigate }) => {
             </p>
             <div className="space-y-2 text-gray-700">
               <p><span className="font-medium">Grievance Officer:</span> Prof. R.S. Singla</p>
-              <p><span className="font-medium">Email:</span> info@rsaristomatch.com</p>
+              <p><span className="font-medium">Email:</span>rsaristomatch@gmail.com</p>
               <p><span className="font-medium">Location:</span> Bathinda, Punjab, India</p>
             </div>
           </div>

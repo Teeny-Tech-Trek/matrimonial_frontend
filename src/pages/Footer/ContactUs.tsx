@@ -171,7 +171,7 @@ const ContactUs: React.FC<ContactUsProps> = ({ onNavigate }) => {
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-1">Email</h3>
                   <a href="mailto:info@rsaristomatch.com" className="text-rose-600 hover:text-pink-600 transition-colors">
-                    info@rsaristomatch.com
+                 rsaristomatch@gmail.com
                   </a>
                   <p className="text-sm text-gray-600 mt-2">
                     General inquiries and support

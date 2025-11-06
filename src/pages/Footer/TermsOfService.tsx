@@ -98,7 +98,7 @@ const TermsOfService: React.FC<TermsOfServiceProps> = ({ onNavigate }) => {
       content: [
         'In accordance with the Information Technology (Intermediary Guidelines and Digital Media Ethics Code) Rules, 2021, the website has appointed a Grievance Officer to address user concerns.',
         'Grievance Officer: Prof. R.S. Singla',
-        'Email: info@rsaristomatch.com',
+        'Email: rsaristomatch@gmail.com',
         'Location: Bathinda, Punjab, India',
         'Users may contact the Grievance Officer for any complaints, concerns, or issues related to the platform.'
       ]

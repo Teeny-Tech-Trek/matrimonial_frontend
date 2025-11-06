@@ -188,13 +188,13 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ onNavigate }) => {
           id: '17',
           title: 'Grievance Redressal',
           preview: 'How to raise concerns or complaints',
-          content: 'In accordance with the Information Technology (Intermediary Guidelines and Digital Media Ethics Code) Rules, 2021, RSAristoMatch has appointed a Grievance Officer to address user concerns. For any grievances, complaints, or concerns, please contact: Grievance Officer: Prof. R.S. Singla, Email: info@rsaristomatch.com, Location: Bathinda, Punjab, India. We are committed to addressing your concerns promptly and fairly.'
+          content: 'In accordance with the Information Technology (Intermediary Guidelines and Digital Media Ethics Code) Rules, 2021, RSAristoMatch has appointed a Grievance Officer to address user concerns. For any grievances, complaints, or concerns, please contact: Grievance Officer: Prof. R.S. Singla, Email: rsaristomatch@gmail.com, Location: Bathinda, Punjab, India. We are committed to addressing your concerns promptly and fairly.'
         },
         {
           id: '18',
           title: 'Contacting Customer Support',
           preview: 'Get help with your account or queries',
-          content: 'Our customer support team is here to help you with any questions or issues. You can reach us at info@rsaristomatch.com. Please provide detailed information about your query including your registered email ID (without sharing passwords) so we can assist you effectively. We strive to respond to all inquiries within 24-48 hours during business days.'
+          content: 'Our customer support team is here to help you with any questions or issues. You can reach us at . Please provide detailed information about your query including your registered email ID (without sharing passwords) so we can assist you effectively. We strive to respond to all inquiries within 24-48 hours during business days.'
         },
         {
           id: '19',
@@ -295,7 +295,7 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ onNavigate }) => {
                 <p className="text-xs text-gray-600 mb-3">Contact our Grievance Officer</p>
                 <div className="space-y-2 text-xs text-gray-700">
                   <p className="font-medium">Prof. R.S. Singla</p>
-                  <p className="break-words">info@rsaristomatch.com</p>
+                  <p className="break-words">rsaristomatch@gmail.com</p>
                   <p>Bathinda, Punjab, India</p>
                 </div>
               </div>
