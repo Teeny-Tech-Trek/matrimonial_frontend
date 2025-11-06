@@ -88,10 +88,10 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
   // ✅ MODIFIED: Fetch profiles with connection filtering
   const fetchProfiles = async (filters: any = {}, queryString: string = '', view: string = 'all') => {
     setLoading(true);
-    console.log('🚀 Starting API call...');
-    console.log('📋 Current View:', view);
-    console.log('📋 Current Filters:', filters);
-    console.log('📋 Query String:', queryString);
+    // console.log('🚀 Starting API call...');
+    // console.log('📋 Current View:', view);
+    // console.log('📋 Current Filters:', filters);
+    // console.log('📋 Query String:', queryString);
     
     try {
       // ✅ NEW: Fetch accepted connections first
@@ -108,11 +108,11 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
         const recommendedFilters = [];
         if (currentUser?.religiousDetails?.religion) {
           recommendedFilters.push(`religion=${currentUser.religiousDetails.religion}`);
-          console.log('✅ Added religion filter:', currentUser.religiousDetails.religion);
+          // console.log('✅ Added religion filter:', currentUser.religiousDetails.religion);
         }
         if (currentUser?.familyDetails?.currentResidenceCity) {
           recommendedFilters.push(`city=${currentUser.familyDetails.currentResidenceCity}`);
-          console.log('✅ Added city filter:', currentUser.familyDetails.currentResidenceCity);
+          // console.log('✅ Added city filter:', currentUser.familyDetails.currentResidenceCity);
         }
         const baseQuery = recommendedFilters.join('&');
         finalQuery = queryString 
@@ -126,26 +126,16 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
       
       if (searchTerm) {
         finalQuery = `${finalQuery}&search=${encodeURIComponent(searchTerm)}`;
-        console.log('🔍 Added search term:', searchTerm);
+        // console.log('🔍 Added search term:', searchTerm);
       }
       
       const apiUrl = `https://api.rsaristomatch.com/api/profile/list?${finalQuery}`;
-      console.log('🌐 API URL:', apiUrl);
-      console.log('⏳ Fetching data from API...');
       
       const response = await fetch(apiUrl);
-      console.log('📡 Response Status:', response.status, response.statusText);
-      console.log('📡 Response OK:', response.ok);
       
       const data = await response.json();
-      console.log('📦 API Response Data:', data);
       
       if (data.success) {
-        console.log('✅ API Call Successful!');
-        console.log('✅ Total Profiles:', data.total);
-        console.log('✅ Profiles Count:', data.data?.length || 0);
-        console.log('✅ Current Page:', data.page);
-        console.log('✅ Total Pages:', data.pages);
         
         // ✅ ENHANCED: Filter out current user, same gender, AND accepted connections
         const filteredProfiles = (data.data || []).filter((profile: CompleteProfile) => {
@@ -188,31 +178,21 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
 
           return true; // Show this profile
         });
-
-        console.log('✅ Filtered Profiles Count (excluding own & connections):', filteredProfiles.length);
-        console.log('🚫 Total filtered out:', (data.data?.length || 0) - filteredProfiles.length);
         
         setProfiles(filteredProfiles);
         // Adjust total count
         setTotalProfiles(filteredProfiles.length > 0 ? data.total - connectedIds.length - 1 : 0);
       } else {
-        console.error('❌ API returned success: false');
-        console.error('❌ Error Message:', data.message);
         setProfiles([]);
         setTotalProfiles(0);
       }
     } catch (error) {
-      console.error('❌❌❌ API Call Failed! ❌❌❌');
-      console.error('❌ Error Type:', error instanceof Error ? error.name : typeof error);
-      console.error('❌ Error Message:', error instanceof Error ? error.message : error);
-      console.error('❌ Full Error Object:', error);
       
       setProfiles([]);
       setTotalProfiles(0);
     } finally {
       setLoading(false);
-      console.log('✔️ API call completed');
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    
     }
   };
 
@@ -220,7 +200,7 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
-      console.log('🔄 Initial load');
+      // console.log('🔄 Initial load');
       fetchProfiles(currentFilters, currentQueryString, activeView);
     }
   }, []);

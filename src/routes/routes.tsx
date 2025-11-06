@@ -13,6 +13,14 @@ import CompleteProfile from '../pages/CompleteProfile';
 import { MyProfile } from '../pages/MyProfile';
 import { ViewRequests } from '../components/ViewRequest'; // ✅ Add this import
 import { AdvancedMatches } from '../components/AllMatches'; 
+import FAQComponent from "../pages/Footer/FAQ"
+import AboutUs from '../pages/Footer/AboutUs';
+import ContactUs from '../pages/Footer/ContactUs';
+import CookiePolicy from '../pages/Footer/CookiePolicy';
+import HelpCenter from '../pages/Footer/HelpCenter';
+import PrivacyPolicy from '../pages/Footer/PrivayPolicy';
+import SafetyTips from '../pages/Footer/SafetyTips';
+import TermsOfService from '../pages/Footer/TermsOfService';
 
 export type Page = 
   | 'landing'
@@ -28,6 +36,14 @@ export type Page =
   | 'profile-setup'
   | 'my-profile'
   | 'requests'
+  | 'faq'
+  | 'about'
+  | 'contact'
+  | 'cookie-policy'
+  | 'help-center'
+  | 'privacy-policy'
+  | 'safety-tips'
+  | 'terms-of-service'
    | 'matches'; 
 
 export interface NavigationData {
@@ -57,7 +73,15 @@ export const routes: Route[] = [
   { path: 'profile-setup', url: '/profile-setup', component: CompleteProfile, requiresAuth: true },
   { path: 'my-profile', url: '/my-profile', component: MyProfile, requiresAuth: true },
   { path: 'requests', url: '/requests', component: ViewRequests, requiresAuth: true }, 
-   { path: 'matches', url: '/matches', component: AdvancedMatches, requiresAuth: true },
+  { path: 'matches', url: '/matches', component: AdvancedMatches, requiresAuth: true },
+  { path: 'about', url: '/about', component: AboutUs, requiresAuth: false},
+  { path: 'faq', url: '/faq', component: FAQComponent, requiresAuth: false },
+  { path: 'contact', url: '/contact', component: ContactUs, requiresAuth: false },
+  { path: 'cookie-policy', url: '/cookie-policy', component: CookiePolicy, requiresAuth: false },
+  { path: 'help-center', url: '/help-center', component: HelpCenter, requiresAuth: false },
+  { path: 'privacy-policy', url: '/privacy-policy', component: PrivacyPolicy, requiresAuth: false },
+  { path: 'safety-tips', url: '/safety-tips', component: SafetyTips, requiresAuth: false },
+  { path: 'terms-of-service', url: '/terms-of-service', component: TermsOfService, requiresAuth: false },
   // Admin routes
   { path: 'admin', url: '/admin', component: AdminPanel, requiresAuth: true, requiresAdmin: true },
 ];
@@ -92,6 +116,30 @@ export const Router: React.FC<RouterProps> = ({
         return <Login onNavigate={onNavigate} />;
       case 'register':
         return <Register onNavigate={onNavigate} />;
+      case 'faq': 
+      return <FAQComponent onNavigate={onNavigate} />;
+      
+    case 'about': 
+      return <AboutUs onNavigate={onNavigate} />;
+
+    case 'contact': 
+      return <ContactUs onNavigate={onNavigate} />;
+
+    case 'cookie-policy': 
+      return <CookiePolicy onNavigate={onNavigate} />;
+
+    case 'help-center': 
+      return <HelpCenter onNavigate={onNavigate} />;
+
+    case 'privacy-policy': 
+      return <PrivacyPolicy onNavigate={onNavigate} />;
+
+    case 'safety-tips': 
+      return <SafetyTips onNavigate={onNavigate} />;
+
+    case 'terms-of-service': 
+      return <TermsOfService onNavigate={onNavigate} />;
+      
       default:
         return <Landing onNavigate={onNavigate} />;
     }
@@ -113,7 +161,31 @@ export const Router: React.FC<RouterProps> = ({
 
     case 'matches': 
       return <AdvancedMatches onNavigate={onNavigate} />;
+ 
+    case 'faq': 
+      return <FAQComponent onNavigate={onNavigate} />;
       
+    case 'about': 
+      return <AboutUs onNavigate={onNavigate} />;
+
+    case 'contact': 
+      return <ContactUs onNavigate={onNavigate} />;
+
+    case 'cookie-policy': 
+      return <CookiePolicy onNavigate={onNavigate} />;
+
+    case 'help-center': 
+      return <HelpCenter onNavigate={onNavigate} />;
+
+    case 'privacy-policy': 
+      return <PrivacyPolicy onNavigate={onNavigate} />;
+
+    case 'safety-tips': 
+      return <SafetyTips onNavigate={onNavigate} />;
+
+    case 'terms-of-service': 
+      return <TermsOfService onNavigate={onNavigate} />;
+    
     case 'profile-view':
       return <ProfileView profileId={navigationData.profileId || ''} onNavigate={onNavigate} />;
       

@@ -146,7 +146,6 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
         });
       }
     } catch (err: any) {
-      console.log('No existing profile found or error loading:', err.message);
       // It's okay if no profile exists yet
     } finally {
       setLoadingProfile(false);
@@ -267,7 +266,6 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
       onNavigate('dashboard');
     }
   } catch (err: any) {
-    console.error('Error saving profile:', err);
     // ✅ CHANGED: Use toast instead of setError
     showToast(err.message || 'Failed to save profile. Please try again.', 'error');
   } finally {
@@ -666,20 +664,7 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
               <h2 className="text-2xl font-bold text-gray-800 mb-6">Family Details</h2>
               
               <div className="grid md:grid-cols-2 gap-6">
-                {/* <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    City <span className="text-rose-600">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="city"
-                    value={formData.city}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                    placeholder="Ahmedabad"
-                  />
-                </div> */}
+               
 
                 <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -701,20 +686,7 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
                     </select>
                   </div>
 
-                {/* <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    State <span className="text-rose-600">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="state"
-                    value={formData.state}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                    placeholder="Gujarat"
-                  />
-                </div> */}
+              
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     State <span className="text-rose-600">*</span>
@@ -729,21 +701,7 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
                   />
               
                 </div>
-                {/* <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    State <span className="text-rose-600">*</span>
-                  </label>
-                  <select
-                    name="state"
-                    value={formData.state}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                  >
-                    <option value="Punjab">Punjab</option>
-                    {/* Add other states if needed */}
-                  {/* </select>
-                </div> */}
+                
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">

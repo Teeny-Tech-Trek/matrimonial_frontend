@@ -117,7 +117,6 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
         setRequestCounts(result.data);
       }
     } catch (err) {
-      console.error('Error fetching request stats:', err);
     }
   };
 
@@ -151,7 +150,6 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
           }));
         
         if (requestsData.length !== formattedRequests.length) {
-          console.warn(`Filtered out ${requestsData.length - formattedRequests.length} invalid received requests`);
           setInvalidRequestCount(requestsData.length - formattedRequests.length);
         }
         
@@ -161,12 +159,10 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
       }
     } catch (err) {
       if (retryCount < 3) {
-        console.warn(`Retrying fetchReceivedRequests (${retryCount + 1}/3)`);
         setTimeout(() => fetchReceivedRequests(retryCount + 1), 1000);
         return;
       }
       setError(err instanceof Error ? err.message : 'Failed to fetch requests');
-      console.error('Error fetching received requests:', err);
     } finally {
       setLoading(false);
     }
@@ -202,7 +198,6 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
           }));
         
         if (requestsData.length !== formattedRequests.length) {
-          console.warn(`Filtered out ${requestsData.length - formattedRequests.length} invalid sent requests`);
           setInvalidRequestCount(requestsData.length - formattedRequests.length);
         }
         
@@ -212,12 +207,10 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
       }
     } catch (err) {
       if (retryCount < 3) {
-        console.warn(`Retrying fetchSentRequests (${retryCount + 1}/3)`);
         setTimeout(() => fetchSentRequests(retryCount + 1), 1000);
         return;
       }
       setError(err instanceof Error ? err.message : 'Failed to fetch requests');
-      console.error('Error fetching sent requests:', err);
     } finally {
       setLoading(false);
     }
@@ -266,10 +259,8 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
       // Refresh stats
       await fetchRequestStats();
 
-      console.log(`${status} request:`, requestId);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update request');
-      console.error(`Error ${status}ing request:`, err);
     }
   };
 
@@ -306,10 +297,8 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
       // Refresh stats
       await fetchRequestStats();
 
-      console.log('Deleted request:', requestId);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete request');
-      console.error('Error deleting request:', err);
     }
   };
 
@@ -658,22 +647,7 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
 
                   {/* Content */}
                   <div className="p-6">
-                    {/* <h3 className="text-xl font-bold text-gray-900 mb-2">{targetUser.fullName}</h3>
-                    <p className="text-sm text-gray-600 mb-3 flex items-center gap-1">
-                      <span className="font-medium">{age} years</span>
-                      <span>•</span>
-                      <span>{targetUser.location || 'Location not specified'}</span>
-                    </p>
-                    
-                    <div className="space-y-2 mb-4">
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <span className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600">🎓</span>
-                        <span>{targetUser.education || 'Education not specified'}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <span className="w-6 h-6 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600">💼</span>
-                        <span>{targetUser.occupation || 'Occupation not specified'}</span>
-                      </div> */}
+                 
                       <h3 className="text-xl font-bold text-gray-900 mb-2">{targetUser.fullName}</h3>
                       <p className="text-sm text-gray-600 mb-3 flex items-center gap-1">
                         <span className="font-medium">{age} years</span> 
@@ -686,23 +660,14 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
                           <span>👤</span>
                           <span className="capitalize">Profile for: {targetUser.profileCreatedFor}</span>  
                         </div>
-                        {/* <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <span>📱</span>
-                          <span>{targetUser.phoneNumber || 'Phone not provided'}</span> 
-                        </div> */}
+                       
                     
                     </div>
 
                     {/* Actions */}
                     {activeTab === 'received' && request.status === 'pending' ? (
                       <div className="flex gap-2">
-                        {/* <button
-                          onClick={() => handleViewProfile(request)}
-                          className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all font-medium flex items-center justify-center gap-2"
-                        >
-                          <Eye className="h-4 w-4" />
-                          View
-                        </button> */}
+                       
                         <button
                           onClick={() => handleAcceptRequest(request._id)}
                           className="flex-1 py-3 bg-gradient-to-r from-rose-600 to-pink-600 text-white rounded-xl hover:shadow-lg transition-all font-medium flex items-center justify-center gap-2"
@@ -719,13 +684,7 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
                       </div>
                     ) : (
                       <div className="flex items-center justify-between">
-                        {/* <button
-                          onClick={() => handleViewProfile(request)}
-                          className="flex items-center gap-2 text-gray-600 hover:text-rose-600 transition-colors font-medium"
-                        >
-                          <Eye className="h-5 w-5" />
-                          View Profile
-                        </button> */}
+                       
                         <div className="flex items-center gap-2">
                           <div
                             className={`px-4 py-2 rounded-xl font-medium flex items-center gap-2 ${

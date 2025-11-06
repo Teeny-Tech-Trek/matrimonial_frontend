@@ -297,32 +297,28 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentPage, onNavigat
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Contact
-                  </a>
+                  <a href="/contact" className="hover:text-white transition-colors">
+                    Contact Us
+                  </a> 
                 </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Careers
-                  </a>
-                </li>
+                
               </ul>
             </div>
             <div>
               <h3 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Support</h3>
               <ul className="space-y-2 text-gray-400 text-xs sm:text-sm">
                 <li>
-                  <a href="#" className="hover:text-white transition-colors">
+                  <a href="/help-center" className="hover:text-white transition-colors">
                     Help Center
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition-colors">
+                  <a href="/safety-tips" className="hover:text-white transition-colors">
                     Safety Tips
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition-colors">
+                  <a href="/faq" className="hover:text-white transition-colors">
                     FAQs
                   </a>
                 </li>
@@ -332,17 +328,17 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentPage, onNavigat
               <h3 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Legal</h3>
               <ul className="space-y-2 text-gray-400 text-xs sm:text-sm">
                 <li>
-                  <a href="#" className="hover:text-white transition-colors">
+                  <a href="/privacy-policy" className="hover:text-white transition-colors">
                     Privacy Policy
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition-colors">
+                  <a href="/terms-of-service" className="hover:text-white transition-colors">
                     Terms of Service
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition-colors">
+                  <a href="/cookie-policy" className="hover:text-white transition-colors">
                     Cookie Policy
                   </a>
                 </li>

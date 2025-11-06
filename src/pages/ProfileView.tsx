@@ -22,12 +22,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ profileId, onNavigate 
         setLoading(true);
         setError('');
         
-        console.log('🔍 Fetching profile with ID:', profileId);
         
         // ✅ THIS CALLS: GET /api/profile/:id
         const response = await profileService.getProfileById(profileId);
         
-        console.log('✅ Profile fetched successfully:', response);
         
         if (response.success && response.data) {
           setProfile(response.data);
@@ -35,7 +33,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ profileId, onNavigate 
           setError('Profile not found');
         }
       } catch (err: any) {
-        console.error('❌ Error fetching profile:', err);
         setError(err.message || 'Failed to load profile');
       } finally {
         setLoading(false);

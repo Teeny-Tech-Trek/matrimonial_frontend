@@ -127,17 +127,7 @@ const ProfileCompletionModal: React.FC<{
               </div>
             </div>
             <div className="flex flex-col justify-between md:col-span-3 lg:col-span-1">
-              {/* <div className="bg-blue-50 border border-blue-200 rounded-lg p-1.5 sm:p-4 mb-1.5 sm:mb-4">
-                <h4 className="text-[9px] sm:text-sm font-semibold text-blue-900 mb-0.5 sm:mb-2">
-                  Why complete?
-                </h4>
-                <ul className="space-y-0.5 sm:space-y-1 text-[7px] sm:text-xs text-blue-800">
-                  <li>✓ Better match recommendations</li>
-                  <li>✓ 10x more profile visibility</li>
-                  <li>✓ Receive more interests</li>
-                  <li>✓ Build trust with matches</li>
-                </ul>
-              </div> */}
+              
               <div className="space-y-1 sm:space-y-2">
                 <button
                   onClick={() => {
