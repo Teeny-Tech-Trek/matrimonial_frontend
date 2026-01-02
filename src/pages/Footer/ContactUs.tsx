@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from 'axios'; // Add axios for API calls
 
 interface FormData {
   name: string;
@@ -29,6 +30,7 @@ const ContactUs: React.FC<ContactUsProps> = ({ onNavigate }) => {
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null); // Add state for errors
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -63,42 +65,60 @@ const ContactUs: React.FC<ContactUsProps> = ({ onNavigate }) => {
       ...prev,
       [name]: value
     }));
-    // Clear error when user starts typing
     if (errors[name as keyof FormErrors]) {
       setErrors(prev => ({
         ...prev,
         [name]: undefined
       }));
     }
+    setSubmitError(null); // Clear error on change
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    setIsSubmitting(true);
-    
-    // Simulate API call - In production, send to info@rsaristomatch.com
-    setTimeout(() => {
-      console.log('Form submitted:', formData);
-      setIsSubmitting(false);
+  if (!validateForm()) {
+    return;
+  }
+
+  setIsSubmitting(true);
+  setSubmitError(null);
+
+  try {
+    const response = await fetch('https://api.rsaristomatch.com/api/contact', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData),
+    });
+
+    const data = await response.json();
+
+    if (response.ok && data.success) {
       setSubmitSuccess(true);
       setFormData({
         name: '',
         email: '',
         subject: '',
-        message: ''
+        message: '',
       });
-      
-      // Reset success message after 5 seconds
+
       setTimeout(() => {
         setSubmitSuccess(false);
       }, 5000);
-    }, 1500);
-  };
+    } else {
+      // Handle backend errors gracefully
+      setSubmitError(data.error || 'Failed to send message. Please try again.');
+    }
+  } catch (error) {
+    console.error('Error submitting contact form:', error);
+    setSubmitError('Failed to send message. Please try again.');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
 
   return (
     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
@@ -114,31 +134,9 @@ const ContactUs: React.FC<ContactUsProps> = ({ onNavigate }) => {
           </p>
         </div>
 
-        {/* Grievance Officer Notice */}
-        {/* <div className="max-w-4xl mx-auto mb-8">
-          <div className="bg-gradient-to-r from-rose-600 to-pink-600 rounded-lg p-6 text-white">
-            <div className="flex items-start space-x-4">
-              <svg className="w-6 h-6 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <div>
-                <h3 className="font-semibold text-lg mb-2">Grievance Redressal</h3>
-                <p className="text-white/90 mb-2">
-                  In accordance with the Information Technology (Intermediary Guidelines and Digital Media Ethics Code) Rules, 2021, 
-                  we have appointed a Grievance Officer to address user concerns, complaints, and disputes.
-                </p>
-                <p className="text-white/90">
-                  For any grievances related to content, user conduct, or platform policies, please contact our Grievance Officer directly.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div> */}
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Contact Information */}
           <div className="lg:col-span-1 space-y-6">
-            {/* Grievance Officer Card */}
             <div className="bg-white rounded-lg shadow-md p-6 border-2 border-rose-200">
               <div className="flex items-start space-x-4">
                 <div className="flex-shrink-0">
@@ -158,7 +156,6 @@ const ContactUs: React.FC<ContactUsProps> = ({ onNavigate }) => {
               </div>
             </div>
 
-            {/* Email Card */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <div className="flex items-start space-x-4">
                 <div className="flex-shrink-0">
@@ -170,8 +167,8 @@ const ContactUs: React.FC<ContactUsProps> = ({ onNavigate }) => {
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-1">Email</h3>
-                  <a href="mailto:info@rsaristomatch.com" className="text-rose-600 hover:text-pink-600 transition-colors">
-                 rsaristomatch@gmail.com
+                  <a href="mailto:rsaristomatch@gmail.com" className="text-rose-600 hover:text-pink-600 transition-colors">
+                    rsaristomatch@gmail.com
                   </a>
                   <p className="text-sm text-gray-600 mt-2">
                     General inquiries and support
@@ -180,7 +177,6 @@ const ContactUs: React.FC<ContactUsProps> = ({ onNavigate }) => {
               </div>
             </div>
 
-            {/* Location Card */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <div className="flex items-start space-x-4">
                 <div className="flex-shrink-0">
@@ -199,7 +195,6 @@ const ContactUs: React.FC<ContactUsProps> = ({ onNavigate }) => {
               </div>
             </div>
 
-            {/* Response Time Card */}
             <div className="bg-rose-50 rounded-lg p-6 border border-rose-200">
               <div className="flex items-start space-x-3">
                 <svg className="w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -229,6 +224,19 @@ const ContactUs: React.FC<ContactUsProps> = ({ onNavigate }) => {
                     </svg>
                     <p className="text-green-800 font-medium">
                       Thank you for contacting RSAristoMatch! We have received your message and will respond shortly.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {submitError && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="flex items-start space-x-3">
+                    <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    <p className="text-red-800 font-medium">
+                      {submitError}
                     </p>
                   </div>
                 </div>
@@ -366,34 +374,6 @@ const ContactUs: React.FC<ContactUsProps> = ({ onNavigate }) => {
                 </div>
               </form>
             </div>
-
-            {/* Additional Information */}
-            {/* <div className="mt-6 bg-blue-50 rounded-lg p-6 border border-blue-200">
-              <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
-                <svg className="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Before You Contact Us
-              </h3>
-              <ul className="space-y-2 text-sm text-gray-700">
-                <li className="flex items-start">
-                  <span className="text-blue-600 mr-2">•</span>
-                  <span>Check our Help Center for answers to common questions</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-blue-600 mr-2">•</span>
-                  <span>For urgent safety concerns, use the "Report" feature on suspicious profiles</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-blue-600 mr-2">•</span>
-                  <span>Include relevant profile IDs or usernames when reporting issues</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-blue-600 mr-2">•</span>
-                  <span>For payment issues, have your transaction ID ready</span>
-                </li>
-              </ul>
-            </div> */}
           </div>
         </div>
       </div>
