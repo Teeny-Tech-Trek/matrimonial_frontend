@@ -1123,57 +1123,63 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
         : [...prev.hobbies, hobby]
     }));
   };
+const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
 
-  // IMAGE UPLOAD HANDLER
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  if (!file.type.startsWith('image/')) {
+    showToast('Please upload an image file', 'error');
+    return;
+  }
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      showToast('Please upload an image file', 'error');
-      return;
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('Image size should be less than 5MB', 'error');
+    return;
+  }
+
+  setUploadingPhoto(true);
+
+  try {
+    const formData = new FormData();
+    formData.append('image', file);
+
+
+const response = await fetch('http://localhost:5000/api/upload-image', {
+  method: 'POST',
+  body: formData,
+  credentials: 'include'
+});
+    // Check if response is ok before parsing JSON
+    if (!response.ok) {
+      throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
     }
 
-    // Validate file size (5MB limit)
-    if (file.size > 5 * 1024 * 1024) {
-      showToast('Image size should be less than 5MB', 'error');
-      return;
+    // Check if response has content
+    const text = await response.text();
+    if (!text) {
+      throw new Error('Empty response from server');
     }
 
-    setUploadingPhoto(true);
+    const data = JSON.parse(text);
 
-    try {
-      const formData = new FormData();
-      formData.append('image', file);
-
-      // Call your backend upload API
-      const response = await fetch('/api/upload-image', {
-        method: 'POST',
-        body: formData,
-        credentials: 'include' // Include cookies for authentication
-      });
-
-      const data = await response.json();
-
-      if (data.success && data.imageUrl) {
-        setPhotos(prev => [...prev, {
-          url: data.imageUrl,
-          isPrimary: prev.length === 0, // First photo is primary
-          file: file
-        }]);
-        showToast('Photo uploaded successfully!', 'success');
-      } else {
-        throw new Error(data.message || 'Upload failed');
-      }
-    } catch (err: any) {
-      console.error('Upload error:', err);
-      showToast(err.message || 'Failed to upload photo', 'error');
-    } finally {
-      setUploadingPhoto(false);
-      e.target.value = ''; // Reset input
+    if (data.success && data.imageUrl) {
+      setPhotos(prev => [...prev, {
+        url: data.imageUrl,
+        isPrimary: prev.length === 0,
+        file: file
+      }]);
+      showToast('Photo uploaded successfully!', 'success');
+    } else {
+      throw new Error(data.message || 'Upload failed');
     }
-  };
+  } catch (err: any) {
+    console.error('Upload error:', err);
+    showToast(err.message || 'Failed to upload photo', 'error');
+  } finally {
+    setUploadingPhoto(false);
+    e.target.value = '';
+  }
+};
 
   const removePhoto = (index: number) => {
     setPhotos(prev => {
