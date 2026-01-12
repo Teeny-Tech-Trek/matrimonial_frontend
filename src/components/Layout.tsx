@@ -25,7 +25,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentPage, onNavigat
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-rose-50 via-white to-pink-50">
-      <nav className="bg-white shadow-md sticky top-0 z-50">
+      <nav className="bg-rose-50 shadow-md sticky top-0 z-50">
         <div className="max-w-[1920px] mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 2xl:px-16">
           <div className="flex justify-between items-center h-14 sm:h-16 md:h-18 lg:h-20">
             <div
@@ -279,13 +279,13 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentPage, onNavigat
       </nav>
 
       {/* Main content - no padding when on messages page */}
-      <main className={`max-w-[1920px] mx-auto ${isMessagesPage ? '' : 'px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 2xl:px-16 py-4 sm:py-6 md:py-8 lg:py-10'}`}>
+      <main className={`max-w-[1920px] mx-auto ${isMessagesPage ? '' : ''}`}>
         {children}
       </main>
 
       {/* Footer - hidden on messages page */}
       {!isMessagesPage && (
-        <footer className="bg-gray-900 text-white mt-12 sm:mt-16 md:mt-20 relative">
+        <footer className="bg-[#590d22] text-white   relative">
           <div className="max-w-[1920px] mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 2xl:px-16 py-8 sm:py-10 md:py-12 lg:py-16">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 md:gap-10">
               <div>
