@@ -22,6 +22,18 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ onNavigate }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('getting-started');
   const [selectedArticle, setSelectedArticle] = useState<HelpArticle | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+
+  const handleHelpfulFeedback = () => {
+    setFeedbackSubmitted(true);
+    setTimeout(() => {
+      setFeedbackSubmitted(false);
+    }, 3000);
+  };
+
+  const handleNeedMoreHelp = () => {
+    window.location.href = 'mailto:rsaristomatch@gmail.com?subject=Help Request - ' + encodeURIComponent(selectedArticle?.title || 'Support Request');
+  };
 
   const categories: HelpCategory[] = [
     {
@@ -194,7 +206,7 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ onNavigate }) => {
           id: '18',
           title: 'Contacting Customer Support',
           preview: 'Get help with your account or queries',
-          content: 'Our customer support team is here to help you with any questions or issues. You can reach us at . Please provide detailed information about your query including your registered email ID (without sharing passwords) so we can assist you effectively. We strive to respond to all inquiries within 24-48 hours during business days.'
+          content: 'Our customer support team is here to help you with any questions or issues. You can reach us at rsaristomatch@gmail.com. Please provide detailed information about your query including your registered email ID (without sharing passwords) so we can assist you effectively. We strive to respond to all inquiries within 24-48 hours during business days.'
         },
         {
           id: '19',
@@ -324,15 +336,32 @@ const HelpCenter: React.FC<HelpCenterProps> = ({ onNavigate }) => {
                   </p>
                 </div>
                 <div className="mt-8 pt-8 border-t border-gray-200">
-                  <p className="text-gray-600 mb-4">Was this article helpful?</p>
-                  <div className="flex space-x-4">
-                    <button className="px-6 py-2 bg-gradient-to-r from-rose-600 to-pink-600 text-white rounded-lg hover:from-rose-700 hover:to-pink-700 transition-all">
-                      Yes, helpful
-                    </button>
-                    <button className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all">
-                      Need more help
-                    </button>
-                  </div>
+                  {feedbackSubmitted ? (
+                    <div className="flex items-center text-green-600 bg-green-50 px-4 py-3 rounded-lg">
+                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Thank you for your feedback!
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-gray-600 mb-4">Was this article helpful?</p>
+                      <div className="flex space-x-4">
+                        <button 
+                          onClick={handleHelpfulFeedback}
+                          className="px-6 py-2 bg-gradient-to-r from-rose-600 to-pink-600 text-white rounded-lg hover:from-rose-700 hover:to-pink-700 transition-all"
+                        >
+                          Yes, helpful
+                        </button>
+                        <button 
+                          onClick={handleNeedMoreHelp}
+                          className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all"
+                        >
+                          Need more help
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             ) : (

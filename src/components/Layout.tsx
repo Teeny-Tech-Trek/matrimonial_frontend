@@ -1,6 +1,8 @@
 import React from 'react';
 import { Heart, Menu, X, User, Search, MessageCircle, LogOut, Shield, Home } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import logoImgWithName from "../Images/ChatGPT Image Dec 28, 2025, 10_58_32 PM.png"
+import logoImg from "../Images/ChatGPT Image Dec 28, 2025, 03_31_49 PM.png"
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -11,6 +13,9 @@ interface LayoutProps {
 export const Layout: React.FC<LayoutProps> = ({ children, currentPage, onNavigate }) => {
   const { isAuthenticated, currentUser, logout, isAdmin } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+
+  // Check if current page is messages
+  const isMessagesPage = currentPage === 'messages';
 
   const handleLogout = () => {
     logout();
@@ -27,10 +32,11 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentPage, onNavigat
               className="flex items-center space-x-1.5 sm:space-x-2 cursor-pointer flex-shrink-0"
               onClick={() => onNavigate(isAuthenticated ? 'dashboard' : 'landing')}
             >
-              <Heart className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 lg:h-9 lg:w-9 text-rose-600 fill-rose-600" />
-              <span className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent whitespace-nowrap">
-                AristoMatch
-              </span>
+              <img 
+                src={logoImgWithName} 
+                alt='AristoMatch Logo' 
+                className="h-32 w-32 sm:h-40 sm:w-40 md:h-48 md:w-48 lg:h-56 lg:w-56 object-contain"
+              />
             </div>
 
             {isAuthenticated ? (
@@ -272,84 +278,86 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentPage, onNavigat
         </div>
       </nav>
 
-      <main className="max-w-[1920px] mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 2xl:px-16 py-4 sm:py-6 md:py-8 lg:py-10">
+      {/* Main content - no padding when on messages page */}
+      <main className={`max-w-[1920px] mx-auto ${isMessagesPage ? '' : 'px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 2xl:px-16 py-4 sm:py-6 md:py-8 lg:py-10'}`}>
         {children}
       </main>
 
-      <footer className="bg-gray-900 text-white mt-12 sm:mt-16 md:mt-20">
-        <div className="max-w-[1920px] mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 2xl:px-16 py-8 sm:py-10 md:py-12 lg:py-16">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 md:gap-10">
-            <div>
-              <div className="flex items-center space-x-2 mb-3 sm:mb-4">
-                <Heart className="h-5 w-5 sm:h-6 sm:w-6 fill-rose-600 text-rose-600" />
-                <span className="text-lg sm:text-xl font-bold">AristoMatch</span>
+      {/* Footer - hidden on messages page */}
+      {!isMessagesPage && (
+        <footer className="bg-gray-900 text-white mt-12 sm:mt-16 md:mt-20 relative">
+          <div className="max-w-[1920px] mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 2xl:px-16 py-8 sm:py-10 md:py-12 lg:py-16">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 md:gap-10">
+              <div>
+                <div className="flex items-center space-x-2 mb-3 sm:mb-4">
+                  <img src={logoImgWithName} alt="AristoMatch-logo" className='h-40 object-contain absolute left-4 top-4' />
+                </div>
+                <p className="text-gray-400 text-xs sm:text-sm leading-relaxed mt-16">
+                  India's trusted matrimonial platform connecting hearts and families.
+                </p>
               </div>
-              <p className="text-gray-400 text-xs sm:text-sm leading-relaxed">
-                India's trusted matrimonial platform connecting hearts and families.
-              </p>
+              <div>
+                <h3 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Company</h3>
+                <ul className="space-y-2 text-gray-400 text-xs sm:text-sm">
+                  <li>
+                    <a href="/about" className="hover:text-white transition-colors">
+                      About Us
+                    </a>
+                  </li>
+                  <li>
+                    <a href="/contact" className="hover:text-white transition-colors">
+                      Contact Us
+                    </a>
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Support</h3>
+                <ul className="space-y-2 text-gray-400 text-xs sm:text-sm">
+                  <li>
+                    <a href="/help-center" className="hover:text-white transition-colors">
+                      Help Center
+                    </a>
+                  </li>
+                  <li>
+                    <a href="/safety-tips" className="hover:text-white transition-colors">
+                      Safety Tips
+                    </a>
+                  </li>
+                  <li>
+                    <a href="/faq" className="hover:text-white transition-colors">
+                      FAQs
+                    </a>
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Legal</h3>
+                <ul className="space-y-2 text-gray-400 text-xs sm:text-sm">
+                  <li>
+                    <a href="/privacy-policy" className="hover:text-white transition-colors">
+                      Privacy Policy
+                    </a>
+                  </li>
+                  <li>
+                    <a href="/terms-of-service" className="hover:text-white transition-colors">
+                      Terms of Service
+                    </a>
+                  </li>
+                  <li>
+                    <a href="/cookie-policy" className="hover:text-white transition-colors">
+                      Cookie Policy
+                    </a>
+                  </li>
+                </ul>
+              </div>
             </div>
-            <div>
-              <h3 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Company</h3>
-              <ul className="space-y-2 text-gray-400 text-xs sm:text-sm">
-                <li>
-                  <a href="/about" className="hover:text-white transition-colors">
-                    About Us
-                  </a>
-                </li>
-                <li>
-                  <a href="/contact" className="hover:text-white transition-colors">
-                    Contact Us
-                  </a> 
-                </li>
-                
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Support</h3>
-              <ul className="space-y-2 text-gray-400 text-xs sm:text-sm">
-                <li>
-                  <a href="/help-center" className="hover:text-white transition-colors">
-                    Help Center
-                  </a>
-                </li>
-                <li>
-                  <a href="/safety-tips" className="hover:text-white transition-colors">
-                    Safety Tips
-                  </a>
-                </li>
-                <li>
-                  <a href="/faq" className="hover:text-white transition-colors">
-                    FAQs
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Legal</h3>
-              <ul className="space-y-2 text-gray-400 text-xs sm:text-sm">
-                <li>
-                  <a href="/privacy-policy" className="hover:text-white transition-colors">
-                    Privacy Policy
-                  </a>
-                </li>
-                <li>
-                  <a href="/terms-of-service" className="hover:text-white transition-colors">
-                    Terms of Service
-                  </a>
-                </li>
-                <li>
-                  <a href="/cookie-policy" className="hover:text-white transition-colors">
-                    Cookie Policy
-                  </a>
-                </li>
-              </ul>
+            <div className="border-t border-gray-800 mt-6 sm:mt-8 md:mt-10 pt-6 sm:pt-8 text-center text-gray-400 text-xs sm:text-sm">
+              <p>&copy; 2025 AristoMatch. All rights reserved.</p>
             </div>
           </div>
-          <div className="border-t border-gray-800 mt-6 sm:mt-8 md:mt-10 pt-6 sm:pt-8 text-center text-gray-400 text-xs sm:text-sm">
-            <p>&copy; 2025 AristoMatch. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+        </footer>
+      )}
     </div>
   );
 };
