@@ -1,6 +1,4 @@
 
-
-
 import React, { useEffect, useState } from 'react';
   import { Heart, MessageCircle, Star, TrendingUp, Users, UserPlus, Loader2, User, X, AlertCircle, Edit } from 'lucide-react';
   import { useAuth } from '../context/AuthContext';
@@ -16,17 +14,17 @@ import React, { useEffect, useState } from 'react';
   // ========================================
   const API_CONFIG = {
   //  For local development
-    // STATS_API: 'http://localhost:5000/api/dashboard/stats',
-    // PROFILE_LIST_API: 'http://localhost:5000/api/profile/list',
-    // SEND_INTEREST_API: 'http://localhost:5000/api/request/send',
-    // // ✅ NEW: Add accepted connections API
-    // ACCEPTED_CONNECTIONS_API: 'http://localhost:5000/api/request/connections/accepted',
+    STATS_API: 'http://localhost:5000/api/dashboard/stats',
+    PROFILE_LIST_API: 'http://localhost:5000/api/profile/list',
+    SEND_INTEREST_API: 'http://localhost:5000/api/request/send',
+    // ✅ NEW: Add accepted connections API
+    ACCEPTED_CONNECTIONS_API: 'http://localhost:5000/api/request/connections/accepted',
     
     // For production, uncomment these:
-    STATS_API: 'https://api.rsaristomatch.com/api/dashboard/stats',
-    PROFILE_LIST_API: 'https://api.rsaristomatch.com/api/profile/list',
-    SEND_INTEREST_API: 'https://api.rsaristomatch.com/api/request/send',
-    ACCEPTED_CONNECTIONS_API: 'https://api.rsaristomatch.com/api/request/connections/accepted',
+    // STATS_API: 'https://api.rsaristomatch.com/api/dashboard/stats',
+    // PROFILE_LIST_API: 'https://api.rsaristomatch.com/api/profile/list',
+    // SEND_INTEREST_API: 'https://api.rsaristomatch.com/api/request/send',
+    // ACCEPTED_CONNECTIONS_API: 'https://api.rsaristomatch.com/api/request/connections/accepted',
   };
 
 // Profile Completion Modal Component
@@ -832,3 +830,5 @@ import React, { useEffect, useState } from 'react';
       </div>
     );
   };
+
+

@@ -38,7 +38,7 @@ export const Register: React.FC<RegisterProps> = ({ onNavigate }) => {
     return maxDate.toISOString().split('T')[0];
   };
 
-  // ✅ Age validation when gender changes
+  
   useEffect(() => {
     if (formData.gender && formData.dateOfBirth) {
       const selectedDate = new Date(formData.dateOfBirth);
