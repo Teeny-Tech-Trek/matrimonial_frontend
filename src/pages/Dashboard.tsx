@@ -18,16 +18,16 @@ interface DashboardProps {
 // ========================================
 const API_CONFIG = {
   //  For local development
-  STATS_API: 'http://localhost:5000/api/dashboard/stats',
-  PROFILE_LIST_API: 'http://localhost:5000/api/profile/list',
-  SEND_INTEREST_API: 'http://localhost:5000/api/request/send',
-  ACCEPTED_CONNECTIONS_API: 'http://localhost:5000/api/request/connections/accepted',
+  // STATS_API: 'http://localhost:5000/api/dashboard/stats',
+  // PROFILE_LIST_API: 'http://localhost:5000/api/profile/list',
+  // SEND_INTEREST_API: 'http://localhost:5000/api/request/send',
+  // ACCEPTED_CONNECTIONS_API: 'http://localhost:5000/api/request/connections/accepted',
   
   // For production, uncomment these:
-  // STATS_API: 'https://api.rsaristomatch.com/api/dashboard/stats',
-  // PROFILE_LIST_API: 'https://api.rsaristomatch.com/api/profile/list',
-  // SEND_INTEREST_API: 'https://api.rsaristomatch.com/api/request/send',
-  // ACCEPTED_CONNECTIONS_API: 'https://api.rsaristomatch.com/api/request/connections/accepted',
+  STATS_API: 'https://api.rsaristomatch.com/api/dashboard/stats',
+  PROFILE_LIST_API: 'https://api.rsaristomatch.com/api/profile/list',
+  SEND_INTEREST_API: 'https://api.rsaristomatch.com/api/request/send',
+  ACCEPTED_CONNECTIONS_API: 'https://api.rsaristomatch.com/api/request/connections/accepted',
 };
 
 // Profile Completion Modal Component
