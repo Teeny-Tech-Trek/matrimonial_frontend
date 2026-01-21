@@ -1694,7 +1694,6 @@ const response = await fetch('http://localhost:5000/api/upload-image', {
               </div>
             </div>
           )}
-          // Part 3: Professional, Family, Lifestyle, About sections + Navigation
 
           {/* PROFESSIONAL DETAILS SECTION */}
           {currentSection === 4 && (

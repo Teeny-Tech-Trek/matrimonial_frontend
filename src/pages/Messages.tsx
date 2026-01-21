@@ -1043,8 +1043,8 @@ interface MessagesProps {
   onNavigate: (page: string) => void;
 }
 
-// const API_BASE_URL = "https://api.rsaristomatch.com/api";
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = "https://api.rsaristomatch.com/api";
+// const API_BASE_URL = "http://localhost:5000/api";
 
 // ✅ Random default avatars (cartoon style)
 const DEFAULT_AVATARS = [
