@@ -29,9 +29,9 @@ export const Landing: React.FC<LandingProps> = ({onNavigate}) => {
       >
        
         
-        <div className="relative z-10 min-h-screen flex flex-col items-center justify-start px-6 py-8 text-center lg:flex-row lg:justify-between lg:px-16 lg:py-20 lg:text-left">
+        <div className="relative z-10 min-h-screen flex flex-col items-center justify-start px-6 py-8 text-center lg:flex-row lg:justify-between lg:px-16 lg:py-20 lg:text-left relative ">
           {/* Text Content */}
-          <div className="w-full lg:w-1/2 lg:pl-16 pt-16 lg:pt-10">
+          <div className="w-full lg:w-1/2 lg:pl-16 pt-16 lg:pt-10  mt-3">
             {/* Heading */}
             <h1 className="mb-6 text-center lg:text-left">
               <span 
@@ -105,8 +105,8 @@ export const Landing: React.FC<LandingProps> = ({onNavigate}) => {
           </div>
 
           {/* Couple Image */}
-          <div className="w-full lg:w-1/2 flex justify-center lg:justify-end mt-0 lg:pt-12">
-            <div className="relative w-full h-full">
+          <div className="w-full lg:w-1/2 flex justify-center lg:justify-end  lg:pt-12 absolute top-10 bottom-0 right-0">
+            <div className="relative w-full h-full  ">
               <img 
                 src={coupleOverlayImage}
                 alt="Happy Couple"
