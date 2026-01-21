@@ -105,7 +105,7 @@ export const Landing: React.FC<LandingProps> = ({onNavigate}) => {
           </div>
 
           {/* Couple Image */}
-          <div className="w-full lg:w-1/2 flex justify-center lg:justify-end  lg:pt-12 absolute top-10 bottom-0 right-0">
+          <div className="w-full lg:w-1/2 flex justify-center lg:justify-end  lg:pt-12">
             <div className="relative w-full h-full  ">
               <img 
                 src={coupleOverlayImage}
