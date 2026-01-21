@@ -461,20 +461,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           SECTION 1: HERO WITH FAMILY BACKGROUND (Image 3)
           ======================================== */}
       <div 
-        className="relative overflow-hidden"
+        className="relative overflow-hidden min-h-[500px] sm:min-h-[600px] lg:min-h-[700px]"
         style={{
           backgroundImage: `url(${heroFamilyBackground})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center top',
           backgroundRepeat: 'no-repeat',
-          minHeight: '700px'
         }}
       >
         <div className="absolute inset-0 bg-white/5"></div>
         
-        <div className="relative z-10 p-6 pt-20 md:p-10 md:pt-10 lg:p-12 lg:pt-12">
+        <div className="relative z-10 p-6 pt-16 md:p-10 lg:p-12">
           <div className="mb-8">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-3" style={{ 
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3" style={{ 
               color: '#5D4037',
               fontFamily: 'Georgia, serif',
               letterSpacing: '-0.5px'
@@ -487,8 +486,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           </div>
 
           <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-5 md:p-6 mb-8 max-w-3xl shadow-lg">
-            <div className="flex items-center justify-between gap-4 flex-wrap">
-              <div className="flex-1 min-w-[240px]">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex-1 w-full">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm md:text-base font-semibold text-gray-800">
                     Profile {stats.profileCompletion}% Complete
@@ -505,12 +504,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                 </div>
               </div>
               {stats.profileCompletion < 98 && (
-                <button
-                  onClick={() => onNavigate('profile-setup')}
-                  className="px-8 py-3 bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-full font-semibold hover:shadow-xl transition-all whitespace-nowrap text-sm md:text-base"
-                >
-                  Complete Profile
-                </button>
+                <div className="w-full sm:w-auto flex-shrink-0">
+                  <button
+                    onClick={() => onNavigate('profile-setup')}
+                    className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-full font-semibold hover:shadow-xl transition-all whitespace-nowrap text-sm md:text-base"
+                  >
+                    Complete Profile
+                  </button>
+                </div>
               )}
             </div>
           </div>

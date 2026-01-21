@@ -18,7 +18,7 @@ export const Landing: React.FC<LandingProps> = ({onNavigate}) => {
           HERO SECTION WITH BACKGROUND IMAGE
           ======================================== */}
       <div 
-        className="relative overflow-hidden -mt-28 "
+        className="relative overflow-hidden  -mt-20 "
         style={{
           backgroundImage: `url(${heroImage})`,
           backgroundSize: 'cover',
@@ -29,15 +29,16 @@ export const Landing: React.FC<LandingProps> = ({onNavigate}) => {
       >
        
         
-        <div className="relative z-10 min-h-screen flex items-center justify-between px-6 md:px-8 lg:px-16 py-20">
-          {/* Left Side - Text Content */}
-          <div className=" lg:pl-16 pt-10">
+        <div className="relative z-10 min-h-screen flex flex-col items-center justify-start px-6 py-8 text-center lg:flex-row lg:justify-between lg:px-16 lg:py-20 lg:text-left">
+          {/* Text Content */}
+          <div className="w-full lg:w-1/2 lg:pl-16 pt-16 lg:pt-10">
             {/* Heading */}
-            <h1 className="mb-5  ">
+            <h1 className="mb-6 text-center lg:text-left">
               <span 
-                className="block pl-10  text-3xl md:text-4xl lg:text-5xl mb-1 italic leading-tight" 
+                className="block text-3xl  sm:text-3xl
+ md:text-4xl lg:text-5xl mb-2 italic leading-tight" 
                 style={{ 
-                  fontFamily: ' serif',
+                  fontFamily: 'serif',
                   color: '#8B6F47',
                   fontWeight: '400',
                   letterSpacing: '0.01em',
@@ -47,7 +48,7 @@ export const Landing: React.FC<LandingProps> = ({onNavigate}) => {
                 Find Your Perfect
               </span>
               <span 
-                className="block text-5xl md:text-6xl lg:text-7xl font-bold leading-tight "
+                className="block text-5xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight"
                 style={{ 
                   fontFamily: 'Georgia, "Times New Roman", serif',
                   color: '#A0522D',
@@ -58,65 +59,39 @@ export const Landing: React.FC<LandingProps> = ({onNavigate}) => {
                 Life Partner
               </span>
             </h1>
-            
-            {/* Decorative Divider */}
-            <div className="flex items-center gap-20 my-2">
-              <div className="h-px w-32" style={{ background: 'linear-gradient(to right, #B8956A, transparent)' }}></div>
-              <div style={{ color: '#B8956A', fontSize: '14px' }}>✦</div>
-              <div className="h-px w-32" style={{ background: 'linear-gradient(to right, transparent, #B8956A)' }}></div>
-            </div>
 
             {/* Description Text */}
-            <div className="space-y-0 mb-8   ">
+            <div className="mb-8 text-center lg:text-left">
               <p 
-                className="text-xl ml-16  md:text-2xl leading-relaxed"
+                className="text-lg sm:text-lg md:text-xl leading-relaxed"
                 style={{ color: '#A0522D', fontWeight: '550' }}
               >
-                Join India's most trusted
-              </p>
-              <p 
-                className="text-xl ml-20 md:text-2xl leading-relaxed"
-                style={{ color: '#A0522D', fontWeight: '550' }}
-              >
-                matrimonial platform.
-              </p>
-              <p 
-                className="text-xl ml-10 md:text-2xl leading-relaxed mt-3"
-                style={{ color: '#A0522D', fontWeight: '550' }}
-              >
-                Thousands of verified profiles
-              </p>
-              <p 
-                className="text-xl ml-14   md:text-2xl leading-relaxed"
-                style={{ color: '#A0522D', fontWeight: '550' }}
-              >
+                Join India's most trusted<br/>
+                matrimonial platform.<br/>
+                Thousands of verified profiles<br/>
                 waiting to connect with you.
               </p>
             </div>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col gap-3 max-w-xs ml-14">
-                <button
-                    onClick={() => onNavigate('register')}
-                  className="px-14 py-5 rounded-full cursor-pointer bg-gradient-to-r  from-rose-500 to-pink-500 text-white text-lg font-semibold transition-all hover:scale-105"
-                  style={{
-                    // background:
-                    //   "linear-gradient(to right, rgba(214,140,125,0.98), rgba(224,155,140,0.98))",
-                    border: "1px solid rgba(255,220,210,0.35)",
-                    boxShadow: "0 12px 40px rgba(214,140,125,0.45)",
-                    backdropFilter: "blur(6px)",
-                    WebkitBackdropFilter: "blur(6px)"
-                  }}
-                >
-                  Register Free
-                </button>
-
+            <div className="flex flex-col items-center lg:items-start gap-3 w-full max-w-xs mx-auto lg:mx-0 mb-8 lg:mb-0">
+              <button
+                onClick={() => onNavigate('register')}
+                className="w-full px-10 py-4 rounded-full cursor-pointer bg-gradient-to-r from-rose-500 to-pink-500 text-white text-lg font-semibold transition-all hover:scale-105"
+                style={{
+                  border: "1px solid rgba(255,220,210,0.35)",
+                  boxShadow: "0 12px 40px rgba(214,140,125,0.45)",
+                  backdropFilter: "blur(6px)",
+                  WebkitBackdropFilter: "blur(6px)"
+                }}
+              >
+                Register Free
+              </button>
 
               <button
                 onClick={() => onNavigate('login')}
-                className="px-10 py-2 cursor-pointer rounded-full bg-pink-50 text-base md:text-lg font-medium transition-all hover:bg-white/60"
+                className="w-full px-10 py-3 cursor-pointer rounded-full bg-pink-50 text-base font-medium transition-all hover:bg-white/60"
                 style={{
-                  // background: 'rgba(255, 255, 255, 0.4)',
                   backdropFilter: 'blur(8px)',
                   border: '2px solid rgba(255, 215, 180, 0.4)',
                   color: '#5D4E47',
@@ -129,9 +104,9 @@ export const Landing: React.FC<LandingProps> = ({onNavigate}) => {
             </div>
           </div>
 
-          {/* Right Side - Overlay Image */}
-          <div className="hidden lg:block relative pt-12">
-            <div className="relative w-auto h-[42rem] ">
+          {/* Couple Image */}
+          <div className="w-full lg:w-1/2 flex justify-center lg:justify-end mt-0 lg:pt-12">
+            <div className="relative w-full h-full">
               <img 
                 src={coupleOverlayImage}
                 alt="Happy Couple"

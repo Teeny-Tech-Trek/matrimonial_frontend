@@ -140,7 +140,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentPage, onNavigat
                 </button>
               </>
             ) : (
-              <div className="hidden sm:flex items-center space-x-2 sm:space-x-3 md:space-x-4">
+              <div className="hidden md:flex items-center space-x-2 sm:space-x-3 md:space-x-4">
                 <button
                   onClick={() => onNavigate('login')}
                   className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm md:text-base text-gray-700 hover:text-rose-600 transition-colors"
