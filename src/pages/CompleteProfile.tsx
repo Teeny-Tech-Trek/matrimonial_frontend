@@ -432,7 +432,7 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
                     <span className="text-sm text-gray-600">
                       {uploadingPhoto ? 'Uploading...' : 'Upload Photo'}
                     </span>
-                    <span className="text-xs text-gray-400 mt-1">Max 5MB</span>
+                    <span className="text-xs text-gray-400 mt-1">Max 100kb</span>
                   </label>
                 )}
               </div>
