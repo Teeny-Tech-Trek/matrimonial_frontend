@@ -156,11 +156,6 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     formData.append('image', file);
 
 
-// const response = await fetch('http://localhost:5000/api/upload-image', {
-//   method: 'POST',
-//   body: formData,
-//   credentials: 'include'
-// });
     const response = await fetch('https://api.rsaristomatch.com/api/upload-image', {
       method: 'POST',
       body: formData,
