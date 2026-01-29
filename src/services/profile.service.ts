@@ -1,26 +1,5 @@
 // src/services/profile.service.ts
-import axios from 'axios';
-
-//  const API_BASE_URL = 'https://matrimonial-backend-14t2.onrender.com/api';
-// const API_BASE_URL = 'http://localhost:5000/api';
-const API_BASE_URL = 'https://api.rsaristomatch.com/api';
-
-// Create axios instance with default config
-const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Add token to requests if available
-apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('authToken');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+import api from './api';
 
 // Interface for complete profile data
 interface ProfileData {
@@ -86,7 +65,7 @@ export const profileService = {
   // Create or Update Profile
   saveProfile: async (data: ProfileData): Promise<ProfileResponse> => {
     try {
-      const response = await apiClient.post<ProfileResponse>('/profile/save', data);
+      const response = await api.post<ProfileResponse>('/profile/save', data);
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.error || 'Failed to save profile');
@@ -96,7 +75,7 @@ export const profileService = {
   // Get My Profile
   getMyProfile: async (): Promise<ProfileResponse> => {
     try {
-      const response = await apiClient.get<ProfileResponse>('/profile/me');
+      const response = await api.get<ProfileResponse>('/profile/me');
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.error || 'Failed to fetch profile');
@@ -106,7 +85,7 @@ export const profileService = {
   // Get Profile by ID
   getProfileById: async (id: string): Promise<ProfileResponse> => {
     try {
-      const response = await apiClient.get<ProfileResponse>(`/profile/${id}`);
+      const response = await api.get<ProfileResponse>(`/profile/${id}`);
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.error || 'Failed to fetch profile');
@@ -121,7 +100,7 @@ export const profileService = {
   }): Promise<ProfileResponse> => {
     try {
       const queryParams = new URLSearchParams(filters as any).toString();
-      const response = await apiClient.get<ProfileResponse>(
+      const response = await api.get<ProfileResponse>(
         `/profile/list${queryParams ? `?${queryParams}` : ''}`
       );
       return response.data;
@@ -133,7 +112,7 @@ export const profileService = {
   // Delete Profile
   deleteProfile: async (): Promise<ProfileResponse> => {
     try {
-      const response = await apiClient.delete<ProfileResponse>('/profile');
+      const response = await api.delete<ProfileResponse>('/profile');
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.error || 'Failed to delete profile');

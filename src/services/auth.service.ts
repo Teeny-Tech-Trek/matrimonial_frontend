@@ -1,25 +1,5 @@
 // src/services/auth.service.ts
-import axios from 'axios';
-
- const API_BASE_URL = 'https://api.rsaristomatch.com/api';
-// const API_BASE_URL = 'http://localhost:5000/api'; 
-
-// Create axios instance with default config
-const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-}); 
-
-// Add token to requests if available
-apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('authToken');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+import api from './api';
 
 // Interface for API responses
 interface AuthResponse {
@@ -52,7 +32,7 @@ export const authService = {
   // Register new user
   register: async (data: RegisterData): Promise<AuthResponse> => {
     try {
-      const response = await apiClient.post<AuthResponse>('/auth/register', data);
+      const response = await api.post<AuthResponse>('/auth/register', data);
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.error || 'Registration failed');
@@ -62,7 +42,7 @@ export const authService = {
   // Login user
   login: async (data: LoginData): Promise<AuthResponse> => {
     try {
-      const response = await apiClient.post<AuthResponse>('/auth/login', data);
+      const response = await api.post<AuthResponse>('/auth/login', data);
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.error || 'Login failed');
@@ -72,7 +52,7 @@ export const authService = {
   // Get current user profile
   getProfile: async (): Promise<any> => {
     try {
-      const response = await apiClient.get('/auth/me');
+      const response = await api.get('/auth/me');
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.error || 'Failed to fetch profile');
@@ -82,7 +62,7 @@ export const authService = {
   // Google Login
   googleLogin: async (idToken: string): Promise<AuthResponse> => {
     try {
-      const response = await apiClient.post<AuthResponse>('/auth/google-login', { idToken });
+      const response = await api.post<AuthResponse>('/auth/google-login', { idToken });
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.error || 'Google login failed');
