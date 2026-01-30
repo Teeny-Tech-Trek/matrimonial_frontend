@@ -38,6 +38,7 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
       console.log('🔗 Fetching accepted connections...');
       
       const response = await fetch('https://api.rsaristomatch.com/api/request/connections/accepted', {
+      // const response = await fetch('http://localhost:5000/api/request/connections/accepted', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -130,6 +131,7 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
       }
       
       const apiUrl = `https://api.rsaristomatch.com/api/profile/list?${finalQuery}`;
+      // const apiUrl = `http://localhost:5000/api/profile/list?${finalQuery}`;
       
       const response = await fetch(apiUrl);
       
@@ -251,6 +253,7 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
       console.log("💌 Sending interest to:", profileId);
 
       const response = await fetch("https://api.rsaristomatch.com/api/request/send", {
+      // const response = await fetch("http://localhost:5000/api/request/send", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

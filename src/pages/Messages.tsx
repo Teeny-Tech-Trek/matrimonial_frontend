@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
-import { MessageCircle, Send, Search, MoreVertical, UserPlus, Heart } from "lucide-react";
+import { MessageCircle, Send, Search, MoreVertical, Heart } from "lucide-react";
 
 interface User {
   _id: string;
   fullName: string;
-  avatar?: string;
-  profilePhotos?: string[];
+  photos?: {
+    isPrimary: boolean;
+    photoUrl: string;
+  }[];
 }
 
 interface Conversation {
@@ -26,38 +28,27 @@ interface MessagesProps {
   onNavigate: (page: string) => void;
 }
 
-const API_BASE_URL = "https://api.rsaristomatch.com/api";
 // const API_BASE_URL = "http://localhost:5000/api";
+const API_BASE_URL = "https://api.rsaristomatch.com/api";
 
-// ✅ Random default avatars (cartoon style)
-const DEFAULT_AVATARS = [
-  "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix",
-  "https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka",
-  "https://api.dicebear.com/7.x/avataaars/svg?seed=Jasmine",
-  "https://api.dicebear.com/7.x/avataaars/svg?seed=Oliver",
-  "https://api.dicebear.com/7.x/avataaars/svg?seed=Luna",
-  "https://api.dicebear.com/7.x/avataaars/svg?seed=Max",
-  "https://api.dicebear.com/7.x/avataaars/svg?seed=Sophie",
-  "https://api.dicebear.com/7.x/avataaars/svg?seed=Charlie",
-];
-
-// ✅ Get random avatar based on user ID (consistent for same user)
-const getDefaultAvatar = (userId: string) => {
-  const index = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % DEFAULT_AVATARS.length;
-  return DEFAULT_AVATARS[index];
-};
-
-// ✅ NEW: Get user's profile photo (primary approved photo from AWS S3)
 const getUserProfilePhoto = (user: any) => {
-  // Check if user has profilePhotos array from backend
-  if (user?.profilePhotos && user.profilePhotos.length > 0) {
-    return user.profilePhotos[0]; // First approved photo (AWS S3 URL)
+  const photos =
+    user?.photos ||
+    user?.profile?.photos ||
+    user?.profilePhotos ||
+    user?.approvedPhotos;
+
+  if (photos && Array.isArray(photos) && photos.length > 0) {
+    const primaryPhoto = photos.find((p: any) => p.isPrimary) || photos[0];
+    
+    if (primaryPhoto && primaryPhoto.photoUrl) {
+      return primaryPhoto.photoUrl;
+    }
   }
-  // Fallback to default avatar if no profile photo
-  return getDefaultAvatar(user?._id || "default");
+  
+  return 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=800';
 };
 
-// Helper function to format time
 const formatTime = (date: Date) => {
   const d = new Date(date);
   let hours = d.getHours();
@@ -69,7 +60,6 @@ const formatTime = (date: Date) => {
   return `${hours}:${minutesStr} ${ampm}`;
 };
 
-// Helper function to format relative time
 const formatRelativeTime = (date: Date) => {
   const now = new Date();
   const diff = now.getTime() - new Date(date).getTime();
@@ -91,6 +81,7 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [connections, setConnections] = useState<any[]>([]);
+  const [photosMap, setPhotosMap] = useState<Record<string, any[]>>({}); // ✅ Store photos map in state
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -100,8 +91,6 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
   const token = localStorage.getItem("authToken");
   const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
   const userId = currentUser?.id || currentUser?._id || localStorage.getItem("userId");
-
-  console.log("🔍 Current User ID:", userId);
 
   const fetchOptions = {
     headers: {
@@ -118,54 +107,84 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
     scrollToBottom();
   }, [messages]);
 
-  // ✅ Fetch connections and conversations
+  // ✅ NEW: Reusable function to fetch and augment conversations
+  const fetchAndAugmentConversations = async (existingPhotosMap?: Record<string, any[]>) => {
+    try {
+      const conversationsResponse = await fetch(`${API_BASE_URL}/messages/conversations`, fetchOptions);
+      
+      if (!conversationsResponse.ok) throw new Error("Failed to fetch conversations");
+      
+      const conversationsData = await conversationsResponse.json();
+      
+      // Use existing photos map if provided, otherwise use the one from state
+      const photosToUse = existingPhotosMap || photosMap;
+      
+      // Augment conversations with photos from the map
+      const augmentedConversations = (conversationsData.data || []).map((conv: Conversation) => {
+        const newParticipants = conv.participants.map(p => {
+          if (photosToUse[p._id]) {
+            return { ...p, photos: photosToUse[p._id] };
+          }
+          return p;
+        });
+        
+        return { ...conv, participants: newParticipants };
+      });
+      
+      setConversations(augmentedConversations);
+      return augmentedConversations;
+    } catch (error) {
+      console.error("❌ Error fetching conversations:", error);
+      throw error;
+    }
+  };
+
+  // ✅ Initial data fetch
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        
-        const connectionsResponse = await fetch(`${API_BASE_URL}/request/connections/accepted`, {
-          ...fetchOptions,
-          method: "GET",
-        });
-        
-        if (!connectionsResponse.ok) throw new Error("Failed to fetch connections");
-        
-        const connectionsData = await connectionsResponse.json();        
-      
-      const processedConnections = connectionsData.data.map((conn: any) => {
-  let otherUser = null;
+        // Fetch conversations and connections in parallel
+        const [conversationsResponse, connectionsResponse] = await Promise.all([
+          fetch(`${API_BASE_URL}/messages/conversations`, fetchOptions),
+          fetch(`${API_BASE_URL}/request/connections/accepted`, fetchOptions)
+        ]);
 
-  if (conn.sender?._id === userId) {
-    otherUser = conn.receiver;
-  } else if (conn.receiver?._id === userId) {
-    otherUser = conn.sender;
-  } else {
-    otherUser = conn; // fallback
-  }
-
-  return {
-    _id: otherUser._id,
-    fullName: otherUser.fullName || otherUser.name || "Unknown User",
-    profilePhotos: otherUser.profilePhotos || [], // ✅ Profile photos from backend
-  };
-});
-        
-        setConnections(processedConnections);
-
-        console.log("📡 Fetching conversations...");
-        
-        const conversationsResponse = await fetch(`${API_BASE_URL}/messages/conversations`, {
-          ...fetchOptions,
-          method: "GET",
-        });
-        
         if (!conversationsResponse.ok) throw new Error("Failed to fetch conversations");
-        
+        if (!connectionsResponse.ok) throw new Error("Failed to fetch connections");
+
         const conversationsData = await conversationsResponse.json();
-        
-        setConversations(conversationsData.data || []);
+        const connectionsData = await connectionsResponse.json();
+
+        setConnections(connectionsData.data || []);
+
+        // ✅ FIXED: Create photos map from connections data
+        const newPhotosMap: Record<string, any[]> = {};
+        (connectionsData.data || []).forEach((conn: any) => {
+          // Connection data is already the user object itself!
+          if (conn._id && conn.photos && Array.isArray(conn.photos)) {
+            newPhotosMap[conn._id] = conn.photos;
+          }
+        });
+
+        // ✅ Store photos map in state
+        setPhotosMap(newPhotosMap);
+
+        // Augment conversations with photos from the map
+        const augmentedConversations = (conversationsData.data || []).map((conv: Conversation) => {
+          const newParticipants = conv.participants.map(p => {
+            if (newPhotosMap[p._id]) {
+              return { ...p, photos: newPhotosMap[p._id] };
+            }
+            return p;
+          });
+          
+          return { ...conv, participants: newParticipants };
+        });
+
+        setConversations(augmentedConversations);
         setError(null);
+
       } catch (err) {
         setError("Failed to fetch data");
         console.error("❌ Error:", err);
@@ -174,47 +193,28 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
       }
     };
     fetchData();
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
-    if (selectedChat) {
-      const fetchMessages = async () => {
-        setIsLoading(true);
-        try {
-          
-          const response = await fetch(`${API_BASE_URL}/messages/conversation/${selectedChat}`, {
-            ...fetchOptions,
-            method: "GET",
-          });
-          
-          if (!response.ok) throw new Error("Failed to fetch messages");
-          
-          const data = await response.json();
-          
-          setMessages(data.data || []);
-          setError(null);
-        } catch (err) {
-          setError("Failed to fetch messages");
-          console.error("❌ Error:", err);
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      fetchMessages();
+  if (!selectedChat) return;
 
-      const typingInterval = setInterval(() => {
-        setIsTyping(true);
-        setTimeout(() => setIsTyping(false), 1500);
-      }, 8000);
-      
-      return () => clearInterval(typingInterval);
-    }
-  }, [selectedChat]);
+  const interval = setInterval(async () => {
+    const res = await fetch(
+      `${API_BASE_URL}/messages/conversation/${selectedChat}`,
+      fetchOptions
+    );
+    const data = await res.json();
+    setMessages(data.data || []);
+  }, 1000); // every 3 seconds
 
+  return () => clearInterval(interval);
+}, [selectedChat]);
+
+
+  // ✅ FIXED: Send message with proper conversation refresh
   const handleSendMessage = async () => {
     if (messageText.trim() && selectedChat) {
       try {
-        
         const response = await fetch(`${API_BASE_URL}/messages/send`, {
           ...fetchOptions,
           method: "POST",
@@ -231,12 +231,9 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
         setMessages((prev) => [...prev, data.data]);
         setMessageText("");
 
-        const convResponse = await fetch(`${API_BASE_URL}/messages/conversations`, {
-          ...fetchOptions,
-          method: "GET",
-        });
-        const convData = await convResponse.json();
-        setConversations(convData.data || []);
+        // ✅ FIXED: Use the reusable function that preserves photos
+        await fetchAndAugmentConversations(photosMap);
+        
       } catch (err) {
         setError("Failed to send message");
         console.error("❌ Error:", err);
@@ -244,54 +241,34 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
     }
   };
 
-  const handleStartConversation = async (userId: string) => {
-    try {
-      
-      const response = await fetch(`${API_BASE_URL}/messages/start`, {
-        ...fetchOptions,
-        method: "POST",
-        body: JSON.stringify({ userB: userId }),
-      });
-      
-      const data = await response.json();
-      
-      const newConversation = data.data;
-      setConversations((prev) => [newConversation, ...prev]);
-      setSelectedChat(newConversation._id);
-    } catch (err) {
-      setError("Failed to start conversation");
-      console.error("❌ Error:", err);
-    }
-  };
-
   const getOtherUser = (conversation: Conversation) => {
-    if (!conversation || !conversation.participants) return null;
-    return conversation.participants.find(p => p._id !== userId) || conversation.participants[0];
+    if (!conversation || !conversation.participants) {
+      return null;
+    }
+    
+    const otherUser = conversation.participants.find(p => p._id !== userId) || conversation.participants[0];
+    
+    return otherUser;
   };
 
-  // ✅ Full-screen popup for no connections
   if (connections.length === 0 && !isLoading) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-md mt-16">
         <div className="bg-white rounded-3xl shadow-2xl p-8 sm:p-12 max-w-md w-full mx-4 text-center transform transition-all animate-fadeIn">
-          {/* Icon */}
           <div className="mb-6">
             <div className="w-24 h-24 mx-auto bg-gradient-to-br from-rose-100 to-pink-100 rounded-full flex items-center justify-center">
               <MessageCircle className="w-12 h-12 text-rose-600" />
             </div>
           </div>
 
-          {/* Title */}
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
             No Connections Yet
           </h2>
 
-          {/* Message */}
           <p className="text-gray-600 mb-8 leading-relaxed">
             You don't have any accepted connection requests yet. Start by sending requests to profiles you're interested in or browse potential matches!
           </p>
 
-          {/* Action Buttons */}
           <div className="space-y-3">
             <button
               onClick={() => onNavigate('search')}
@@ -317,7 +294,6 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
             </button>
           </div>
 
-          {/* Decorative elements */}
           <div className="mt-8 pt-6 border-t border-gray-100">
             <p className="text-sm text-gray-500">
               💡 Tip: Complete your profile to get better matches!
@@ -325,7 +301,6 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
           </div>
         </div>
 
-        {/* CSS Animation */}
         <style>{`
           @keyframes fadeIn {
             from {
@@ -345,10 +320,8 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
     );
   }
 
-  // ✅ Normal Messages Component (when connections.length > 0)
   return (
-    <div className="fixed inset-0 flex bg-white mt-16">
-      {/* Left Panel — Chat List */}
+    <div className="fixed inset-0 flex bg-white mt-20">
       <div className="w-full md:w-96 bg-white border-r border-gray-200 flex flex-col h-full">
         <div className="px-4 py-4 flex items-center justify-between border-b border-gray-200 bg-white flex-shrink-0">
           <h2 className="text-xl font-semibold text-gray-900">Messages</h2>
@@ -368,45 +341,38 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
           </div>
         </div>
 
-        {/* Chat List */}
         <div className="flex-1 overflow-y-auto">
-          {connections.map((conn) => {
-            const conversation = conversations.find((c) =>
-              c.participants.some((p) => p._id === conn._id)
-            );
+          {conversations.map((conversation) => {
+            const otherUser = getOtherUser(conversation);
+            if (!otherUser) {
+              return null;
+            }
             
-            const unread = conversation?.unreadCount?.[userId] || 0;
-
-            // ✅ Get profile photo or fallback to avatar
-            const avatarUrl = getUserProfilePhoto(conn);
+            const unread = conversation.unreadCount?.[userId] || 0;
+            const avatarUrl = getUserProfilePhoto(otherUser);
 
             return (
               <div
-                key={conn._id}
+                key={conversation._id}
                 onClick={() => {
-                  if (conversation) {
-                    setSelectedChat(conversation._id);
-
-                    // ✅ reset unread bubble instantly
+                  setSelectedChat(conversation._id);
+                  if (conversation.unreadCount) {
                     conversation.unreadCount[userId] = 0;
-                    setConversations([...conversations]); // force UI refresh
-                  } else {
-                    handleStartConversation(conn._id);
                   }
+                  setConversations([...conversations]);
                 }}
 
                 className={`flex items-center px-4 py-3 cursor-pointer transition-colors border-b border-gray-50 ${
-                  selectedChat === conversation?._id ? "bg-rose-50" : "hover:bg-gray-50"
+                  selectedChat === conversation._id ? "bg-rose-50" : "hover:bg-gray-50"
                 }`}
               >
                 <div className="relative flex-shrink-0">
                   <img
                     src={avatarUrl}
-                    alt={conn.fullName}
+                    alt={otherUser.fullName}
                     className="w-12 h-12 rounded-full object-cover bg-gray-200"
                     onError={(e) => {
-                      // ✅ Fallback to default avatar if image fails to load
-                      (e.target as HTMLImageElement).src = getDefaultAvatar(conn._id);
+                      (e.target as HTMLImageElement).src = 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=800';
                     }}
                   />
 
@@ -419,12 +385,11 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
 
                 <div className="flex-1 ml-3 min-w-0">
                   <div className="flex justify-between items-baseline mb-1">
-                   
                     <h3 className="font-semibold text-gray-900 truncate">
-                      {conn.fullName || conn.name || conn.sender?.fullName || conn.receiver?.fullName || "Unknown User"}
+                      {otherUser.fullName || "Unknown User"}
                     </h3>
 
-                    {conversation?.lastMessage && (
+                    {conversation.lastMessage && (
                       <span className="text-xs text-gray-500 ml-2 flex-shrink-0">
                         {formatRelativeTime(conversation.lastMessage.createdAt)}
                       </span>
@@ -432,7 +397,7 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
                   </div>
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-gray-600 truncate flex-1">
-                      {conversation?.lastMessage?.text || "Start chatting"}
+                      {conversation.lastMessage?.text || "Start chatting"}
                     </p>
                     {unread > 0 && (
                       <span className="ml-2 bg-rose-600 text-white text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0">
@@ -447,7 +412,6 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      {/* Right Panel — Chat Window */}
       <div className="hidden md:flex flex-1 flex-col h-full">
         {selectedChat ? (
           <>
@@ -455,8 +419,6 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
               {(() => {
                 const conversation = conversations.find((c) => c._id === selectedChat);
                 const otherUser = getOtherUser(conversation!);
-                
-                // ✅ Get profile photo or fallback to avatar
                 const avatarUrl = getUserProfilePhoto(otherUser);
                 
                 return (
@@ -466,8 +428,7 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
                       alt={otherUser?.fullName || "User"}
                       className="w-11 h-11 rounded-full object-cover bg-gray-200"
                       onError={(e) => {
-                        // ✅ Fallback to default avatar if image fails to load
-                        (e.target as HTMLImageElement).src = getDefaultAvatar(otherUser?._id || "default");
+                        (e.target as HTMLImageElement).src = 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=800';
                       }}
                     />
                     <div className="flex-1 min-w-0">

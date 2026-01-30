@@ -41,7 +41,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
         <img
           src={primaryPhoto?.photoUrl || 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=800'}
           alt={profile.fullName}
-          className="w-full h-64 object-cover"
+          className="w-full h-80 "
         />
         <div className="absolute top-4 right-4">
           {getTierBadge()}
