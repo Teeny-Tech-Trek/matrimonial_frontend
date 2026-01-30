@@ -60,35 +60,45 @@ interface ProfileResponse {
   data?: any;
   error?: string;
 }
-
 export const profileService = {
   // Create or Update Profile
   saveProfile: async (data: ProfileData): Promise<ProfileResponse> => {
     try {
-      const response = await api.post<ProfileResponse>('/profile/save', data);
+      const response = await api.post<ProfileResponse>(
+        "/backend/profile/save",
+        data
+      );
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.error || 'Failed to save profile');
+      throw new Error(error.response?.data?.error || "Failed to save profile");
     }
   },
 
   // Get My Profile
   getMyProfile: async (): Promise<ProfileResponse> => {
     try {
-      const response = await api.get<ProfileResponse>('/profile/me');
+      const response = await api.get<ProfileResponse>(
+        "/backend/profile/me"
+      );
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.error || 'Failed to fetch profile');
+      throw new Error(
+        error.response?.data?.error || "Failed to fetch profile"
+      );
     }
   },
 
   // Get Profile by ID
   getProfileById: async (id: string): Promise<ProfileResponse> => {
     try {
-      const response = await api.get<ProfileResponse>(`/profile/${id}`);
+      const response = await api.get<ProfileResponse>(
+        `/backend/profile/${id}`
+      );
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.error || 'Failed to fetch profile');
+      throw new Error(
+        error.response?.data?.error || "Failed to fetch profile"
+      );
     }
   },
 
@@ -101,21 +111,27 @@ export const profileService = {
     try {
       const queryParams = new URLSearchParams(filters as any).toString();
       const response = await api.get<ProfileResponse>(
-        `/profile/list${queryParams ? `?${queryParams}` : ''}`
+        `/backend/profile/list${queryParams ? `?${queryParams}` : ""}`
       );
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.error || 'Failed to fetch profiles');
+      throw new Error(
+        error.response?.data?.error || "Failed to fetch profiles"
+      );
     }
   },
 
   // Delete Profile
   deleteProfile: async (): Promise<ProfileResponse> => {
     try {
-      const response = await api.delete<ProfileResponse>('/profile');
+      const response = await api.delete<ProfileResponse>(
+        "/backend/profile"
+      );
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.error || 'Failed to delete profile');
+      throw new Error(
+        error.response?.data?.error || "Failed to delete profile"
+      );
     }
   },
 };
