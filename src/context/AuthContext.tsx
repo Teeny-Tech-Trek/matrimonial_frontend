@@ -110,7 +110,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     throw new Error('OTP login not implemented in backend yet. Please use password login.');
   };
 
-  // ✅ UPDATED: Check role from backend
+  //  UPDATED: Check role from backend
   const login = async (phoneNumber: string, password: string): Promise<void> => {
     try {
       
@@ -138,7 +138,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setCurrentUser(userProfile);
       localStorage.setItem('currentUser', JSON.stringify(userProfile));
 
-      // ⭐ CHECK ADMIN ROLE FROM BACKEND RESPONSE
+      //  CHECK ADMIN ROLE FROM BACKEND RESPONSE
       const userRole = (response.user as any).role;
       if (userRole === 'admin' || userRole === 'moderator') {
         setIsAdmin(true);
