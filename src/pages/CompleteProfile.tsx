@@ -135,69 +135,66 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
         : [...prev.hobbies, hobby]
     }));
   };
-const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-  const file = e.target.files?.[0];
-  if (!file) return;
 
-  if (!file.type.startsWith('image/')) {
-    showToast('Please upload an image file', 'error');
-    return;
-  }
+  //  FIXED: Correct route - /backend instead of /api
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  if (file.size > 5 * 1024 * 1024) {
-    showToast('Image size should be less than 5MB', 'error');
-    return;
-  }
-
-  setUploadingPhoto(true);
-
-  try {
-    const formData = new FormData();
-    formData.append('image', file);
-
-
-// const response = await fetch("http://localhost:5000/api/upload-image", {
-
-//   method: 'POST',
-//   body: formData,
-//   credentials: 'include'
-// });
-    const response = await fetch('https://api.rsaristomatch.com/api/upload-image', {
-      method: 'POST',
-      body: formData,
-      credentials: 'include'
-    });
-    // Check if response is ok before parsing JSON
-    if (!response.ok) {
-      throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+    if (!file.type.startsWith('image/')) {
+      showToast('Please upload an image file', 'error');
+      return;
     }
 
-    // Check if response has content
-    const text = await response.text();
-    if (!text) {
-      throw new Error('Empty response from server');
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('Image size should be less than 5MB', 'error');
+      return;
     }
 
-    const data = JSON.parse(text);
+    setUploadingPhoto(true);
 
-    if (data.success && data.imageUrl) {
-      setPhotos(prev => [...prev, {
-        url: data.imageUrl,
-        isPrimary: prev.length === 0,
-        file: file
-      }]);
-      showToast('Photo uploaded successfully!', 'success');
-    } else {
-      throw new Error(data.message || 'Upload failed');
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+   // Line 154 ko update karo
+const response = await fetch('https://15-207-55-215.nip.io/backend/upload-image', {
+  method: 'POST',
+  body: formData,
+  credentials: 'include'
+});
+
+      // Check if response is ok before parsing JSON
+      if (!response.ok) {
+        throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+      }
+
+      // Check if response has content
+      const text = await response.text();
+      if (!text) {
+        throw new Error('Empty response from server');
+      }
+
+      const data = JSON.parse(text);
+
+      if (data.success && data.imageUrl) {
+        setPhotos(prev => [...prev, {
+          url: data.imageUrl,
+          isPrimary: prev.length === 0,
+          file: file
+        }]);
+        showToast('Photo uploaded successfully!', 'success');
+      } else {
+        throw new Error(data.message || 'Upload failed');
+      }
+    } catch (err: any) {
+      console.error('Upload error:', err);
+      showToast(err.message || 'Failed to upload photo', 'error');
+    } finally {
+      setUploadingPhoto(false);
+      e.target.value = '';
     }
-  } catch (err: any) {
-    console.error('Upload error:', err);
-    showToast(err.message || 'Failed to upload photo', 'error');
-  } finally {
-    setUploadingPhoto(false);
-    e.target.value = '';
-  }
-};
+  };
 
   const removePhoto = (index: number) => {
     setPhotos(prev => {
@@ -216,7 +213,6 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
       isPrimary: i === index
     })));
   };
-  // Part 2: Submit Handler and Render Sections (Religious, Education, Professional, Family, Lifestyle, About)
 
   // SUBMIT HANDLER
   const handleSubmit = async (e: React.FormEvent) => {

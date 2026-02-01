@@ -32,7 +32,7 @@ export const authService = {
   register: async (data: RegisterData): Promise<AuthResponse> => {
     try {
       const response = await api.post<AuthResponse>(
-        "/backend/auth/register",
+        "/auth/register",
         data
       );
       return response.data;
@@ -45,7 +45,7 @@ export const authService = {
   login: async (data: LoginData): Promise<AuthResponse> => {
     try {
       const response = await api.post<AuthResponse>(
-        "/backend/auth/login",
+        "/auth/login",
         data
       );
       return response.data;
@@ -57,7 +57,7 @@ export const authService = {
   // Get current user profile
   getProfile: async (): Promise<any> => {
     try {
-      const response = await api.get("/backend/auth/me");
+      const response = await api.get("/auth/me");
       return response.data;
     } catch (error: any) {
       throw new Error(
@@ -70,7 +70,7 @@ export const authService = {
   googleLogin: async (idToken: string): Promise<AuthResponse> => {
     try {
       const response = await api.post<AuthResponse>(
-        "/backend/auth/google-login",
+        "/auth/google-login",
         { idToken }
       );
       return response.data;

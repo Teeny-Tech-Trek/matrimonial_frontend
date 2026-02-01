@@ -65,7 +65,7 @@ export const profileService = {
   saveProfile: async (data: ProfileData): Promise<ProfileResponse> => {
     try {
       const response = await api.post<ProfileResponse>(
-        "/backend/profile/save",
+        "/profile/save",
         data
       );
       return response.data;
@@ -78,7 +78,7 @@ export const profileService = {
   getMyProfile: async (): Promise<ProfileResponse> => {
     try {
       const response = await api.get<ProfileResponse>(
-        "/backend/profile/me"
+        "/profile/me"
       );
       return response.data;
     } catch (error: any) {
@@ -92,7 +92,7 @@ export const profileService = {
   getProfileById: async (id: string): Promise<ProfileResponse> => {
     try {
       const response = await api.get<ProfileResponse>(
-        `/backend/profile/${id}`
+        `/profile/${id}`
       );
       return response.data;
     } catch (error: any) {
@@ -111,7 +111,7 @@ export const profileService = {
     try {
       const queryParams = new URLSearchParams(filters as any).toString();
       const response = await api.get<ProfileResponse>(
-        `/backend/profile/list${queryParams ? `?${queryParams}` : ""}`
+        `/profile/list${queryParams ? `?${queryParams}` : ""}`
       );
       return response.data;
     } catch (error: any) {
@@ -125,7 +125,7 @@ export const profileService = {
   deleteProfile: async (): Promise<ProfileResponse> => {
     try {
       const response = await api.delete<ProfileResponse>(
-        "/backend/profile"
+        "/profile"
       );
       return response.data;
     } catch (error: any) {

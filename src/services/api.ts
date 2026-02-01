@@ -1,5 +1,4 @@
 
-import axios from 'axios';
 
 // const api = axios.create({
 //     // baseURL: import.meta.env.VITE_API_URL,
@@ -9,22 +8,45 @@ import axios from 'axios';
 //     headers: {
 //         'Content-Type': 'application/json',
 //     }
-// });
+// });// src/lib/api.ts or src/services/api.ts
+
+// src/lib/api.ts or src/services/api.ts
+
+import axios from "axios";
+
 const api = axios.create({
-    baseURL: "https://15-207-55-215.nip.io",
+    baseURL: "https://15-207-55-215.nip.io", //  Updated to your actual backend URL
     withCredentials: true,
     headers: {
         "Content-Type": "application/json",
     },
 });
 
-
-api.interceptors.request.use((config) => {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+// Add request interceptor (optional - for auth tokens)
+api.interceptors.request.use(
+    (config) => {
+        const token = localStorage.getItem("token");
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
     }
-    return config;
-});
+);
+
+// Add response interceptor (optional - for error handling)
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response?.status === 401) {
+            // Handle unauthorized - redirect to login
+            localStorage.removeItem("token");
+            window.location.href = "/login";
+        }
+        return Promise.reject(error);
+    }
+);
 
 export default api;
