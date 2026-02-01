@@ -1,5 +1,6 @@
 // src/services/profile.service.ts
 import api from "./api";
+
 // Interface for complete profile data
 interface ProfileData {
   fullName: string;
@@ -77,12 +78,12 @@ export const profileService = {
     }
   },
 
-  // ✅ FIXED: Get My Profile - changed from /profile/me to /profile/my-profile
+  // ✅ FIXED: Get My Profile - changed to /profile/me (matches backend)
   getMyProfile: async (): Promise<ProfileResponse> => {
     try {
-      console.log('👤 Fetching my profile from /profile/my-profile...');
-      // ✅ Changed route to match backend
-      const response = await api.get<ProfileResponse>('/profile/my-profile');
+      console.log('👤 Fetching my profile from /profile/me...');
+      // ✅ CHANGED FROM /profile/my-profile TO /profile/me
+      const response = await api.get<ProfileResponse>('/profile/me');
       console.log('✅ Profile fetched successfully:', response.data);
       return response.data;
     } catch (error: any) {
