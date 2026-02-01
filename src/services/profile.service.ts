@@ -1,6 +1,5 @@
 // src/services/profile.service.ts
-import api from './api';
-
+import api from "./api";
 // Interface for complete profile data
 interface ProfileData {
   fullName: string;
@@ -60,45 +59,54 @@ interface ProfileResponse {
   data?: any;
   error?: string;
 }
+
 export const profileService = {
   // Create or Update Profile
   saveProfile: async (data: ProfileData): Promise<ProfileResponse> => {
     try {
-      const response = await api.post<ProfileResponse>(
-        "/profile/save",
-        data
-      );
+      console.log('💾 Saving profile...');
+      const response = await api.post<ProfileResponse>('/profile/save', data);
+      console.log('✅ Profile saved successfully');
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.error || "Failed to save profile");
+      console.error('❌ Failed to save profile:', error);
+      const errorMessage = error.response?.data?.message 
+        || error.response?.data?.error 
+        || 'Failed to save profile';
+      throw new Error(errorMessage);
     }
   },
 
-  // Get My Profile
+  // ✅ FIXED: Get My Profile - changed from /profile/me to /profile/my-profile
   getMyProfile: async (): Promise<ProfileResponse> => {
     try {
-      const response = await api.get<ProfileResponse>(
-        "/profile/me"
-      );
+      console.log('👤 Fetching my profile from /profile/my-profile...');
+      // ✅ Changed route to match backend
+      const response = await api.get<ProfileResponse>('/profile/my-profile');
+      console.log('✅ Profile fetched successfully:', response.data);
       return response.data;
     } catch (error: any) {
-      throw new Error(
-        error.response?.data?.error || "Failed to fetch profile"
-      );
+      console.error('❌ Failed to fetch profile:', error);
+      const errorMessage = error.response?.data?.message 
+        || error.response?.data?.error 
+        || 'Failed to fetch profile';
+      throw new Error(errorMessage);
     }
   },
 
-  // Get Profile by ID
+  // Get Profile by ID (for viewing other profiles)
   getProfileById: async (id: string): Promise<ProfileResponse> => {
     try {
-      const response = await api.get<ProfileResponse>(
-        `/profile/${id}`
-      );
+      console.log('👤 Fetching profile by ID:', id);
+      const response = await api.get<ProfileResponse>(`/profile/${id}`);
+      console.log('✅ Profile fetched successfully');
       return response.data;
     } catch (error: any) {
-      throw new Error(
-        error.response?.data?.error || "Failed to fetch profile"
-      );
+      console.error('❌ Failed to fetch profile:', error);
+      const errorMessage = error.response?.data?.message 
+        || error.response?.data?.error 
+        || 'Failed to fetch profile';
+      throw new Error(errorMessage);
     }
   },
 
@@ -109,29 +117,35 @@ export const profileService = {
     city?: string;
   }): Promise<ProfileResponse> => {
     try {
+      console.log('📋 Fetching profiles with filters:', filters);
       const queryParams = new URLSearchParams(filters as any).toString();
       const response = await api.get<ProfileResponse>(
-        `/profile/list${queryParams ? `?${queryParams}` : ""}`
+        `/profile/list${queryParams ? `?${queryParams}` : ''}`
       );
+      console.log('✅ Profiles fetched successfully');
       return response.data;
     } catch (error: any) {
-      throw new Error(
-        error.response?.data?.error || "Failed to fetch profiles"
-      );
+      console.error('❌ Failed to fetch profiles:', error);
+      const errorMessage = error.response?.data?.message 
+        || error.response?.data?.error 
+        || 'Failed to fetch profiles';
+      throw new Error(errorMessage);
     }
   },
 
   // Delete Profile
   deleteProfile: async (): Promise<ProfileResponse> => {
     try {
-      const response = await api.delete<ProfileResponse>(
-        "/profile"
-      );
+      console.log('🗑️ Deleting profile...');
+      const response = await api.delete<ProfileResponse>('/profile');
+      console.log('✅ Profile deleted successfully');
       return response.data;
     } catch (error: any) {
-      throw new Error(
-        error.response?.data?.error || "Failed to delete profile"
-      );
+      console.error('❌ Failed to delete profile:', error);
+      const errorMessage = error.response?.data?.message 
+        || error.response?.data?.error 
+        || 'Failed to delete profile';
+      throw new Error(errorMessage);
     }
   },
 };
