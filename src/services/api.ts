@@ -15,17 +15,18 @@
 import axios from "axios";
 
 const api = axios.create({
-    baseURL: "https://15-207-55-215.nip.io", //  Updated to your actual backend URL
+    baseURL: "https://15-207-55-215.nip.io/backend", //  Added /backend
     withCredentials: true,
     headers: {
         "Content-Type": "application/json",
     },
 });
 
-// Add request interceptor (optional - for auth tokens)
+// Add request interceptor - FIXED token key
 api.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem("token");
+        // ✅ Changed from "token" to "authToken" (consistent with your app)
+        const token = localStorage.getItem("authToken");
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
@@ -36,13 +37,15 @@ api.interceptors.request.use(
     }
 );
 
-// Add response interceptor (optional - for error handling)
+// Add response interceptor - FIXED token key
 api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
             // Handle unauthorized - redirect to login
-            localStorage.removeItem("token");
+            // ✅ Changed from "token" to "authToken"
+            localStorage.removeItem("authToken");
+            localStorage.removeItem("user"); // Also clear user data
             window.location.href = "/login";
         }
         return Promise.reject(error);
