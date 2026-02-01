@@ -1,5 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { UserPlus, CheckCircle, XCircle, Clock, Eye, Loader2, Heart, Users, AlertTriangle, Search, Sparkles } from 'lucide-react';
+import {
+  UserPlus,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Eye,
+  Loader2,
+  Heart,
+  Users,
+  AlertTriangle,
+  Search,
+  Sparkles,
+} from 'lucide-react';
+import api from '../services/api';
 
 interface User {
   _id: string;
@@ -31,7 +44,8 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
   const [activeTab, setActiveTab] = useState<'received' | 'sent'>('received');
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'accepted' | 'rejected'>('all');
+  const [filterStatus, setFilterStatus] =
+    useState<'all' | 'pending' | 'accepted' | 'rejected'>('all');
   const [receivedRequests, setReceivedRequests] = useState<Request[]>([]);
   const [sentRequests, setSentRequests] = useState<Request[]>([]);
   const [error, setError] = useState<string>('');
@@ -39,84 +53,19 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
   const [requestCounts, setRequestCounts] = useState({
     received: 0,
     sent: 0,
-    pending: 0
+    pending: 0,
   });
 
-  // API Base URL
-  //  const API_BASE_URL = 'https://matrimonial-backend-14t2.onrender.com/api/request';
-  // const API_BASE_URL = 'http://localhost:5000/api/request';
-  const API_BASE_URL = 'https://api.rsaristomatch.com/api/request';
-
-  // Calculate age from date of birth
-  const calculateAge = (dateOfBirth: string): number => {
-    try {
-      const birthDate = new Date(dateOfBirth);
-      const today = new Date();
-      let age = today.getFullYear() - birthDate.getFullYear();
-      const monthDiff = today.getMonth() - birthDate.getMonth();
-      
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-      }
-      
-      return age;
-    } catch (error) {
-      return 0;
-    }
-  };
-
-  // Format time ago
-  const getTimeAgo = (createdAt: string): string => {
-    try {
-      const created = new Date(createdAt);
-      const now = new Date();
-      const diffInMs = now.getTime() - created.getTime();
-      const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-      const diffInDays = Math.floor(diffInHours / 24);
-
-      if (diffInHours < 1) return 'Just now';
-      if (diffInHours < 24) return `${diffInHours} hours ago`;
-      if (diffInDays === 1) return '1 day ago';
-      if (diffInDays < 7) return `${diffInDays} days ago`;
-      if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} weeks ago`;
-      return `${Math.floor(diffInDays / 30)} months ago`;
-    } catch (error) {
-      return 'Recently';
-    }
-  };
-
-  // Get default profile image
-  const getDefaultProfileImage = (gender: string): string => {
-    return gender === 'female' 
-      ? 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop&crop=face'
-      : 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face';
-  };
-
-  // Get auth token
-  const getAuthToken = (): string => {
-    return localStorage.getItem('authToken') || '';
-  };
-
-  // Fetch request statistics
+  // Fetch request statistics  ✅ (MISSING PART FIXED)
   const fetchRequestStats = async () => {
     try {
-      const token = getAuthToken();
-      const response = await fetch(`${API_BASE_URL}/stats`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch request statistics');
-      }
-
-      const result = await response.json();
+      const response = await api.get('/request/stats');
+      const result = response.data;
       if (result.success) {
         setRequestCounts(result.data);
       }
     } catch (err) {
+      console.error('Failed to fetch request stats');
     }
   };
 
@@ -125,34 +74,25 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
     try {
       setLoading(true);
       setError('');
-      const token = getAuthToken();
-      
-      const response = await fetch(`${API_BASE_URL}/received`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch received requests');
-      }
+      const response = await api.get('/request/received');
+      const result = response.data;
 
-      const result = await response.json();
-      
       if (result.success) {
         const requestsData = result.data || [];
         const formattedRequests: Request[] = requestsData
-          .filter((request: any) => request.sender && request.receiver)
-          .map((request: any) => ({
-            ...request,
-            type: 'received' as const,
+          .filter((r: any) => r.sender && r.receiver)
+          .map((r: any) => ({
+            ...r,
+            type: 'received',
           }));
-        
+
         if (requestsData.length !== formattedRequests.length) {
-          setInvalidRequestCount(requestsData.length - formattedRequests.length);
+          setInvalidRequestCount(
+            requestsData.length - formattedRequests.length
+          );
         }
-        
+
         setReceivedRequests(formattedRequests);
       } else {
         throw new Error(result.error || 'Failed to fetch requests');
@@ -173,34 +113,25 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
     try {
       setLoading(true);
       setError('');
-      const token = getAuthToken();
-      
-      const response = await fetch(`${API_BASE_URL}/sent`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch sent requests');
-      }
+      const response = await api.get('/request/sent');
+      const result = response.data;
 
-      const result = await response.json();
-      
       if (result.success) {
         const requestsData = result.data || [];
         const formattedRequests: Request[] = requestsData
-          .filter((request: any) => request.sender && request.receiver)
-          .map((request: any) => ({
-            ...request,
-            type: 'sent' as const,
+          .filter((r: any) => r.sender && r.receiver)
+          .map((r: any) => ({
+            ...r,
+            type: 'sent',
           }));
-        
+
         if (requestsData.length !== formattedRequests.length) {
-          setInvalidRequestCount(requestsData.length - formattedRequests.length);
+          setInvalidRequestCount(
+            requestsData.length - formattedRequests.length
+          );
         }
-        
+
         setSentRequests(formattedRequests);
       } else {
         throw new Error(result.error || 'Failed to fetch requests');
@@ -217,48 +148,35 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
   };
 
   // Update request status
-  const updateRequestStatus = async (requestId: string, status: 'accepted' | 'rejected') => {
+  const updateRequestStatus = async (
+    requestId: string,
+    status: 'accepted' | 'rejected'
+  ) => {
     try {
       setError('');
-      const token = getAuthToken();
-      
-      const response = await fetch(`${API_BASE_URL}/${requestId}/status`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status }),
-      });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Failed to ${status} request`);
-      }
+      const response = await api.put(`/request/${requestId}/status`, { status });
+      const result = response.data;
 
-      const result = await response.json();
       if (!result.success) {
-        throw new Error(result.error || `Failed to ${status} request`);
+        throw new Error(result.error || 'Failed to update request');
       }
 
-      // Update local state
       if (activeTab === 'received') {
-        setReceivedRequests(prev => 
-          prev.map(req => 
+        setReceivedRequests(prev =>
+          prev.map(req =>
             req._id === requestId ? { ...req, status } : req
           )
         );
       } else {
-        setSentRequests(prev => 
-          prev.map(req => 
+        setSentRequests(prev =>
+          prev.map(req =>
             req._id === requestId ? { ...req, status } : req
           )
         );
       }
 
-      // Refresh stats
       await fetchRequestStats();
-
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update request');
     }
@@ -268,70 +186,29 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
   const deleteRequest = async (requestId: string) => {
     try {
       setError('');
-      const token = getAuthToken();
-      
-      const response = await fetch(`${API_BASE_URL}/${requestId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to delete request');
-      }
+      const response = await api.delete(`/request/${requestId}`);
+      const result = response.data;
 
-      const result = await response.json();
       if (!result.success) {
         throw new Error(result.error || 'Failed to delete request');
       }
 
-      // Update local state
       if (activeTab === 'received') {
-        setReceivedRequests(prev => prev.filter(req => req._id !== requestId));
+        setReceivedRequests(prev =>
+          prev.filter(req => req._id !== requestId)
+        );
       } else {
         setSentRequests(prev => prev.filter(req => req._id !== requestId));
       }
 
-      // Refresh stats
       await fetchRequestStats();
-
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete request');
     }
   };
 
-  // Handle accept request
-  const handleAcceptRequest = (requestId: string) => {
-    updateRequestStatus(requestId, 'accepted');
-  };
-
-  // Handle reject request
-  const handleRejectRequest = (requestId: string) => {
-    updateRequestStatus(requestId, 'rejected');
-  };
-
-  // Handle delete request
-  const handleDeleteRequest = (requestId: string) => {
-    if (window.confirm('Are you sure you want to delete this request?')) {
-      deleteRequest(requestId);
-    }
-  };
-
-  const handleViewProfile = (request: Request) => {
-    const profileUser = activeTab === 'received' ? request.sender : request.receiver;
-    if (!profileUser) {
-      setError('Cannot view profile: User data is missing');
-      return;
-    }
-    onNavigate('profile-view', { 
-      profileId: profileUser._id,
-      user: profileUser
-    });
-  };
-
-  // Fetch data when tab changes
+  // Effects
   useEffect(() => {
     if (activeTab === 'received') {
       fetchReceivedRequests();
