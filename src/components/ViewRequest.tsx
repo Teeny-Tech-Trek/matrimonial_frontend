@@ -1,10 +1,625 @@
+// import React, { useState, useEffect } from 'react';
+// import {
+//   UserPlus,
+//   CheckCircle,
+//   XCircle,
+//   Clock,
+//   Eye,
+//   Loader2,
+//   Heart,
+//   Users,
+//   AlertTriangle,
+//   Search,
+//   Sparkles,
+// } from 'lucide-react';
+// import api from '../services/api';
+
+// interface User {
+//   _id: string;
+//   fullName: string;
+//   dateOfBirth: string;
+//   gender: string;
+//   profileCreatedFor: string;
+//   education?: string;
+//   occupation?: string;
+//   location?: string;
+//   profilePhotos?: string[];
+// }
+
+// interface Request {
+//   _id: string;
+//   sender: User | null;
+//   receiver: User | null;
+//   status: 'pending' | 'accepted' | 'rejected';
+//   compatibility?: number;
+//   createdAt: string;
+//   type: 'received' | 'sent';
+// }
+
+// interface ViewRequestsProps {
+//   onNavigate: (page: string, data?: any) => void;
+// }
+
+// export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
+//   const [activeTab, setActiveTab] = useState<'received' | 'sent'>('received');
+//   const [loading, setLoading] = useState(false);
+//   const [searchQuery, setSearchQuery] = useState('');
+//   const [filterStatus, setFilterStatus] =
+//     useState<'all' | 'pending' | 'accepted' | 'rejected'>('all');
+//   const [receivedRequests, setReceivedRequests] = useState<Request[]>([]);
+//   const [sentRequests, setSentRequests] = useState<Request[]>([]);
+//   const [error, setError] = useState<string>('');
+//   const [invalidRequestCount, setInvalidRequestCount] = useState<number>(0);
+//   const [requestCounts, setRequestCounts] = useState({
+//     received: 0,
+//     sent: 0,
+//     pending: 0,
+//   });
+
+//   // Fetch request statistics  ✅ (MISSING PART FIXED)
+//   const fetchRequestStats = async () => {
+//     try {
+//       const response = await api.get('/request/stats');
+//       const result = response.data;
+//       if (result.success) {
+//         setRequestCounts(result.data);
+//       }
+//     } catch (err) {
+//       console.error('Failed to fetch request stats');
+//     }
+//   };
+
+//   // Fetch received requests
+//   const fetchReceivedRequests = async (retryCount = 0) => {
+//     try {
+//       setLoading(true);
+//       setError('');
+
+//       const response = await api.get('/request/received');
+//       const result = response.data;
+
+//       if (result.success) {
+//         const requestsData = result.data || [];
+//         const formattedRequests: Request[] = requestsData
+//           .filter((r: any) => r.sender && r.receiver)
+//           .map((r: any) => ({
+//             ...r,
+//             type: 'received',
+//           }));
+
+//         if (requestsData.length !== formattedRequests.length) {
+//           setInvalidRequestCount(
+//             requestsData.length - formattedRequests.length
+//           );
+//         }
+
+//         setReceivedRequests(formattedRequests);
+//       } else {
+//         throw new Error(result.error || 'Failed to fetch requests');
+//       }
+//     } catch (err) {
+//       if (retryCount < 3) {
+//         setTimeout(() => fetchReceivedRequests(retryCount + 1), 1000);
+//         return;
+//       }
+//       setError(err instanceof Error ? err.message : 'Failed to fetch requests');
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   // Fetch sent requests
+//   const fetchSentRequests = async (retryCount = 0) => {
+//     try {
+//       setLoading(true);
+//       setError('');
+
+//       const response = await api.get('/request/sent');
+//       const result = response.data;
+
+//       if (result.success) {
+//         const requestsData = result.data || [];
+//         const formattedRequests: Request[] = requestsData
+//           .filter((r: any) => r.sender && r.receiver)
+//           .map((r: any) => ({
+//             ...r,
+//             type: 'sent',
+//           }));
+
+//         if (requestsData.length !== formattedRequests.length) {
+//           setInvalidRequestCount(
+//             requestsData.length - formattedRequests.length
+//           );
+//         }
+
+//         setSentRequests(formattedRequests);
+//       } else {
+//         throw new Error(result.error || 'Failed to fetch requests');
+//       }
+//     } catch (err) {
+//       if (retryCount < 3) {
+//         setTimeout(() => fetchSentRequests(retryCount + 1), 1000);
+//         return;
+//       }
+//       setError(err instanceof Error ? err.message : 'Failed to fetch requests');
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   // Update request status
+//   const updateRequestStatus = async (
+//     requestId: string,
+//     status: 'accepted' | 'rejected'
+//   ) => {
+//     try {
+//       setError('');
+
+//       const response = await api.put(`/request/${requestId}/status`, { status });
+//       const result = response.data;
+
+//       if (!result.success) {
+//         throw new Error(result.error || 'Failed to update request');
+//       }
+
+//       if (activeTab === 'received') {
+//         setReceivedRequests(prev =>
+//           prev.map(req =>
+//             req._id === requestId ? { ...req, status } : req
+//           )
+//         );
+//       } else {
+//         setSentRequests(prev =>
+//           prev.map(req =>
+//             req._id === requestId ? { ...req, status } : req
+//           )
+//         );
+//       }
+
+//       await fetchRequestStats();
+//     } catch (err) {
+//       setError(err instanceof Error ? err.message : 'Failed to update request');
+//     }
+//   };
+
+//   // Delete request
+//   const deleteRequest = async (requestId: string) => {
+//     try {
+//       setError('');
+
+//       const response = await api.delete(`/request/${requestId}`);
+//       const result = response.data;
+
+//       if (!result.success) {
+//         throw new Error(result.error || 'Failed to delete request');
+//       }
+
+//       if (activeTab === 'received') {
+//         setReceivedRequests(prev =>
+//           prev.filter(req => req._id !== requestId)
+//         );
+//       } else {
+//         setSentRequests(prev => prev.filter(req => req._id !== requestId));
+//       }
+
+//       await fetchRequestStats();
+//     } catch (err) {
+//       setError(err instanceof Error ? err.message : 'Failed to delete request');
+//     }
+//   };
+
+//   // Effects
+//   useEffect(() => {
+//     if (activeTab === 'received') {
+//       fetchReceivedRequests();
+//     } else {
+//       fetchSentRequests();
+//     }
+//     fetchRequestStats();
+//   }, [activeTab]);
+
+//   // Stats calculations
+//   const pendingReceived = receivedRequests.filter(r => r.status === 'pending').length;
+//   const acceptedSent = sentRequests.filter(r => r.status === 'accepted').length;
+//   const rejectedSent = sentRequests.filter(r => r.status === 'rejected').length;
+//   const pendingSent = sentRequests.filter(r => r.status === 'pending').length;
+
+//   // Filter requests based on search and status
+//   const filteredRequests = (activeTab === 'received' ? receivedRequests : sentRequests).filter(req => {
+//     const targetUser = activeTab === 'received' ? req.sender : req.receiver;
+//     if (!targetUser) {
+//       return false;
+//     }
+//     const matchesSearch =
+//       (targetUser.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
+//      (targetUser.gender?.toLowerCase().includes(searchQuery.toLowerCase()) || false);
+//     const matchesStatus = filterStatus === 'all' || req.status === filterStatus;
+//     return matchesSearch && matchesStatus;
+//   });
+
+//   return (
+//     <div className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50 p-6">
+//       <div className="max-w-7xl mx-auto space-y-6">
+//         {/* Error Message */}
+//         {error && (
+//           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center gap-2">
+//             <AlertTriangle className="h-5 w-5" />
+//             {error}
+//             <button 
+//               onClick={() => setError('')} 
+//               className="ml-auto text-red-500 hover:text-red-700"
+//             >
+//               ×
+//             </button>
+//           </div>
+//         )}
+
+//         {/* Invalid Requests Warning */}
+//         {invalidRequestCount > 0 && (
+//           <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-xl flex items-center gap-2">
+//             <AlertTriangle className="h-5 w-5" />
+//             <span>{invalidRequestCount} invalid request(s) could not be displayed due to missing user data.</span>
+//           </div>
+//         )}
+
+//         {/* Hero Header */}
+//         <div className="relative overflow-hidden bg-gradient-to-r from-rose-600 to-pink-600 rounded-3xl p-8 text-white shadow-2xl">
+//           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+//           <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
+          
+//           <div className="relative z-10">
+//             <div className="flex items-center gap-3 mb-4">
+//               <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+//                 <UserPlus className="h-8 w-8" />
+//               </div>
+//               <div>
+//                 <h1 className="text-4xl font-bold mb-1">Connection Requests</h1>
+//                 <p className="text-rose-100 text-lg">Manage your meaningful connections</p>
+//               </div>
+//             </div>
+            
+//             {requestCounts.pending > 0 && (
+//               <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
+//                 <Sparkles className="h-5 w-5 animate-pulse" />
+//                 <span className="font-semibold">{requestCounts.pending} new requests waiting for you!</span>
+//               </div>
+//             )}
+//           </div>
+//         </div>
+
+//         {/* Tab Navigation with Stats */}
+//         <div className="grid md:grid-cols-2 gap-4">
+//           <button
+//             onClick={() => setActiveTab('received')}
+//             className={`relative overflow-hidden rounded-2xl p-6 transition-all ${
+//               activeTab === 'received'
+//                 ? 'bg-white text-gray-900 shadow-xl ring-2 ring-rose-600'
+//                 : 'bg-white text-gray-700 shadow-lg hover:shadow-xl'
+//             }`}
+//           >
+//             <div className="flex items-center justify-between">
+//               <div className="text-left">
+//                 <div className="flex items-center gap-2 mb-2">
+//                   <Heart className="h-6 w-6 fill-rose-600 text-rose-600" />
+//                   <span className="text-2xl font-bold">Received</span>
+//                 </div>
+//                 <p className="text-sm text-gray-600">
+//                   Profiles interested in you
+//                 </p>
+//               </div>
+//               <div className="text-right">
+//                 <div className="text-4xl font-bold text-gray-900">{requestCounts.received}</div>
+//                 {pendingReceived > 0 && (
+//                   <span className="inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-rose-600 to-pink-600 text-white">
+//                     {pendingReceived} New
+//                   </span>
+//                 )}
+//               </div>
+//             </div>
+//           </button>
+
+//           <button
+//             onClick={() => setActiveTab('sent')}
+//             className={`relative overflow-hidden rounded-2xl p-6 transition-all ${
+//               activeTab === 'sent'
+//                 ? 'bg-white text-gray-900 shadow-xl ring-2 ring-rose-600'
+//                 : 'bg-white text-gray-700 shadow-lg hover:shadow-xl'
+//             }`}
+//           >
+//             <div className="flex items-center justify-between">
+//               <div className="text-left">
+//                 <div className="flex items-center gap-2 mb-2">
+//                   <Users className="h-6 w-6 text-gray-700" />
+//                   <span className="text-2xl font-bold">Sent</span>
+//                 </div>
+//                 <p className="text-sm text-gray-600">
+//                   Your sent requests
+//                 </p>
+//               </div>
+//               <div className="text-right">
+//                 <div className="text-4xl font-bold text-gray-900">{requestCounts.sent}</div>
+//                 {acceptedSent > 0 && (
+//                   <span className="inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
+//                     {acceptedSent} Accepted
+//                   </span>
+//                 )}
+//               </div>
+//             </div>
+//           </button>
+//         </div>
+
+//         {/* Search and Filter Bar */}
+//         <div className="bg-white rounded-2xl shadow-lg p-6">
+//           <div className="flex flex-col md:flex-row gap-6">
+//             <div className="flex-1 relative">
+//               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+//               <input
+//                 type="text"
+//                 placeholder="Search by name or location..."
+//                 value={searchQuery}
+//                 onChange={(e) => setSearchQuery(e.target.value)}
+//                 className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-rose-500 focus:outline-none transition-colors"
+//               />
+//             </div>
+            
+//             {/* Filter Pills */}
+//             <div className="flex flex-wrap gap-3">
+//               <div
+//                 onClick={() => setFilterStatus('all')}
+//                 className={`cursor-pointer px-5 py-2.5 rounded-full font-medium transition-all flex items-center gap-2 ${
+//                   filterStatus === 'all'
+//                     ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white shadow-lg scale-105'
+//                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+//                 }`}
+//               >
+//                 <span className="text-sm">All Requests</span>
+//                 <span className={`text-xs px-2 py-0.5 rounded-full ${
+//                   filterStatus === 'all' ? 'bg-white/20' : 'bg-gray-200'
+//                 }`}>
+//                   {(activeTab === 'received' ? receivedRequests : sentRequests).length}
+//                 </span>
+//               </div>
+              
+//               <div
+//                 onClick={() => setFilterStatus('pending')}
+//                 className={`cursor-pointer px-5 py-2.5 rounded-full font-medium transition-all flex items-center gap-2 ${
+//                   filterStatus === 'pending'
+//                     ? 'bg-blue-600 text-white shadow-lg scale-105'
+//                     : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+//                 }`}
+//               >
+//                 <Clock className="h-4 w-4" />
+//                 <span className="text-sm">Pending</span>
+//                 <span className={`text-xs px-2 py-0.5 rounded-full ${
+//                   filterStatus === 'pending' ? 'bg-white/20' : 'bg-blue-100'
+//                 }`}>
+//                   {activeTab === 'received' ? pendingReceived : pendingSent}
+//                 </span>
+//               </div>
+              
+//               <div
+//                 onClick={() => setFilterStatus('accepted')}
+//                 className={`cursor-pointer px-5 py-2.5 rounded-full font-medium transition-all flex items-center gap-2 ${
+//                   filterStatus === 'accepted'
+//                     ? 'bg-green-600 text-white shadow-lg scale-105'
+//                     : 'bg-green-50 text-green-700 hover:bg-green-100'
+//                 }`}
+//               >
+//                 <CheckCircle className="h-4 w-4" />
+//                 <span className="text-sm">Accepted</span>
+//                 <span className={`text-xs px-2 py-0.5 rounded-full ${
+//                   filterStatus === 'accepted' ? 'bg-white/20' : 'bg-green-100'
+//                 }`}>
+//                   {activeTab === 'received' 
+//                     ? receivedRequests.filter(r => r.status === 'accepted').length 
+//                     : acceptedSent}
+//                 </span>
+//               </div>
+              
+//               <div
+//                 onClick={() => setFilterStatus('rejected')}
+//                 className={`cursor-pointer px-5 py-2.5 rounded-full font-medium transition-all flex items-center gap-2 ${
+//                   filterStatus === 'rejected'
+//                     ? 'bg-red-600 text-white shadow-lg scale-105'
+//                     : 'bg-red-50 text-red-700 hover:bg-red-100'
+//                 }`}
+//               >
+//                 <XCircle className="h-4 w-4" />
+//                 <span className="text-sm">Declined</span>
+//                 <span className={`text-xs px-2 py-0.5 rounded-full ${
+//                   filterStatus === 'rejected' ? 'bg-white/20' : 'bg-red-100'
+//                 }`}>
+//                   {activeTab === 'received' 
+//                     ? receivedRequests.filter(r => r.status === 'rejected').length 
+//                     : rejectedSent}
+//                 </span>
+//               </div>
+//             </div>
+//           </div>
+//         </div>
+
+//         {/* Requests Grid */}
+//         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+//           {loading ? (
+//             <div className="col-span-full text-center py-12">
+//               <Loader2 className="h-12 w-12 animate-spin text-rose-600 mx-auto mb-4" />
+//               <p className="text-gray-600">Loading requests...</p>
+//             </div>
+//           ) : filteredRequests.length === 0 ? (
+//             <div className="col-span-full text-center py-12 bg-white rounded-2xl shadow-lg">
+//               <UserPlus className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+//               <h3 className="text-xl font-semibold text-gray-900 mb-2">No requests found</h3>
+//               <p className="text-gray-600">
+//                 {searchQuery || filterStatus !== 'all' 
+//                   ? 'Try adjusting your search or filters' 
+//                   : activeTab === 'received' 
+//                     ? 'No received requests at the moment' 
+//                     : "You haven't sent any requests yet"}
+//               </p>
+//             </div>
+//           ) : (
+//             filteredRequests.map((request, index) => {
+//               const targetUser = activeTab === 'received' ? request.sender : request.receiver;
+//               if (!targetUser) {
+//                 return (
+//                   <div
+//                     key={request._id}
+//                     className="bg-white rounded-2xl shadow-lg p-6 text-center flex items-center justify-center gap-2"
+//                     style={{ animationDelay: `${index * 100}ms` }}
+//                   >
+//                     <AlertTriangle className="h-5 w-5 text-yellow-600" />
+//                     <p className="text-yellow-600">Invalid request: User data missing</p>
+//                   </div>
+//                 );
+//               }
+//               const age = calculateAge(targetUser.dateOfBirth);
+//               const profileImage = targetUser.profilePhotos?.[0] || getDefaultProfileImage(targetUser.gender);
+              
+//               return (
+//                 <div
+//                   key={request._id}
+//                   className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all overflow-hidden animate-fade-in"
+//                   style={{ animationDelay: `${index * 100}ms` }}
+//                 >
+//                   {/* Image Header */}
+//                   <div className="relative h-48 overflow-hidden">
+//                     <img
+//                       src={profileImage}
+//                       alt={targetUser.fullName}
+//                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+//                       onError={(e) => {
+//                         e.currentTarget.src = getDefaultProfileImage(targetUser.gender);
+//                       }}
+//                     />
+//                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                    
+//                     {/* Status Badge */}
+//                     {request.status === 'pending' && activeTab === 'received' && (
+//                       <div className="absolute top-4 right-4">
+//                         <span className="bg-gradient-to-r from-rose-600 to-pink-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg animate-pulse flex items-center gap-1">
+//                           <Sparkles className="h-3 w-3" />
+//                           New
+//                         </span>
+//                       </div>
+//                     )}
+                    
+//                     {/* Compatibility Badge */}
+//                     {request.compatibility && (
+//                       <div className="absolute top-4 left-4">
+//                         <div className="bg-white/90 backdrop-blur-sm text-gray-900 text-sm font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1">
+//                           <Heart className="h-4 w-4 text-rose-600 fill-rose-600" />
+//                           {request.compatibility}%
+//                         </div>
+//                       </div>
+//                     )}
+                    
+//                     {/* Time */}
+//                     <div className="absolute bottom-4 left-4">
+//                       <span className="bg-black/50 backdrop-blur-sm text-white text-xs px-3 py-1 rounded-full flex items-center gap-1">
+//                         <Clock className="h-3 w-3" />
+//                         {getTimeAgo(request.createdAt)}
+//                       </span>
+//                     </div>
+//                   </div>
+
+//                   {/* Content */}
+//                   <div className="p-6">
+                 
+//                       <h3 className="text-xl font-bold text-gray-900 mb-2">{targetUser.fullName}</h3>
+//                       <p className="text-sm text-gray-600 mb-3 flex items-center gap-1">
+//                         <span className="font-medium">{age} years</span> 
+//                         <span>•</span>
+//                         <span className="capitalize">{targetUser.gender}</span>  
+//                       </p>
+
+//                       <div className="space-y-2 mb-4">
+//                         <div className="flex items-center gap-2 text-sm text-gray-600">
+//                           <span>👤</span>
+//                           <span className="capitalize">Profile for: {targetUser.profileCreatedFor}</span>  
+//                         </div>
+                       
+                    
+//                     </div>
+
+//                     {/* Actions */}
+//                     {activeTab === 'received' && request.status === 'pending' ? (
+//                       <div className="flex gap-2">
+                       
+//                         <button
+//                           onClick={() => handleAcceptRequest(request._id)}
+//                           className="flex-1 py-3 bg-gradient-to-r from-rose-600 to-pink-600 text-white rounded-xl hover:shadow-lg transition-all font-medium flex items-center justify-center gap-2"
+//                         >
+//                           <CheckCircle className="h-4 w-4" />
+//                           Accept
+//                         </button>
+//                         <button
+//                           onClick={() => handleRejectRequest(request._id)}
+//                           className="py-3 px-4 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all"
+//                         >
+//                           <XCircle className="h-5 w-5" />
+//                         </button>
+//                       </div>
+//                     ) : (
+//                       <div className="flex items-center justify-between">
+                       
+//                         <div className="flex items-center gap-2">
+//                           <div
+//                             className={`px-4 py-2 rounded-xl font-medium flex items-center gap-2 ${
+//                               request.status === 'accepted'
+//                                 ? 'bg-green-100 text-green-700'
+//                                 : request.status === 'rejected'
+//                                 ? 'bg-red-100 text-red-700'
+//                                 : 'bg-amber-100 text-amber-700'
+//                             }`}
+//                           >
+//                             {request.status === 'accepted' && <CheckCircle className="h-4 w-4" />}
+//                             {request.status === 'rejected' && <XCircle className="h-4 w-4" />}
+//                             {request.status === 'pending' && <Clock className="h-4 w-4" />}
+//                             {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+//                           </div>
+//                           {(request.status === 'rejected' || request.status === 'accepted') && (
+//                            <button
+//                             onClick={() => handleDeleteRequest(request._id)}
+//                             className="flex items-center gap-2 px-4 py-2 rounded-md border border-gray-300 text-gray-600 hover:text-red-600 hover:border-red-600 transition-colors duration-200"
+//                             title="Delete request"
+//                           >
+//                             Delete
+//                             <XCircle className="h-5 w-5" />
+//                           </button>
+
+//                           )}
+//                         </div>
+//                       </div>
+//                     )}
+//                   </div>
+//                 </div>
+//               );
+//             })
+//           )}
+//         </div>
+//       </div>
+
+//       {/* Add some custom animations */}
+//       <style >{`
+//         @keyframes fade-in {
+//           from { opacity: 0; transform: translateY(20px); }
+//           to { opacity: 1; transform: translateY(0); }
+//         }
+//         .animate-fade-in {
+//           animation: fade-in 0.5s ease-out forwards;
+//         }
+//       `}</style>
+//     </div>
+//   );
+// };
+
+
 import React, { useState, useEffect } from 'react';
 import {
   UserPlus,
   CheckCircle,
   XCircle,
   Clock,
-  Eye,
   Loader2,
   Heart,
   Users,
@@ -13,6 +628,56 @@ import {
   Sparkles,
 } from 'lucide-react';
 import api from '../services/api';
+
+// ─────────────────────────────────────────────
+// ✅ HELPER FUNCTIONS (component ke upar)
+// ─────────────────────────────────────────────
+
+/** DOB se age calculate karta hai */
+function calculateAge(dob: string): number {
+  const birth = new Date(dob);
+  const now = new Date();
+  let age = now.getFullYear() - birth.getFullYear();
+  const m = now.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--;
+  return age;
+}
+
+/** Relative time string — "2h ago", "3d ago" etc. */
+function getTimeAgo(dateStr: string): string {
+  const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+  if (seconds < 60) return 'Just now';
+
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months}mo ago`;
+
+  return `${Math.floor(months / 12)}y ago`;
+}
+
+/** Gender ke hisaab se default profile image return karta hai */
+function getDefaultProfileImage(gender: string): string {
+  // Agar aapke project mein actual default images hain toh unka path dein.
+  // Filaal ek generic placeholder URL use kar rahe hain.
+  const g = (gender || '').toLowerCase();
+  if (g === 'female' || g === 'woman')
+    return 'https://i.pravatar.cc/150?img=47';
+  if (g === 'male' || g === 'man')
+    return 'https://i.pravatar.cc/150?img=12';
+  return 'https://i.pravatar.cc/150?img=1';
+}
+
+// ─────────────────────────────────────────────
+// INTERFACES
+// ─────────────────────────────────────────────
 
 interface User {
   _id: string;
@@ -40,6 +705,10 @@ interface ViewRequestsProps {
   onNavigate: (page: string, data?: any) => void;
 }
 
+// ─────────────────────────────────────────────
+// MAIN COMPONENT
+// ─────────────────────────────────────────────
+
 export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
   const [activeTab, setActiveTab] = useState<'received' | 'sent'>('received');
   const [loading, setLoading] = useState(false);
@@ -56,7 +725,7 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
     pending: 0,
   });
 
-  // Fetch request statistics  ✅ (MISSING PART FIXED)
+  // ── Fetch request statistics ─────────────────
   const fetchRequestStats = async () => {
     try {
       const response = await api.get('/request/stats');
@@ -69,7 +738,7 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
     }
   };
 
-  // Fetch received requests
+  // ── Fetch received requests ──────────────────
   const fetchReceivedRequests = async (retryCount = 0) => {
     try {
       setLoading(true);
@@ -84,7 +753,7 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
           .filter((r: any) => r.sender && r.receiver)
           .map((r: any) => ({
             ...r,
-            type: 'received',
+            type: 'received' as const,
           }));
 
         if (requestsData.length !== formattedRequests.length) {
@@ -108,7 +777,7 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
     }
   };
 
-  // Fetch sent requests
+  // ── Fetch sent requests ──────────────────────
   const fetchSentRequests = async (retryCount = 0) => {
     try {
       setLoading(true);
@@ -123,7 +792,7 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
           .filter((r: any) => r.sender && r.receiver)
           .map((r: any) => ({
             ...r,
-            type: 'sent',
+            type: 'sent' as const,
           }));
 
         if (requestsData.length !== formattedRequests.length) {
@@ -147,7 +816,7 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
     }
   };
 
-  // Update request status
+  // ── Update request status (accept / reject) ─
   const updateRequestStatus = async (
     requestId: string,
     status: 'accepted' | 'rejected'
@@ -162,15 +831,16 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
         throw new Error(result.error || 'Failed to update request');
       }
 
+      // Local state update — no full re-fetch needed
       if (activeTab === 'received') {
-        setReceivedRequests(prev =>
-          prev.map(req =>
+        setReceivedRequests((prev) =>
+          prev.map((req) =>
             req._id === requestId ? { ...req, status } : req
           )
         );
       } else {
-        setSentRequests(prev =>
-          prev.map(req =>
+        setSentRequests((prev) =>
+          prev.map((req) =>
             req._id === requestId ? { ...req, status } : req
           )
         );
@@ -182,7 +852,7 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
     }
   };
 
-  // Delete request
+  // ── Delete request ───────────────────────────
   const deleteRequest = async (requestId: string) => {
     try {
       setError('');
@@ -195,11 +865,11 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
       }
 
       if (activeTab === 'received') {
-        setReceivedRequests(prev =>
-          prev.filter(req => req._id !== requestId)
+        setReceivedRequests((prev) =>
+          prev.filter((req) => req._id !== requestId)
         );
       } else {
-        setSentRequests(prev => prev.filter(req => req._id !== requestId));
+        setSentRequests((prev) => prev.filter((req) => req._id !== requestId));
       }
 
       await fetchRequestStats();
@@ -208,7 +878,12 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
     }
   };
 
-  // Effects
+  // ── ✅ Handler aliases (JSX mein use hote hain) ─
+  const handleAcceptRequest = (id: string) => updateRequestStatus(id, 'accepted');
+  const handleRejectRequest = (id: string) => updateRequestStatus(id, 'rejected');
+  const handleDeleteRequest = (id: string) => deleteRequest(id);
+
+  // ── Effects ──────────────────────────────────
   useEffect(() => {
     if (activeTab === 'received') {
       fetchReceivedRequests();
@@ -218,35 +893,44 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
     fetchRequestStats();
   }, [activeTab]);
 
-  // Stats calculations
-  const pendingReceived = receivedRequests.filter(r => r.status === 'pending').length;
-  const acceptedSent = sentRequests.filter(r => r.status === 'accepted').length;
-  const rejectedSent = sentRequests.filter(r => r.status === 'rejected').length;
-  const pendingSent = sentRequests.filter(r => r.status === 'pending').length;
+  // ── Stats calculations ───────────────────────
+  const pendingReceived = receivedRequests.filter((r) => r.status === 'pending').length;
+  const acceptedSent = sentRequests.filter((r) => r.status === 'accepted').length;
+  const rejectedSent = sentRequests.filter((r) => r.status === 'rejected').length;
+  const pendingSent = sentRequests.filter((r) => r.status === 'pending').length;
 
-  // Filter requests based on search and status
-  const filteredRequests = (activeTab === 'received' ? receivedRequests : sentRequests).filter(req => {
+  // ── Filter requests ──────────────────────────
+  const filteredRequests = (
+    activeTab === 'received' ? receivedRequests : sentRequests
+  ).filter((req) => {
     const targetUser = activeTab === 'received' ? req.sender : req.receiver;
-    if (!targetUser) {
-      return false;
-    }
+    if (!targetUser) return false;
+
     const matchesSearch =
-      (targetUser.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
-     (targetUser.gender?.toLowerCase().includes(searchQuery.toLowerCase()) || false);
-    const matchesStatus = filterStatus === 'all' || req.status === filterStatus;
+      targetUser.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      targetUser.gender?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      false;
+
+    const matchesStatus =
+      filterStatus === 'all' || req.status === filterStatus;
+
     return matchesSearch && matchesStatus;
   });
 
+  // ─────────────────────────────────────────────
+  // RENDER
+  // ─────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
+
         {/* Error Message */}
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center gap-2">
             <AlertTriangle className="h-5 w-5" />
             {error}
-            <button 
-              onClick={() => setError('')} 
+            <button
+              onClick={() => setError('')}
               className="ml-auto text-red-500 hover:text-red-700"
             >
               ×
@@ -258,7 +942,9 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
         {invalidRequestCount > 0 && (
           <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-xl flex items-center gap-2">
             <AlertTriangle className="h-5 w-5" />
-            <span>{invalidRequestCount} invalid request(s) could not be displayed due to missing user data.</span>
+            <span>
+              {invalidRequestCount} invalid request(s) could not be displayed due to missing user data.
+            </span>
           </div>
         )}
 
@@ -266,7 +952,7 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
         <div className="relative overflow-hidden bg-gradient-to-r from-rose-600 to-pink-600 rounded-3xl p-8 text-white shadow-2xl">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
-          
+
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
@@ -277,11 +963,13 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
                 <p className="text-rose-100 text-lg">Manage your meaningful connections</p>
               </div>
             </div>
-            
+
             {requestCounts.pending > 0 && (
               <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
                 <Sparkles className="h-5 w-5 animate-pulse" />
-                <span className="font-semibold">{requestCounts.pending} new requests waiting for you!</span>
+                <span className="font-semibold">
+                  {requestCounts.pending} new requests waiting for you!
+                </span>
               </div>
             )}
           </div>
@@ -289,6 +977,7 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
 
         {/* Tab Navigation with Stats */}
         <div className="grid md:grid-cols-2 gap-4">
+          {/* Received Tab */}
           <button
             onClick={() => setActiveTab('received')}
             className={`relative overflow-hidden rounded-2xl p-6 transition-all ${
@@ -303,12 +992,12 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
                   <Heart className="h-6 w-6 fill-rose-600 text-rose-600" />
                   <span className="text-2xl font-bold">Received</span>
                 </div>
-                <p className="text-sm text-gray-600">
-                  Profiles interested in you
-                </p>
+                <p className="text-sm text-gray-600">Profiles interested in you</p>
               </div>
               <div className="text-right">
-                <div className="text-4xl font-bold text-gray-900">{requestCounts.received}</div>
+                <div className="text-4xl font-bold text-gray-900">
+                  {requestCounts.received}
+                </div>
                 {pendingReceived > 0 && (
                   <span className="inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-rose-600 to-pink-600 text-white">
                     {pendingReceived} New
@@ -318,6 +1007,7 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
             </div>
           </button>
 
+          {/* Sent Tab */}
           <button
             onClick={() => setActiveTab('sent')}
             className={`relative overflow-hidden rounded-2xl p-6 transition-all ${
@@ -332,12 +1022,12 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
                   <Users className="h-6 w-6 text-gray-700" />
                   <span className="text-2xl font-bold">Sent</span>
                 </div>
-                <p className="text-sm text-gray-600">
-                  Your sent requests
-                </p>
+                <p className="text-sm text-gray-600">Your sent requests</p>
               </div>
               <div className="text-right">
-                <div className="text-4xl font-bold text-gray-900">{requestCounts.sent}</div>
+                <div className="text-4xl font-bold text-gray-900">
+                  {requestCounts.sent}
+                </div>
                 {acceptedSent > 0 && (
                   <span className="inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
                     {acceptedSent} Accepted
@@ -351,19 +1041,21 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
         {/* Search and Filter Bar */}
         <div className="bg-white rounded-2xl shadow-lg p-6">
           <div className="flex flex-col md:flex-row gap-6">
+            {/* Search Input */}
             <div className="flex-1 relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search by name or location..."
+                placeholder="Search by name or gender..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-rose-500 focus:outline-none transition-colors"
               />
             </div>
-            
+
             {/* Filter Pills */}
             <div className="flex flex-wrap gap-3">
+              {/* All */}
               <div
                 onClick={() => setFilterStatus('all')}
                 className={`cursor-pointer px-5 py-2.5 rounded-full font-medium transition-all flex items-center gap-2 ${
@@ -373,13 +1065,16 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
                 }`}
               >
                 <span className="text-sm">All Requests</span>
-                <span className={`text-xs px-2 py-0.5 rounded-full ${
-                  filterStatus === 'all' ? 'bg-white/20' : 'bg-gray-200'
-                }`}>
+                <span
+                  className={`text-xs px-2 py-0.5 rounded-full ${
+                    filterStatus === 'all' ? 'bg-white/20' : 'bg-gray-200'
+                  }`}
+                >
                   {(activeTab === 'received' ? receivedRequests : sentRequests).length}
                 </span>
               </div>
-              
+
+              {/* Pending */}
               <div
                 onClick={() => setFilterStatus('pending')}
                 className={`cursor-pointer px-5 py-2.5 rounded-full font-medium transition-all flex items-center gap-2 ${
@@ -390,13 +1085,16 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
               >
                 <Clock className="h-4 w-4" />
                 <span className="text-sm">Pending</span>
-                <span className={`text-xs px-2 py-0.5 rounded-full ${
-                  filterStatus === 'pending' ? 'bg-white/20' : 'bg-blue-100'
-                }`}>
+                <span
+                  className={`text-xs px-2 py-0.5 rounded-full ${
+                    filterStatus === 'pending' ? 'bg-white/20' : 'bg-blue-100'
+                  }`}
+                >
                   {activeTab === 'received' ? pendingReceived : pendingSent}
                 </span>
               </div>
-              
+
+              {/* Accepted */}
               <div
                 onClick={() => setFilterStatus('accepted')}
                 className={`cursor-pointer px-5 py-2.5 rounded-full font-medium transition-all flex items-center gap-2 ${
@@ -407,15 +1105,18 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
               >
                 <CheckCircle className="h-4 w-4" />
                 <span className="text-sm">Accepted</span>
-                <span className={`text-xs px-2 py-0.5 rounded-full ${
-                  filterStatus === 'accepted' ? 'bg-white/20' : 'bg-green-100'
-                }`}>
-                  {activeTab === 'received' 
-                    ? receivedRequests.filter(r => r.status === 'accepted').length 
+                <span
+                  className={`text-xs px-2 py-0.5 rounded-full ${
+                    filterStatus === 'accepted' ? 'bg-white/20' : 'bg-green-100'
+                  }`}
+                >
+                  {activeTab === 'received'
+                    ? receivedRequests.filter((r) => r.status === 'accepted').length
                     : acceptedSent}
                 </span>
               </div>
-              
+
+              {/* Declined */}
               <div
                 onClick={() => setFilterStatus('rejected')}
                 className={`cursor-pointer px-5 py-2.5 rounded-full font-medium transition-all flex items-center gap-2 ${
@@ -426,11 +1127,13 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
               >
                 <XCircle className="h-4 w-4" />
                 <span className="text-sm">Declined</span>
-                <span className={`text-xs px-2 py-0.5 rounded-full ${
-                  filterStatus === 'rejected' ? 'bg-white/20' : 'bg-red-100'
-                }`}>
-                  {activeTab === 'received' 
-                    ? receivedRequests.filter(r => r.status === 'rejected').length 
+                <span
+                  className={`text-xs px-2 py-0.5 rounded-full ${
+                    filterStatus === 'rejected' ? 'bg-white/20' : 'bg-red-100'
+                  }`}
+                >
+                  {activeTab === 'received'
+                    ? receivedRequests.filter((r) => r.status === 'rejected').length
                     : rejectedSent}
                 </span>
               </div>
@@ -440,41 +1143,49 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
 
         {/* Requests Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Loading State */}
           {loading ? (
             <div className="col-span-full text-center py-12">
               <Loader2 className="h-12 w-12 animate-spin text-rose-600 mx-auto mb-4" />
               <p className="text-gray-600">Loading requests...</p>
             </div>
           ) : filteredRequests.length === 0 ? (
+            /* Empty State */
             <div className="col-span-full text-center py-12 bg-white rounded-2xl shadow-lg">
               <UserPlus className="h-16 w-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-900 mb-2">No requests found</h3>
               <p className="text-gray-600">
-                {searchQuery || filterStatus !== 'all' 
-                  ? 'Try adjusting your search or filters' 
-                  : activeTab === 'received' 
-                    ? 'No received requests at the moment' 
-                    : "You haven't sent any requests yet"}
+                {searchQuery || filterStatus !== 'all'
+                  ? 'Try adjusting your search or filters'
+                  : activeTab === 'received'
+                  ? 'No received requests at the moment'
+                  : "You haven't sent any requests yet"}
               </p>
             </div>
           ) : (
+            /* Request Cards */
             filteredRequests.map((request, index) => {
-              const targetUser = activeTab === 'received' ? request.sender : request.receiver;
+              const targetUser =
+                activeTab === 'received' ? request.sender : request.receiver;
+
+              // Safety: agar targetUser null hai (shouldn't happen after filter, but just in case)
               if (!targetUser) {
                 return (
                   <div
                     key={request._id}
                     className="bg-white rounded-2xl shadow-lg p-6 text-center flex items-center justify-center gap-2"
-                    style={{ animationDelay: `${index * 100}ms` }}
                   >
                     <AlertTriangle className="h-5 w-5 text-yellow-600" />
                     <p className="text-yellow-600">Invalid request: User data missing</p>
                   </div>
                 );
               }
+
               const age = calculateAge(targetUser.dateOfBirth);
-              const profileImage = targetUser.profilePhotos?.[0] || getDefaultProfileImage(targetUser.gender);
-              
+              const profileImage =
+                targetUser.profilePhotos?.[0] ||
+                getDefaultProfileImage(targetUser.gender);
+
               return (
                 <div
                   key={request._id}
@@ -492,8 +1203,8 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
                       }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-                    
-                    {/* Status Badge */}
+
+                    {/* "New" Badge — only on pending received */}
                     {request.status === 'pending' && activeTab === 'received' && (
                       <div className="absolute top-4 right-4">
                         <span className="bg-gradient-to-r from-rose-600 to-pink-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg animate-pulse flex items-center gap-1">
@@ -502,7 +1213,7 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
                         </span>
                       </div>
                     )}
-                    
+
                     {/* Compatibility Badge */}
                     {request.compatibility && (
                       <div className="absolute top-4 left-4">
@@ -512,8 +1223,8 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
                         </div>
                       </div>
                     )}
-                    
-                    {/* Time */}
+
+                    {/* Time Ago */}
                     <div className="absolute bottom-4 left-4">
                       <span className="bg-black/50 backdrop-blur-sm text-white text-xs px-3 py-1 rounded-full flex items-center gap-1">
                         <Clock className="h-3 w-3" />
@@ -522,29 +1233,30 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
                     </div>
                   </div>
 
-                  {/* Content */}
+                  {/* Card Content */}
                   <div className="p-6">
-                 
-                      <h3 className="text-xl font-bold text-gray-900 mb-2">{targetUser.fullName}</h3>
-                      <p className="text-sm text-gray-600 mb-3 flex items-center gap-1">
-                        <span className="font-medium">{age} years</span> 
-                        <span>•</span>
-                        <span className="capitalize">{targetUser.gender}</span>  
-                      </p>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">
+                      {targetUser.fullName}
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-3 flex items-center gap-1">
+                      <span className="font-medium">{age} years</span>
+                      <span>•</span>
+                      <span className="capitalize">{targetUser.gender}</span>
+                    </p>
 
-                      <div className="space-y-2 mb-4">
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <span>👤</span>
-                          <span className="capitalize">Profile for: {targetUser.profileCreatedFor}</span>  
-                        </div>
-                       
-                    
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <span>👤</span>
+                        <span className="capitalize">
+                          Profile for: {targetUser.profileCreatedFor}
+                        </span>
+                      </div>
                     </div>
 
                     {/* Actions */}
                     {activeTab === 'received' && request.status === 'pending' ? (
+                      /* Accept / Reject buttons */
                       <div className="flex gap-2">
-                       
                         <button
                           onClick={() => handleAcceptRequest(request._id)}
                           className="flex-1 py-3 bg-gradient-to-r from-rose-600 to-pink-600 text-white rounded-xl hover:shadow-lg transition-all font-medium flex items-center justify-center gap-2"
@@ -560,9 +1272,10 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
                         </button>
                       </div>
                     ) : (
+                      /* Status badge + Delete (for accepted / rejected) */
                       <div className="flex items-center justify-between">
-                       
                         <div className="flex items-center gap-2">
+                          {/* Status Pill */}
                           <div
                             className={`px-4 py-2 rounded-xl font-medium flex items-center gap-2 ${
                               request.status === 'accepted'
@@ -572,21 +1285,30 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
                                 : 'bg-amber-100 text-amber-700'
                             }`}
                           >
-                            {request.status === 'accepted' && <CheckCircle className="h-4 w-4" />}
-                            {request.status === 'rejected' && <XCircle className="h-4 w-4" />}
-                            {request.status === 'pending' && <Clock className="h-4 w-4" />}
-                            {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                            {request.status === 'accepted' && (
+                              <CheckCircle className="h-4 w-4" />
+                            )}
+                            {request.status === 'rejected' && (
+                              <XCircle className="h-4 w-4" />
+                            )}
+                            {request.status === 'pending' && (
+                              <Clock className="h-4 w-4" />
+                            )}
+                            {request.status.charAt(0).toUpperCase() +
+                              request.status.slice(1)}
                           </div>
-                          {(request.status === 'rejected' || request.status === 'accepted') && (
-                           <button
-                            onClick={() => handleDeleteRequest(request._id)}
-                            className="flex items-center gap-2 px-4 py-2 rounded-md border border-gray-300 text-gray-600 hover:text-red-600 hover:border-red-600 transition-colors duration-200"
-                            title="Delete request"
-                          >
-                            Delete
-                            <XCircle className="h-5 w-5" />
-                          </button>
 
+                          {/* Delete button — only for accepted/rejected */}
+                          {(request.status === 'rejected' ||
+                            request.status === 'accepted') && (
+                            <button
+                              onClick={() => handleDeleteRequest(request._id)}
+                              className="flex items-center gap-2 px-4 py-2 rounded-md border border-gray-300 text-gray-600 hover:text-red-600 hover:border-red-600 transition-colors duration-200"
+                              title="Delete request"
+                            >
+                              Delete
+                              <XCircle className="h-5 w-5" />
+                            </button>
                           )}
                         </div>
                       </div>
@@ -599,11 +1321,17 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      {/* Add some custom animations */}
-      <style >{`
+      {/* Custom Animations */}
+      <style>{`
         @keyframes fade-in {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
         .animate-fade-in {
           animation: fade-in 0.5s ease-out forwards;
