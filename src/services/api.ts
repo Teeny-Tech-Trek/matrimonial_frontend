@@ -43,7 +43,7 @@ api.interceptors.response.use(
     (error) => {
         if (error.response?.status === 401) {
             // Handle unauthorized - redirect to login
-            // ✅ Changed from "token" to "authToken"
+            //  Changed from "token" to "authToken"
             localStorage.removeItem("authToken");
             localStorage.removeItem("user"); // Also clear user data
             window.location.href = "/login";

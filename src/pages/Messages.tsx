@@ -1027,9 +1027,7 @@ interface PhotoObject {
 interface User {
   _id: string;
   fullName: string;
-  // Conversations endpoint returns: profilePhotos: string[]
   profilePhotos?: string[];
-  // Connections endpoint returns: photos: [{ photoUrl, isPrimary }]
   photos?: PhotoObject[];
 }
 
@@ -1061,14 +1059,14 @@ interface MessagesProps {
 // ─────────────────────────────────────────────
 
 /**
- * ✅ Safely extract userId —
- * Try 1: currentUser JSON → .id or ._id
- * Try 2: standalone localStorage("userId")
- * Try 3: decode JWT payload
+ * ✅ FIXED localStorage keys — matched to api.js exactly:
+ *   token key  → "authToken"
+ *   user key   → "user"
  */
 const extractUserId = (): string | null => {
+  // Try 1: "user" key (matches api.js removeItem("user"))
   try {
-    const raw = localStorage.getItem("currentUser");
+    const raw = localStorage.getItem("user");
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed?.id) return parsed.id;
@@ -1078,11 +1076,13 @@ const extractUserId = (): string | null => {
     /* ignore */
   }
 
+  // Try 2: standalone userId key
   const standalone = localStorage.getItem("userId");
   if (standalone) return standalone;
 
+  // Try 3: decode JWT from "authToken" (matches api.js interceptor)
   try {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("authToken");
     if (token) {
       const payload = JSON.parse(atob(token.split(".")[1]));
       return payload?.id || payload?._id || payload?.userId || null;
@@ -1097,14 +1097,14 @@ const extractUserId = (): string | null => {
 const FALLBACK_IMG = "https://i.pravatar.cc/150?img=1";
 
 /**
- * ✅ Unified photo extractor — handles BOTH backend shapes:
- *   Shape A (conversations):  { profilePhotos: ["url1", "url2"] }
- *   Shape B (connections):    { photos: [{ photoUrl, isPrimary }] }
+ * ✅ Unified photo extractor — handles both backend shapes:
+ *   Shape A (conversations): { profilePhotos: ["url1", "url2"] }
+ *   Shape B (connections):   { photos: [{ photoUrl, isPrimary }] }
  */
 const getUserProfilePhoto = (user: any): string => {
   if (!user) return FALLBACK_IMG;
 
-  // Shape B first — photos object array
+  // Shape B — photos object array
   if (Array.isArray(user.photos) && user.photos.length > 0) {
     const primary = user.photos.find((p: any) => p?.isPrimary);
     const best = primary || user.photos[0];
@@ -1171,7 +1171,7 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
-  // ── get the other user from a conversation ─
+  // ── other user from conversation ───────────
   const getOtherUser = useCallback(
     (conv: Conversation | undefined): User | null => {
       if (!conv?.participants?.length) return null;
@@ -1183,7 +1183,7 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
     [userId]
   );
 
-  // ── refresh conversations list ─────────────
+  // ── refresh conversations ──────────────────
   const refreshConversations = useCallback(async () => {
     try {
       const res = await api.get("/messages/conversations");
@@ -1221,7 +1221,7 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
     fetchAll();
   }, [userId]);
 
-  // ── poll messages for the open chat ────────
+  // ── poll messages for selected chat ────────
   useEffect(() => {
     if (!selectedChat) {
       setMessages([]);
@@ -1265,15 +1265,14 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
     } catch (err: any) {
       console.error("❌ send:", err);
       setError(err?.response?.data?.error || "Failed to send");
-      setMessageText(trimmed); // restore on failure
+      setMessageText(trimmed);
     }
   };
 
-  // ── ✅ start or open a conversation ────────
-  // Backend: POST /messages/start  →  body: { userB: "<id>" }
+  // ── start / open conversation ──────────────
+  // Backend: POST /messages/start → body: { userB }
   const startConversation = async (connectionId: string) => {
     try {
-      // Already exists locally? Just open it.
       const existing = conversations.find((c) =>
         c.participants.some((p) => p._id === connectionId)
       );
@@ -1283,7 +1282,6 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
         return;
       }
 
-      // ✅ Correct endpoint + correct body key
       const res = await api.post("/messages/start", {
         userB: connectionId,
       });
@@ -1299,7 +1297,7 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
     }
   };
 
-  // ── mark read (local) ──────────────────────
+  // ── mark read locally ──────────────────────
   const markAsRead = (convId: string) => {
     if (!userId) return;
     setConversations((prev) =>
@@ -1400,7 +1398,7 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
   const activeConv = conversations.find((c) => c._id === selectedChat);
   const activeOther = getOtherUser(activeConv);
 
-  // Connections that don't have a conversation yet → show as "start chat"
+  // Connections without a conversation yet
   const connectionsWithoutConv = connections.filter(
     (conn) =>
       !conversations.some((c) =>
@@ -1448,7 +1446,7 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
           </div>
         )}
 
-        {/* Scrollable list */}
+        {/* List */}
         <div className="flex-1 overflow-y-auto">
 
           {/* Existing conversations */}
@@ -1504,7 +1502,9 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
                   </div>
                   <p
                     className={`text-xs truncate ${
-                      unread > 0 ? "text-gray-900 font-medium" : "text-gray-500"
+                      unread > 0
+                        ? "text-gray-900 font-medium"
+                        : "text-gray-500"
                     }`}
                   >
                     {conv.lastMessage?.text || "Start chatting"}
@@ -1520,7 +1520,7 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
             );
           })}
 
-          {/* Connections without a conversation → tap to start */}
+          {/* Connections without conversation — tap to start */}
           {connectionsWithoutConv.length > 0 && (
             <>
               <div className="px-4 pt-4 pb-2">
@@ -1557,7 +1557,7 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      {/* ──── RIGHT PANEL — chat view ──── */}
+      {/* ──── RIGHT PANEL — chat ──── */}
       <div
         className={`
           flex-1 flex flex-col h-full
@@ -1568,7 +1568,6 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
           <>
             {/* Chat header */}
             <div className="flex items-center gap-3 px-4 md:px-6 py-4 border-b border-gray-200 bg-white flex-shrink-0">
-              {/* Back — mobile only */}
               <button
                 className="md:hidden p-1 hover:bg-gray-100 rounded-full transition-colors"
                 onClick={() => setIsMobileOpen(false)}
@@ -1592,7 +1591,7 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
               </div>
             </div>
 
-            {/* Messages scroll area */}
+            {/* Messages */}
             <div
               className="flex-1 overflow-y-auto px-4 md:px-6 py-4 bg-gray-50"
               style={{
@@ -1610,7 +1609,9 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
                   return (
                     <div
                       key={msg._id}
-                      className={`flex ${isMine ? "justify-end" : "justify-start"}`}
+                      className={`flex ${
+                        isMine ? "justify-end" : "justify-start"
+                      }`}
                     >
                       <div
                         className={`max-w-[70%] rounded-2xl px-4 py-2.5 shadow-sm ${
@@ -1637,7 +1638,7 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
               </div>
             </div>
 
-            {/* Message input */}
+            {/* Input */}
             <div className="px-4 md:px-6 py-4 bg-white border-t border-gray-200 flex-shrink-0">
               <div className="flex items-center gap-3">
                 <input
@@ -1665,7 +1666,7 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
             </div>
           </>
         ) : (
-          /* Desktop placeholder when no chat selected */
+          /* Desktop — no chat selected */
           <div className="flex-1 flex flex-col items-center justify-center bg-gray-50">
             <MessageCircle className="h-24 w-24 mb-4 text-gray-200" />
             <p className="text-xl font-semibold text-gray-500 mb-1">
