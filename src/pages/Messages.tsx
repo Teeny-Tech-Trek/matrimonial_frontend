@@ -1002,8 +1002,6 @@
 //   );
 // };
 
-// export { Messages };
-
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   MessageCircle,
@@ -1058,13 +1056,7 @@ interface MessagesProps {
 // HELPERS
 // ─────────────────────────────────────────────
 
-/**
- * ✅ FIXED localStorage keys — matched to api.js exactly:
- *   token key  → "authToken"
- *   user key   → "user"
- */
 const extractUserId = (): string | null => {
-  // Try 1: "user" key (matches api.js removeItem("user"))
   try {
     const raw = localStorage.getItem("user");
     if (raw) {
@@ -1072,24 +1064,18 @@ const extractUserId = (): string | null => {
       if (parsed?.id) return parsed.id;
       if (parsed?._id) return parsed._id;
     }
-  } catch {
-    /* ignore */
-  }
+  } catch { /* ignore */ }
 
-  // Try 2: standalone userId key
   const standalone = localStorage.getItem("userId");
   if (standalone) return standalone;
 
-  // Try 3: decode JWT from "authToken" (matches api.js interceptor)
   try {
     const token = localStorage.getItem("authToken");
     if (token) {
       const payload = JSON.parse(atob(token.split(".")[1]));
       return payload?.id || payload?._id || payload?.userId || null;
     }
-  } catch {
-    /* ignore */
-  }
+  } catch { /* ignore */ }
 
   return null;
 };
@@ -1097,21 +1083,21 @@ const extractUserId = (): string | null => {
 const FALLBACK_IMG = "https://i.pravatar.cc/150?img=1";
 
 /**
- * ✅ Unified photo extractor — handles both backend shapes:
- *   Shape A (conversations): { profilePhotos: ["url1", "url2"] }
- *   Shape B (connections):   { photos: [{ photoUrl, isPrimary }] }
+ * ✅ Unified photo extractor — handles both shapes:
+ *   { profilePhotos: ["url1"] }          ← conversations endpoint
+ *   { photos: [{ photoUrl, isPrimary }] } ← connections endpoint
  */
 const getUserProfilePhoto = (user: any): string => {
   if (!user) return FALLBACK_IMG;
 
-  // Shape B — photos object array
+  // Shape B — photos object array (connections)
   if (Array.isArray(user.photos) && user.photos.length > 0) {
     const primary = user.photos.find((p: any) => p?.isPrimary);
     const best = primary || user.photos[0];
     if (best?.photoUrl) return best.photoUrl;
   }
 
-  // Shape A — profilePhotos string array
+  // Shape A — profilePhotos string array (conversations / messages)
   if (
     Array.isArray(user.profilePhotos) &&
     user.profilePhotos.length > 0 &&
@@ -1158,6 +1144,9 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
   const [error, setError] = useState<string | null>(null);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
+  // ✅ photosMap — userId → photoUrl (built from connections, used everywhere)
+  const [photosMap, setPhotosMap] = useState<Record<string, string>>({});
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const userId = extractUserId();
@@ -1171,7 +1160,7 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
-  // ── other user from conversation ───────────
+  // ── other user ─────────────────────────────
   const getOtherUser = useCallback(
     (conv: Conversation | undefined): User | null => {
       if (!conv?.participants?.length) return null;
@@ -1181,6 +1170,53 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
       );
     },
     [userId]
+  );
+
+  /**
+   * ✅ Build photosMap from connections response.
+   * connections endpoint returns correct photos — we store them here
+   * and use this map to fill in photos for conversations + messages
+   * where backend returns profilePhotos: []
+   */
+  const buildPhotosMap = useCallback((conns: any[]): Record<string, string> => {
+    const map: Record<string, string> = {};
+    conns.forEach((conn: any) => {
+      if (!conn._id) return;
+
+      // Shape: { photos: [{ photoUrl, isPrimary }] }
+      if (Array.isArray(conn.photos) && conn.photos.length > 0) {
+        const primary = conn.photos.find((p: any) => p?.isPrimary);
+        const best = primary || conn.photos[0];
+        if (best?.photoUrl) {
+          map[conn._id] = best.photoUrl;
+        }
+      }
+
+      // Shape: { profilePhotos: ["url"] }
+      if (
+        Array.isArray(conn.profilePhotos) &&
+        conn.profilePhotos.length > 0 &&
+        typeof conn.profilePhotos[0] === "string"
+      ) {
+        map[conn._id] = conn.profilePhotos[0];
+      }
+    });
+    return map;
+  }, []);
+
+  /**
+   * ✅ Get photo for any user — checks photosMap first,
+   * then falls back to whatever the user object has
+   */
+  const getPhotoForUser = useCallback(
+    (user: any): string => {
+      if (!user) return FALLBACK_IMG;
+      // photosMap se pehle dekho (connections se aaya correct photo hai)
+      if (photosMap[user._id]) return photosMap[user._id];
+      // fallback: user object pe jo bhi hai
+      return getUserProfilePhoto(user);
+    },
+    [photosMap]
   );
 
   // ── refresh conversations ──────────────────
@@ -1208,8 +1244,13 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
           api.get("/messages/conversations"),
           api.get("/request/connections/accepted"),
         ]);
-        setConnections(connRes.data?.data || []);
+
+        const conns = connRes.data?.data || [];
+        setConnections(conns);
         setConversations(convRes.data?.data || []);
+
+        // ✅ Build photosMap from connections — this is the source of truth for photos
+        setPhotosMap(buildPhotosMap(conns));
       } catch (err: any) {
         console.error("❌ fetch:", err);
         setError(err?.response?.data?.error || "Failed to load messages");
@@ -1219,9 +1260,9 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
     };
 
     fetchAll();
-  }, [userId]);
+  }, [userId, buildPhotosMap]);
 
-  // ── poll messages for selected chat ────────
+  // ── poll messages ──────────────────────────
   useEffect(() => {
     if (!selectedChat) {
       setMessages([]);
@@ -1247,7 +1288,7 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
     };
   }, [selectedChat]);
 
-  // ── send message ───────────────────────────
+  // ── send ───────────────────────────────────
   const handleSendMessage = async () => {
     const trimmed = messageText.trim();
     if (!trimmed || !selectedChat) return;
@@ -1269,8 +1310,7 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
     }
   };
 
-  // ── start / open conversation ──────────────
-  // Backend: POST /messages/start → body: { userB }
+  // ── start conversation ─────────────────────
   const startConversation = async (connectionId: string) => {
     try {
       const existing = conversations.find((c) =>
@@ -1282,6 +1322,7 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
         return;
       }
 
+      // POST /messages/start → { userB }
       const res = await api.post("/messages/start", {
         userB: connectionId,
       });
@@ -1297,7 +1338,7 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
     }
   };
 
-  // ── mark read locally ──────────────────────
+  // ── mark read ──────────────────────────────
   const markAsRead = (convId: string) => {
     if (!userId) return;
     setConversations((prev) =>
@@ -1398,7 +1439,6 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
   const activeConv = conversations.find((c) => c._id === selectedChat);
   const activeOther = getOtherUser(activeConv);
 
-  // Connections without a conversation yet
   const connectionsWithoutConv = connections.filter(
     (conn) =>
       !conversations.some((c) =>
@@ -1436,13 +1476,11 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
           </div>
         </div>
 
-        {/* Error banner */}
+        {/* Error */}
         {error && (
           <div className="mx-4 mt-2 px-3 py-2 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm flex items-center justify-between">
             <span>{error}</span>
-            <button onClick={() => setError(null)}>
-              <X className="h-4 w-4" />
-            </button>
+            <button onClick={() => setError(null)}><X className="h-4 w-4" /></button>
           </div>
         )}
 
@@ -1468,8 +1506,9 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
                 }`}
               >
                 <div className="relative flex-shrink-0">
+                  {/* ✅ getPhotoForUser — photosMap se pehle dekta hai */}
                   <img
-                    src={getUserProfilePhoto(other)}
+                    src={getPhotoForUser(other)}
                     alt={other.fullName}
                     className="w-12 h-12 rounded-full object-cover bg-gray-200"
                     onError={(e) =>
@@ -1485,13 +1524,7 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
 
                 <div className="flex-1 ml-3 min-w-0">
                   <div className="flex justify-between items-baseline mb-0.5">
-                    <h3
-                      className={`text-sm truncate ${
-                        unread > 0
-                          ? "font-bold text-gray-900"
-                          : "font-semibold text-gray-800"
-                      }`}
-                    >
+                    <h3 className={`text-sm truncate ${unread > 0 ? "font-bold text-gray-900" : "font-semibold text-gray-800"}`}>
                       {other.fullName || "Unknown"}
                     </h3>
                     {conv.lastMessage && (
@@ -1500,13 +1533,7 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
                       </span>
                     )}
                   </div>
-                  <p
-                    className={`text-xs truncate ${
-                      unread > 0
-                        ? "text-gray-900 font-medium"
-                        : "text-gray-500"
-                    }`}
-                  >
+                  <p className={`text-xs truncate ${unread > 0 ? "text-gray-900 font-medium" : "text-gray-500"}`}>
                     {conv.lastMessage?.text || "Start chatting"}
                   </p>
                 </div>
@@ -1520,7 +1547,7 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
             );
           })}
 
-          {/* Connections without conversation — tap to start */}
+          {/* Connections without conversation */}
           {connectionsWithoutConv.length > 0 && (
             <>
               <div className="px-4 pt-4 pb-2">
@@ -1535,7 +1562,7 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
                   className="flex items-center px-4 py-3 cursor-pointer hover:bg-rose-50 transition-colors border-b border-gray-50"
                 >
                   <img
-                    src={getUserProfilePhoto(conn)}
+                    src={getPhotoForUser(conn)}
                     alt={conn.fullName}
                     className="w-12 h-12 rounded-full object-cover bg-gray-200"
                     onError={(e) =>
@@ -1543,12 +1570,8 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
                     }
                   />
                   <div className="ml-3">
-                    <h3 className="font-semibold text-gray-900 text-sm">
-                      {conn.fullName}
-                    </h3>
-                    <p className="text-xs text-rose-500">
-                      Tap to start chatting
-                    </p>
+                    <h3 className="font-semibold text-gray-900 text-sm">{conn.fullName}</h3>
+                    <p className="text-xs text-rose-500">Tap to start chatting</p>
                   </div>
                 </div>
               ))}
@@ -1557,7 +1580,7 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      {/* ──── RIGHT PANEL — chat ──── */}
+      {/* ──── RIGHT PANEL ──── */}
       <div
         className={`
           flex-1 flex flex-col h-full
@@ -1575,8 +1598,9 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
                 <ArrowLeft className="h-5 w-5 text-gray-600" />
               </button>
 
+              {/* ✅ Header avatar — photosMap se */}
               <img
-                src={getUserProfilePhoto(activeOther)}
+                src={getPhotoForUser(activeOther)}
                 alt={activeOther.fullName}
                 className="w-11 h-11 rounded-full object-cover bg-gray-200"
                 onError={(e) =>
@@ -1600,21 +1624,30 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
             >
               <div className="space-y-3">
                 {messages.map((msg) => {
-                  const senderId =
-                    typeof msg.sender === "object"
-                      ? (msg.sender as User)._id
-                      : msg.sender;
+                  const sender =
+                    typeof msg.sender === "object" ? (msg.sender as User) : null;
+                  const senderId = sender?._id || (msg.sender as string);
                   const isMine = senderId === userId;
 
                   return (
                     <div
                       key={msg._id}
-                      className={`flex ${
-                        isMine ? "justify-end" : "justify-start"
-                      }`}
+                      className={`flex ${isMine ? "justify-end" : "justify-start"}`}
                     >
+                      {/* ✅ Received message — show sender avatar from photosMap */}
+                      {!isMine && (
+                        <img
+                          src={photosMap[senderId] || FALLBACK_IMG}
+                          alt={sender?.fullName || "User"}
+                          className="w-8 h-8 rounded-full object-cover bg-gray-200 mr-2 flex-shrink-0 self-end"
+                          onError={(e) =>
+                            ((e.target as HTMLImageElement).src = FALLBACK_IMG)
+                          }
+                        />
+                      )}
+
                       <div
-                        className={`max-w-[70%] rounded-2xl px-4 py-2.5 shadow-sm ${
+                        className={`max-w-[65%] rounded-2xl px-4 py-2.5 shadow-sm ${
                           isMine
                             ? "bg-rose-500 text-white rounded-br-none"
                             : "bg-white text-gray-900 rounded-bl-none border border-gray-100"
@@ -1666,15 +1699,10 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
             </div>
           </>
         ) : (
-          /* Desktop — no chat selected */
           <div className="flex-1 flex flex-col items-center justify-center bg-gray-50">
             <MessageCircle className="h-24 w-24 mb-4 text-gray-200" />
-            <p className="text-xl font-semibold text-gray-500 mb-1">
-              Select a conversation
-            </p>
-            <p className="text-sm text-gray-400">
-              Choose a chat from the left to start messaging
-            </p>
+            <p className="text-xl font-semibold text-gray-500 mb-1">Select a conversation</p>
+            <p className="text-sm text-gray-400">Choose a chat from the left to start messaging</p>
           </div>
         )}
       </div>
