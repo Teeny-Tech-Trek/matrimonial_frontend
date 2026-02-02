@@ -158,7 +158,7 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
       formData.append('image', file);
 
    // Line 154 ko update karo
-const response = await fetch('https://15-207-55-215.nip.io/backend/upload-image', {
+const response = await fetch('https://api.rsaristomatch.com/backend/upload-image', {
   method: 'POST',
   body: formData,
   credentials: 'include'
