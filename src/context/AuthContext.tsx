@@ -102,7 +102,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const sendOTP = async (phoneNumber: string): Promise<void> => {
     await new Promise(resolve => setTimeout(resolve, 1000));
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    alert(`OTP sent! For demo: ${otp}`);
+    // alert(`OTP sent! For demo: ${otp}`);
   };
 
   const loginWithOTP = async (phoneNumber: string, otp: string): Promise<void> => {

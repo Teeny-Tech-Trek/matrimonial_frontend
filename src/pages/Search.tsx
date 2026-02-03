@@ -679,7 +679,7 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
   // ✅ Send interest using axios
   const handleSendInterest = async (profileId: string) => {
     if (!currentUser) {
-      alert("Please login to send an interest");
+      // alert("Please login to send an interest");
       return;
     }
 
@@ -694,15 +694,15 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
       // console.log("📦 Interest Response:", response.data);
 
       if (response.data.success) {
-        alert("Interest sent successfully ❤️");
+        // alert("Interest sent successfully ❤️");
         // Refresh profiles after sending interest
         fetchProfiles(currentFilters, currentQueryString, activeView);
       } else {
-        alert(response.data.message || "Failed to send interest");
+        // alert(response.data.message || "Failed to send interest");
       }
     } catch (error: any) {
       // console.error("❌ Failed to send interest:", error);
-      alert(error.response?.data?.message || "Something went wrong while sending interest");
+      // alert(error.response?.data?.message || "Something went wrong while sending interest");
     }
   };
 

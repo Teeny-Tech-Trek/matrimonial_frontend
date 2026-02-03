@@ -1082,7 +1082,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
 
   const handleSendInterest = async (profileId: string) => {
     if (!currentUser) {
-      alert("Please login to send an interest");
+      // alert("Please login to send an interest");
       return;
     }
 
@@ -1094,12 +1094,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       });
 
       if (response.data.success) {
-        alert("Interest sent successfully ❤️");
+        // alert("Interest sent successfully ❤️");
       } else {
-        alert(response.data.message || "Failed to send interest");
+        // alert(response.data.message || "Failed to send interest");
       }
     } catch (error) {
-      alert("Something went wrong while sending interest. Make sure your backend is running.");
+      // alert("Something went wrong while sending interest. Make sure your backend is running.");
     }
   };
 

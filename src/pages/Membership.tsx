@@ -10,10 +10,10 @@ interface MembershipProps {
 export const Membership: React.FC<MembershipProps> = ({ onNavigate }) => {
   const handleSubscribe = (planId: string, price: number) => {
     if (price === 0) {
-      alert('You are already on the free plan!');
+      // alert('You are already on the free plan!');
       return;
     }
-    alert(`Payment integration would open here for ₹${price}. UPI payment gateway would be integrated in production.`);
+    // alert(`Payment integration would open here for ₹${price}. UPI payment gateway would be integrated in production.`);
   };
 
   const getIcon = (tier: string) => {
