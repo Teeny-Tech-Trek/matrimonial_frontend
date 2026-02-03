@@ -15,7 +15,9 @@
 import axios from "axios";
 
 const api = axios.create({
-    baseURL: "https://15-207-55-215.nip.io/backend", //  Added /backend
+    baseURL: "https://api.rsaristomatch.com/backend",
+    
+ //  Added /backend
     withCredentials: true,
     headers: {
         "Content-Type": "application/json",
