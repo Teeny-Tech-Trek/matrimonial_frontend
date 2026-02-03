@@ -189,18 +189,19 @@ export const MyProfile: React.FC<MyProfileProps> = ({ onNavigate }) => {
       setLoading(true);
       setError('');
       
-      console.log('📥 Fetching my profile...');
+      // console.log('📥 Fetching my profile...');
       const response = await profileService.getMyProfile();
       
       if (response.success && response.data) {
-        console.log('✅ Profile loaded:', response.data);
+        // console.log('✅ Profile loaded:', response.data);
         setProfile(response.data);
       } else {
         // No profile found
         setProfile(null);
       }
     } catch (err: any) {
-      console.error('❌ Error loading profile:', err);
+      // console.error('❌ Error loading profile:', err);
+       console.error(err);
       setError(err.message || 'Failed to load profile');
       setProfile(null);
     } finally {

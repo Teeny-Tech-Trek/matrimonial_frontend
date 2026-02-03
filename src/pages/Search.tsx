@@ -489,12 +489,12 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
   // ✅ Fetch accepted connections using axios
   const fetchAcceptedConnections = async () => {
     try {
-      console.log('🔗 Fetching accepted connections...');
+      // console.log('🔗 Fetching accepted connections...');
       
       const response = await api.get('/request/connections/accepted');
 
       if (response.data.success) {
-        console.log('✅ Accepted Connections Response:', response.data);
+        // console.log('✅ Accepted Connections Response:', response.data);
         
         const connections = response.data.data || [];
         const currentUserId = currentUser?.id || currentUser?.userId;
@@ -522,13 +522,13 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
         })
         .filter((id, index, self) => self.indexOf(id) === index); // Remove duplicates
         
-        console.log('✅ Connected User IDs:', connectedUserIds);
+        // console.log('✅ Connected User IDs:', connectedUserIds);
         return connectedUserIds;
       }
       
       return [];
     } catch (error: any) {
-      console.error('❌ Error fetching connections:', error);
+      // console.error('❌ Error fetching connections:', error);
       return [];
     }
   };
@@ -572,7 +572,7 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
         finalQuery = `${finalQuery}&search=${encodeURIComponent(searchTerm.trim())}`;
       }
       
-      console.log('📡 Fetching profiles with query:', finalQuery);
+      // console.log('📡 Fetching profiles with query:', finalQuery);
       
       const response = await api.get(`/profile/list?${finalQuery}`);
       
@@ -593,7 +593,7 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
           
           // 🚫 1. Exclude current user's own profile
           if (possibleProfileIds.includes(currentUserId)) {
-            console.log('🚫 Filtered: Own profile');
+            // console.log('🚫 Filtered: Own profile');
             return false;
           }
 
@@ -611,14 +611,14 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
           );
           
           if (isConnected) {
-            console.log('🚫 Filtered: Already connected -', profile.fullName);
+            // console.log('🚫 Filtered: Already connected -', profile.fullName);
             return false;
           }
 
           return true; // ✅ Show this profile
         });
         
-        console.log(`✅ Showing ${filteredProfiles.length} profiles after filtering`);
+        // console.log(`✅ Showing ${filteredProfiles.length} profiles after filtering`);
         
         setProfiles(filteredProfiles);
         // Adjust total count (subtract connected + own profile)
@@ -630,7 +630,7 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
         setError(response.data.message || 'Failed to fetch profiles');
       }
     } catch (error: any) {
-      console.error('❌ Error fetching profiles:', error);
+      // console.error('❌ Error fetching profiles:', error);
       setProfiles([]);
       setTotalProfiles(0);
       setError(error.response?.data?.message || error.message || 'Failed to load profiles');
@@ -650,7 +650,7 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
   // Handle page changes
   useEffect(() => {
     if (!isFirstRender.current) {
-      console.log('🔄 Page changed to:', currentPage);
+      // console.log('🔄 Page changed to:', currentPage);
       fetchProfiles(currentFilters, currentQueryString, activeView);
     }
   }, [currentPage]);
@@ -658,7 +658,7 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
   // Handle view changes
   useEffect(() => {
     if (!isFirstRender.current) {
-      console.log('🔄 View changed to:', activeView);
+      // console.log('🔄 View changed to:', activeView);
       setCurrentPage(1);
       fetchProfiles(currentFilters, currentQueryString, activeView);
     }
@@ -666,9 +666,9 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
 
   // Handle filter changes from QuickFilters component
   const handleFilterChange = (filters: any, queryString: string) => {
-    console.log('🎛️ Filters Changed!');
-    console.log('🎛️ New Filters:', filters);
-    console.log('🎛️ New Query String:', queryString);
+    // console.log('🎛️ Filters Changed!');
+    // console.log('🎛️ New Filters:', filters);
+    // console.log('🎛️ New Query String:', queryString);
     
     setCurrentFilters(filters);
     setCurrentQueryString(queryString);
@@ -684,14 +684,14 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
     }
 
     try {
-      console.log("💌 Sending interest to:", profileId);
+      // console.log("💌 Sending interest to:", profileId);
 
       const response = await api.post('/request/send', {
         senderId: currentUser.id,
         receiverId: profileId,
       });
 
-      console.log("📦 Interest Response:", response.data);
+      // console.log("📦 Interest Response:", response.data);
 
       if (response.data.success) {
         alert("Interest sent successfully ❤️");
@@ -701,7 +701,7 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
         alert(response.data.message || "Failed to send interest");
       }
     } catch (error: any) {
-      console.error("❌ Failed to send interest:", error);
+      // console.error("❌ Failed to send interest:", error);
       alert(error.response?.data?.message || "Something went wrong while sending interest");
     }
   };
@@ -716,7 +716,7 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
     }
     
     searchTimeoutRef.current = setTimeout(() => {
-      console.log('🔍 Executing search:', value);
+      // console.log('🔍 Executing search:', value);
       setCurrentPage(1);
       fetchProfiles(currentFilters, currentQueryString, activeView);
     }, 500);
@@ -724,7 +724,7 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
 
   // Handle view change
   const handleViewChange = (view: 'all' | 'recommended' | 'recent') => {
-    console.log('👁️ View Changed to:', view);
+    // console.log('👁️ View Changed to:', view);
     setActiveView(view);
   };
 

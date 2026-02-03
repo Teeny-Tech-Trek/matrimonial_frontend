@@ -178,17 +178,19 @@ const response = await fetch('https://api.rsaristomatch.com/backend/upload-image
       const data = JSON.parse(text);
 
       if (data.success && data.imageUrl) {
-        setPhotos(prev => [...prev, {
+        // Only allow a single photo; set as primary
+        setPhotos([{ 
           url: data.imageUrl,
-          isPrimary: prev.length === 0,
+          isPrimary: true,
           file: file
         }]);
-        showToast('Photo uploaded successfully!', 'success');
+        showToast('Photo uploaded successfully and set as primary!', 'success');
       } else {
         throw new Error(data.message || 'Upload failed');
       }
     } catch (err: any) {
-      console.error('Upload error:', err);
+      // console.error('Upload error:', err);
+       console.error(err);
       showToast(err.message || 'Failed to upload photo', 'error');
     } finally {
       setUploadingPhoto(false);
@@ -374,7 +376,7 @@ const response = await fetch('https://api.rsaristomatch.com/backend/upload-image
               
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                 <p className="text-sm text-blue-800">
-                  <strong>Tips for great photos:</strong> Upload clear, recent photos. First photo will be your primary display picture.
+                  <strong>Tip for your photo:</strong> Upload a clear, recent photo. Only one photo is allowed and it will be set as your primary display picture.
                 </p>
               </div>
 
@@ -392,15 +394,6 @@ const response = await fetch('https://api.rsaristomatch.com/backend/upload-image
                       </div>
                     )}
                     <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
-                      {!photo.isPrimary && (
-                        <button
-                          type="button"
-                          onClick={() => setPrimaryPhoto(index)}
-                          className="px-3 py-1 bg-white text-gray-800 rounded text-sm hover:bg-gray-100"
-                        >
-                          Set Primary
-                        </button>
-                      )}
                       <button
                         type="button"
                         onClick={() => removePhoto(index)}
@@ -412,7 +405,7 @@ const response = await fetch('https://api.rsaristomatch.com/backend/upload-image
                   </div>
                 ))}
 
-                {photos.length < 6 && (
+                {photos.length === 0 && (
                   <label className="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-rose-500 hover:bg-rose-50 transition-all">
                     <input
                       type="file"

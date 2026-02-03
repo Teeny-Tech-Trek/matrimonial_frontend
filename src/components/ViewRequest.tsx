@@ -734,7 +734,8 @@ export const ViewRequests: React.FC<ViewRequestsProps> = ({ onNavigate }) => {
         setRequestCounts(result.data);
       }
     } catch (err) {
-      console.error('Failed to fetch request stats');
+      // console.error('Failed to fetch request stats');
+      console.error(err);
     }
   };
 

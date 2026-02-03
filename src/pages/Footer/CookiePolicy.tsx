@@ -174,7 +174,7 @@ const CookiePolicy: React.FC<CookiePolicyProps> = ({ onNavigate }) => {
 
   const handleSavePreferences = () => {
     setShowBanner(false);
-    console.log('Saving preferences:', preferences);
+    // console.log('Saving preferences:', preferences);
   };
 
   return (

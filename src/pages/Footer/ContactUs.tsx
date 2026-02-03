@@ -112,7 +112,8 @@ const handleSubmit = async (e: React.FormEvent) => {
       setSubmitError(data.error || 'Failed to send message. Please try again.');
     }
   } catch (error) {
-    console.error('Error submitting contact form:', error);
+    // console.error('Error submitting contact form:', error);
+     console.error(error);
     setSubmitError('Failed to send message. Please try again.');
   } finally {
     setIsSubmitting(false);

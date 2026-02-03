@@ -223,7 +223,7 @@ export const AdvancedMatches: React.FC<AdvancedMatchesProps> = ({ onNavigate }) 
   };
 
   const handleSendInterest = (matchId: string) => {
-    console.log('Interest sent to:', matchId);
+    // console.log('Interest sent to:', matchId);
   };
 
   const handleMessage = (matchId: string) => {

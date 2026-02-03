@@ -1225,7 +1225,8 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
       const res = await api.get("/messages/conversations");
       setConversations(res.data?.data || []);
     } catch (e) {
-      console.error("refresh conv:", e);
+      // console.error("refresh conv:", e);
+       console.error(e);
     }
   }, []);
 
@@ -1252,7 +1253,8 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
         // ✅ Build photosMap from connections — this is the source of truth for photos
         setPhotosMap(buildPhotosMap(conns));
       } catch (err: any) {
-        console.error("❌ fetch:", err);
+        // console.error("❌ fetch:", err);
+         console.error(err);
         setError(err?.response?.data?.error || "Failed to load messages");
       } finally {
         setIsLoading(false);
@@ -1276,7 +1278,8 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
         const res = await api.get(`/messages/conversation/${selectedChat}`);
         if (active) setMessages(res.data?.data || []);
       } catch (e) {
-        console.error("❌ poll:", e);
+        // console.error("❌ poll:", e);
+         console.error(e);
       }
     };
 
@@ -1304,7 +1307,8 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
       }
       await refreshConversations();
     } catch (err: any) {
-      console.error("❌ send:", err);
+      // console.error("❌ send:", err);
+       console.error(err);
       setError(err?.response?.data?.error || "Failed to send");
       setMessageText(trimmed);
     }
@@ -1333,7 +1337,8 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
         setIsMobileOpen(true);
       }
     } catch (err: any) {
-      console.error("❌ start conv:", err);
+      // console.error("❌ start conv:", err);
+       console.error(err);
       setError(err?.response?.data?.error || "Failed to start conversation");
     }
   };
