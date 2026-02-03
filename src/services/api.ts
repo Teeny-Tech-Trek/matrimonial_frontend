@@ -44,11 +44,18 @@ api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
-            // Handle unauthorized - redirect to login
-            //  Changed from "token" to "authToken"
-            localStorage.removeItem("authToken");
-            localStorage.removeItem("user"); // Also clear user data
-            window.location.href = "/login";
+            // Don't automatically redirect for login endpoints so the calling
+            // code can show a toast message (e.g., Invalid credentials).
+            const requestUrl = error.config?.url || '';
+            const isAuthEndpoint = requestUrl.includes('/auth/login') || requestUrl.includes('/auth/google-login');
+
+            if (!isAuthEndpoint) {
+                // Handle unauthorized - redirect to login
+                // Changed from "token" to "authToken"
+                localStorage.removeItem("authToken");
+                localStorage.removeItem("user"); // Also clear user data
+                window.location.href = "/login";
+            }
         }
         return Promise.reject(error);
     }

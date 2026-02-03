@@ -50,6 +50,10 @@ export const authService = {
       );
       return response.data;
     } catch (error: any) {
+      // If server returns 401 Unauthorized, show a clear invalid credentials message
+      if (error.response?.status === 401) {
+        throw new Error(error.response?.data?.error || 'Invalid credentials');
+      }
       throw new Error(error.response?.data?.error || "Login failed");
     }
   },
