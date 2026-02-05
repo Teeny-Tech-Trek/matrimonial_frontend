@@ -42,53 +42,57 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentPage, onNavigat
             {isAuthenticated ? (
               <>
                 <div className="hidden lg:flex items-center space-x-3 xl:space-x-4 2xl:space-x-6">
-                  <button
-                    onClick={() => onNavigate('dashboard')}
-                    className={`flex items-center space-x-1.5 px-3 py-2 xl:px-4 xl:py-2.5 rounded-lg transition-colors text-sm xl:text-base ${
-                      currentPage === 'matches'
-                        ? 'bg-rose-100 text-rose-700'
-                        : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <Home className="h-4 w-4 xl:h-5 xl:w-5" />
-                    <span>Dashboard</span>
-                  </button>
+                  {!isAdmin && (
+                    <>
+                      <button
+                        onClick={() => onNavigate('dashboard')}
+                        className={`flex items-center space-x-1.5 px-3 py-2 xl:px-4 xl:py-2.5 rounded-lg transition-colors text-sm xl:text-base ${
+                          currentPage === 'matches'
+                            ? 'bg-rose-100 text-rose-700'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        <Home className="h-4 w-4 xl:h-5 xl:w-5" />
+                        <span>Dashboard</span>
+                      </button>
 
-                  <button
-                    onClick={() => onNavigate('search')}
-                    className={`flex items-center space-x-1.5 px-3 py-2 xl:px-4 xl:py-2.5 rounded-lg transition-colors text-sm xl:text-base ${
-                      currentPage === 'search'
-                        ? 'bg-rose-100 text-rose-700'
-                        : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <Search className="h-4 w-4 xl:h-5 xl:w-5" />
-                    <span>Search</span>
-                  </button>
+                      <button
+                        onClick={() => onNavigate('search')}
+                        className={`flex items-center space-x-1.5 px-3 py-2 xl:px-4 xl:py-2.5 rounded-lg transition-colors text-sm xl:text-base ${
+                          currentPage === 'search'
+                            ? 'bg-rose-100 text-rose-700'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        <Search className="h-4 w-4 xl:h-5 xl:w-5" />
+                        <span>Search</span>
+                      </button>
 
-                  <button
-                    onClick={() => onNavigate('requests')}
-                    className={`flex items-center space-x-1.5 px-3 py-2 xl:px-4 xl:py-2.5 rounded-lg transition-colors text-sm xl:text-base ${
-                      currentPage === 'requests'
-                        ? 'bg-rose-100 text-rose-700'
-                        : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <Heart className="h-4 w-4 xl:h-5 xl:w-5" />
-                    <span>Requests</span>
-                  </button>
+                      <button
+                        onClick={() => onNavigate('requests')}
+                        className={`flex items-center space-x-1.5 px-3 py-2 xl:px-4 xl:py-2.5 rounded-lg transition-colors text-sm xl:text-base ${
+                          currentPage === 'requests'
+                            ? 'bg-rose-100 text-rose-700'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        <Heart className="h-4 w-4 xl:h-5 xl:w-5" />
+                        <span>Requests</span>
+                      </button>
 
-                  <button
-                    onClick={() => onNavigate('messages')}
-                    className={`flex items-center space-x-1.5 px-3 py-2 xl:px-4 xl:py-2.5 rounded-lg transition-colors text-sm xl:text-base ${
-                      currentPage === 'messages'
-                        ? 'bg-rose-100 text-rose-700'
-                        : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <MessageCircle className="h-4 w-4 xl:h-5 xl:w-5" />
-                    <span>Messages</span>
-                  </button>
+                      <button
+                        onClick={() => onNavigate('messages')}
+                        className={`flex items-center space-x-1.5 px-3 py-2 xl:px-4 xl:py-2.5 rounded-lg transition-colors text-sm xl:text-base ${
+                          currentPage === 'messages'
+                            ? 'bg-rose-100 text-rose-700'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        <MessageCircle className="h-4 w-4 xl:h-5 xl:w-5" />
+                        <span>Messages</span>
+                      </button>
+                    </>
+                  )}
 
                   {isAdmin && (
                     <button
@@ -104,19 +108,21 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentPage, onNavigat
                     </button>
                   )}
 
-                  <button
-                    onClick={() => onNavigate('my-profile')}
-                    className={`flex items-center space-x-1.5 px-3 py-2 xl:px-4 xl:py-2.5 rounded-lg transition-colors text-sm xl:text-base ${
-                      currentPage === 'my-profile'
-                        ? 'bg-rose-100 text-rose-700'
-                        : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <User className="h-4 w-4 xl:h-5 xl:w-5" />
-                    <span className="max-w-[100px] xl:max-w-[150px] truncate">
-                      {currentUser?.fullName?.split(' ')[0]}
-                    </span>
-                  </button>
+                  {!isAdmin && (
+                    <button
+                      onClick={() => onNavigate('my-profile')}
+                      className={`flex items-center space-x-1.5 px-3 py-2 xl:px-4 xl:py-2.5 rounded-lg transition-colors text-sm xl:text-base ${
+                        currentPage === 'my-profile'
+                          ? 'bg-rose-100 text-rose-700'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <User className="h-4 w-4 xl:h-5 xl:w-5" />
+                      <span className="max-w-[100px] xl:max-w-[150px] truncate">
+                        {currentUser?.fullName?.split(' ')[0]}
+                      </span>
+                    </button>
+                  )}
 
                   <button
                     onClick={handleLogout}
@@ -181,58 +187,62 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentPage, onNavigat
                 </div>
 
                 <div className="p-4 space-y-1 pb-6">
-                  <button
-                    onClick={() => {
-                      onNavigate('dashboard');
-                      setMobileMenuOpen(false);
-                    }}
-                    className={`w-full text-left px-4 py-3 rounded-lg text-base transition-colors ${
-                      currentPage === 'dashboard'
-                        ? 'bg-rose-100 text-rose-700 font-medium'
-                        : 'hover:bg-gray-100'
-                    }`}
-                  >
-                    Dashboard
-                  </button>
-                  <button
-                    onClick={() => {
-                      onNavigate('search');
-                      setMobileMenuOpen(false);
-                    }}
-                    className={`w-full text-left px-4 py-3 rounded-lg text-base transition-colors ${
-                      currentPage === 'search'
-                        ? 'bg-rose-100 text-rose-700 font-medium'
-                        : 'hover:bg-gray-100'
-                    }`}
-                  >
-                    Search
-                  </button>
-                  <button
-                    onClick={() => {
-                      onNavigate('requests');
-                      setMobileMenuOpen(false);
-                    }}
-                    className={`w-full text-left px-4 py-3 rounded-lg text-base transition-colors ${
-                      currentPage === 'requests'
-                        ? 'bg-rose-100 text-rose-700 font-medium'
-                        : 'hover:bg-gray-100'
-                    }`}
-                  >
-                    Requests
-                  </button>
-                  <button
-                    onClick={() => {
-                      onNavigate('messages');
-                      setMobileMenuOpen(false);
-                    }}
-                    className={`w-full text-left px-4 py-3 rounded-lg text-base transition-colors ${
-                      currentPage === 'messages'
-                        ? 'bg-rose-100 text-rose-700 font-medium'
-                        : 'hover:bg-gray-100'
-                    }`}
-                  >
-                    Messages
-                  </button>
+                  {!isAdmin && (
+                    <>
+                      <button
+                        onClick={() => {
+                          onNavigate('dashboard');
+                          setMobileMenuOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-3 rounded-lg text-base transition-colors ${
+                          currentPage === 'dashboard'
+                            ? 'bg-rose-100 text-rose-700 font-medium'
+                            : 'hover:bg-gray-100'
+                        }`}
+                      >
+                        Dashboard
+                      </button>
+                      <button
+                        onClick={() => {
+                          onNavigate('search');
+                          setMobileMenuOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-3 rounded-lg text-base transition-colors ${
+                          currentPage === 'search'
+                            ? 'bg-rose-100 text-rose-700 font-medium'
+                            : 'hover:bg-gray-100'
+                        }`}
+                      >
+                        Search
+                      </button>
+                      <button
+                        onClick={() => {
+                          onNavigate('requests');
+                          setMobileMenuOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-3 rounded-lg text-base transition-colors ${
+                          currentPage === 'requests'
+                            ? 'bg-rose-100 text-rose-700 font-medium'
+                            : 'hover:bg-gray-100'
+                        }`}
+                      >
+                        Requests
+                      </button>
+                      <button
+                        onClick={() => {
+                          onNavigate('messages');
+                          setMobileMenuOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-3 rounded-lg text-base transition-colors ${
+                          currentPage === 'messages'
+                            ? 'bg-rose-100 text-rose-700 font-medium'
+                            : 'hover:bg-gray-100'
+                        }`}
+                      >
+                        Messages
+                      </button>
+                    </>
+                  )}
                   {isAdmin && (
                     <button
                       onClick={() => {
@@ -248,19 +258,21 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentPage, onNavigat
                       Admin Panel
                     </button>
                   )}
-                  <button
-                    onClick={() => {
-                      onNavigate('my-profile');
-                      setMobileMenuOpen(false);
-                    }}
-                    className={`w-full text-left px-4 py-3 rounded-lg text-base transition-colors ${
-                      currentPage === 'my-profile'
-                        ? 'bg-rose-100 text-rose-700 font-medium'
-                        : 'hover:bg-gray-100'
-                    }`}
-                  >
-                    My Profile
-                  </button>
+                  {!isAdmin && (
+                    <button
+                      onClick={() => {
+                        onNavigate('my-profile');
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-3 rounded-lg text-base transition-colors ${
+                        currentPage === 'my-profile'
+                          ? 'bg-rose-100 text-rose-700 font-medium'
+                          : 'hover:bg-gray-100'
+                      }`}
+                    >
+                      My Profile
+                    </button>
+                  )}
 
                   <div className="pt-4 border-t mt-4">
                     <button

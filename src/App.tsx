@@ -26,12 +26,25 @@ function AppContent() {
     }
   }, []);
 
-  // Redirect to dashboard if authenticated and on landing
+  // Redirect to dashboard/admin panel if authenticated and on landing
   useEffect(() => {
     if (isAuthenticated && currentPage === 'landing') {
-      handleNavigate('dashboard');
+      if (isAdmin) {
+        handleNavigate('admin');
+      } else {
+        handleNavigate('dashboard');
+      }
     }
-  }, [isAuthenticated, currentPage]);
+  }, [isAuthenticated, currentPage, isAdmin]);
+
+  // Prevent admin users from accessing regular user pages
+  useEffect(() => {
+    const adminRestrictedPages: Page[] = ['dashboard', 'search', 'messages', 'requests', 'my-profile', 'membership', 'matches', 'profile-view'];
+    
+    if (isAdmin && adminRestrictedPages.includes(currentPage)) {
+      handleNavigate('admin');
+    }
+  }, [isAdmin, currentPage]);
 
   // Handle navigation and update URL
   const handleNavigate = (page: string, data?: any) => {
