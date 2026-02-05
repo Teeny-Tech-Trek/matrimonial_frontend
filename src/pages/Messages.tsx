@@ -1595,7 +1595,7 @@ const Messages: React.FC<MessagesProps> = ({ onNavigate }) => {
         {selectedChat && activeOther ? (
           <>
             {/* Chat header */}
-            <div className="flex items-center gap-3 px-4 md:px-6 py-4 border-b border-gray-200 bg-white flex-shrink-0">
+            <div className="flex items-center gap-3 mt-4 px-4 md:px-6 py-4 border-b border-gray-200 bg-white flex-shrink-0">
               <button
                 className="md:hidden p-1 hover:bg-gray-100 rounded-full transition-colors"
                 onClick={() => setIsMobileOpen(false)}
