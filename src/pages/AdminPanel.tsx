@@ -1463,13 +1463,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
           <div className="flex justify-between items-center p-6 border-b">
-            <h2 className="text-2xl font-bold">User Details</h2>
+            <h2 className="text-2xl font-bold text-gray-900">User Details</h2>
             <button
               onClick={() => {
                 setShowUserModal(false);
                 setSelectedUser(null);
               }}
-              className="text-gray-500 hover:text-gray-700"
+              className="text-gray-400 hover:text-gray-600 transition-colors"
             >
               <X size={24} />
             </button>
@@ -1477,107 +1477,149 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
 
           <div className="p-6">
             {loadingUserDetails ? (
-              <div className="text-center py-8">Loading user details...</div>
+              <div className="flex items-center justify-center py-12">
+                <div className="w-8 h-8 border-4 border-rose-600 border-t-transparent rounded-full animate-spin"></div>
+                <span className="ml-3 text-gray-600">Loading user details...</span>
+              </div>
             ) : selectedUser ? (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Full Name</label>
-                    <p className="text-lg font-semibold">{selectedUser.fullName}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Phone Number</label>
-                    <p className="text-lg font-semibold">{selectedUser.phoneNumber}</p>
+              <div className="space-y-6">
+                {/* Personal Information */}
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4">Personal Information</h3>
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Full Name</label>
+                      <p className="text-base font-semibold text-gray-900">{selectedUser.fullName}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Phone Number</label>
+                      <p className="text-base font-semibold text-gray-900">{selectedUser.phoneNumber}</p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Gender</label>
-                    <p className="text-lg capitalize">{selectedUser.gender}</p>
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Gender</label>
+                    <p className="text-base text-gray-900 capitalize">{selectedUser.gender}</p>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Date of Birth</label>
-                    <p className="text-lg">
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Date of Birth</label>
+                    <p className="text-base text-gray-900">
                       {selectedUser.dateOfBirth ? new Date(selectedUser.dateOfBirth).toLocaleDateString() : 'N/A'}
                     </p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Role</label>
-                    <p className="text-lg">
-                      <span className={`px-3 py-1 rounded-full text-sm ${
-                        selectedUser.role === 'admin' ? 'bg-purple-100 text-purple-800' :
-                        selectedUser.role === 'moderator' ? 'bg-blue-100 text-blue-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {selectedUser.role}
-                      </span>
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Status</label>
-                    <p className="text-lg">
-                      <span className={`px-3 py-1 rounded-full text-sm ${
-                        selectedUser.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}>
-                        {selectedUser.isActive ? 'Active' : 'Inactive'}
-                      </span>
-                    </p>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Profile Created For</label>
-                  <p className="text-lg capitalize">{selectedUser.profileCreatedFor || 'N/A'}</p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Joined Date</label>
-                    <p className="text-lg">{new Date(selectedUser.createdAt).toLocaleDateString()}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Last Updated</label>
-                    <p className="text-lg">{new Date(selectedUser.updatedAt).toLocaleDateString()}</p>
-                  </div>
-                </div>
-
+                {/* Account Information */}
                 <div className="pt-4 border-t">
-                  <label className="text-sm font-medium text-gray-500 mb-2 block">Quick Actions</label>
-                  <div className="flex gap-2">
+                  <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4">Account Information</h3>
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Role</label>
+                      <div>
+                        <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                          selectedUser.role === 'admin' ? 'bg-purple-100 text-purple-800' :
+                          selectedUser.role === 'moderator' ? 'bg-blue-100 text-blue-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {selectedUser.role}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Status</label>
+                      <div>
+                        <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                          selectedUser.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {selectedUser.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Profile Created For</label>
+                  <p className="text-base text-gray-900 capitalize">{selectedUser.profileCreatedFor || 'N/A'}</p>
+                </div>
+
+                {/* Timeline */}
+                <div className="pt-4 border-t">
+                  <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4">Timeline</h3>
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Joined Date</label>
+                      <p className="text-base text-gray-900">{new Date(selectedUser.createdAt).toLocaleDateString()}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Last Updated</label>
+                      <p className="text-base text-gray-900">{new Date(selectedUser.updatedAt).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Actions */}
+                <div className="pt-6 border-t">
+                  <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4">Quick Actions</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {/* Activate/Deactivate Button */}
                     <button
                       onClick={() => {
                         handleUpdateUser(selectedUser._id, { isActive: !selectedUser.isActive });
                         setShowUserModal(false);
                       }}
-                      className={`px-4 py-2 rounded-lg ${
+                      className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors ${
                         selectedUser.isActive 
-                          ? 'bg-red-100 text-red-700 hover:bg-red-200' 
-                          : 'bg-green-100 text-green-700 hover:bg-green-200'
+                          ? 'bg-orange-50 text-orange-700 hover:bg-orange-100 border border-orange-200' 
+                          : 'bg-green-50 text-green-700 hover:bg-green-100 border border-green-200'
                       }`}
                     >
-                      {selectedUser.isActive ? 'Deactivate User' : 'Activate User'}
+                      {selectedUser.isActive ? (
+                        <>
+                          <UserCheck size={18} />
+                          Deactivate User
+                        </>
+                      ) : (
+                        <>
+                          <UserCheck size={18} />
+                          Activate User
+                        </>
+                      )}
                     </button>
+
+                    {/* Change Role Dropdown */}
                     <select
                       value={selectedUser.role}
                       onChange={(e) => {
                         handleUpdateUser(selectedUser._id, { role: e.target.value });
                         setSelectedUser({ ...selectedUser, role: e.target.value });
                       }}
-                      className="px-4 py-2 border rounded-lg"
+                      className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent text-gray-700 font-medium"
                     >
                       <option value="user">User</option>
                       <option value="admin">Admin</option>
                       <option value="moderator">Moderator</option>
                     </select>
+
+                    {/* Delete Button */}
+                    <button
+                      onClick={() => {
+                        setSelectedUserForDelete(selectedUser);
+                        setShowUserModal(false);
+                        setShowDeleteUserModal(true);
+                      }}
+                      className="flex items-center justify-center gap-2 px-4 py-3 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg font-medium transition-colors border border-red-200"
+                    >
+                      <Trash2 size={18} />
+                      Delete User
+                    </button>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="text-center py-8">No user data available</div>
+              <div className="text-center py-12 text-gray-500">No user data available</div>
             )}
           </div>
         </div>
