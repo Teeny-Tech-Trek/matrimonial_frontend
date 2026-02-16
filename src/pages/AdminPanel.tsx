@@ -1060,6 +1060,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
   const [showDeleteProfileModal, setShowDeleteProfileModal] = useState(false);
   const [deletingProfile, setDeletingProfile] = useState(false);
 
+  // Delete User Confirmation Modal
+  const [selectedUserForDelete, setSelectedUserForDelete] = useState<any>(null);
+  const [showDeleteUserModal, setShowDeleteUserModal] = useState(false);
+  const [deletingUser, setDeletingUser] = useState(false);
+
   // Global Search
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any>({ users: [], profiles: [] });
@@ -1269,6 +1274,26 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
     }
   };
 
+  const handlePermanentDeleteUser = async () => {
+    if (!selectedUserForDelete) return;
+    
+    setDeletingUser(true);
+    try {
+      const response = await adminService.permanentDeleteUser(selectedUserForDelete._id);
+      if (response.success) {
+        showToast('User permanently deleted', 'success');
+        setShowDeleteUserModal(false);
+        setSelectedUserForDelete(null);
+        fetchUsers();
+        fetchStats(); // Refresh stats
+      }
+    } catch (error: any) {
+      showToast(error.message, 'error');
+    } finally {
+      setDeletingUser(false);
+    }
+  };
+
   const handleExportUsers = async () => {
     try {
       const params: any = {};
@@ -1346,6 +1371,81 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
                   <>
                     <Trash2 size={16} />
                     Delete Profile
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const DeleteUserModal = () => {
+    if (!showDeleteUserModal || !selectedUserForDelete) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg max-w-md w-full">
+          <div className="p-6">
+            <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
+              <AlertTriangle className="text-red-600" size={24} />
+            </div>
+            
+            <h2 className="text-xl font-bold text-center mb-2">Permanently Delete User</h2>
+            <p className="text-gray-600 text-center mb-6">
+              Are you sure you want to <strong className="text-red-600">permanently delete</strong> the user <strong>{selectedUserForDelete.fullName}</strong>? 
+              This action <strong className="text-red-600">CANNOT BE UNDONE</strong> and will completely remove all user data from the system.
+            </p>
+
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+              <div className="flex gap-2">
+                <AlertTriangle className="text-red-600 flex-shrink-0 mt-0.5" size={20} />
+                <div className="text-sm text-red-800">
+                  <p className="font-medium mb-1">⚠️ This will PERMANENTLY:</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>Delete the user account</li>
+                    <li>Delete all user profiles</li>
+                    <li>Remove all photos and documents</li>
+                    <li>Delete all connection requests</li>
+                    <li>Remove all conversations and messages</li>
+                    <li>Remove from all connections/favorites/blocked lists</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-6">
+              <p className="text-sm text-yellow-800">
+                💡 <strong>Tip:</strong> If you want to temporarily disable the user, use the "Deactivate" button instead. Deactivation can be reversed.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowDeleteUserModal(false);
+                  setSelectedUserForDelete(null);
+                }}
+                disabled={deletingUser}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePermanentDeleteUser}
+                disabled={deletingUser}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {deletingUser ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={16} />
+                    Permanently Delete
                   </>
                 )}
               </button>
@@ -1758,12 +1858,23 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
                       </button>
                       <button
                         onClick={() => handleUpdateUser(user._id, { isActive: !user.isActive })}
-                        className={`${
-                          user.isActive ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'
+                        className={`font-medium ${
+                          user.isActive ? 'text-orange-600 hover:text-orange-900' : 'text-green-600 hover:text-green-900'
                         }`}
                       >
                         {user.isActive ? 'Deactivate' : 'Activate'}
                       </button>
+                      <button
+                        onClick={() => {
+                          setSelectedUserForDelete(user);
+                          setShowDeleteUserModal(true);
+                        }}
+                        className="text-red-600 hover:text-red-900 font-medium"
+                        title="Permanently delete this user"
+                      >
+                        Delete
+                      </button>
+                    </td>
                     </td>
                   </tr>
                 ))
@@ -2086,6 +2197,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
 
       <UserDetailsModal />
       <DeleteProfileModal />
+      <DeleteUserModal />
     </div>
   );
 };

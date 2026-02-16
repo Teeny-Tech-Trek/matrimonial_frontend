@@ -234,6 +234,16 @@ export const adminService = {
     }
   },
 
+  // DELETE /admin/users/:userId/permanent - Permanent deletion
+  permanentDeleteUser: async (userId: string) => {
+    try {
+      const response = await api.delete(`/admin/users/${userId}/permanent`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || "Failed to permanently delete user");
+    }
+  },
+
   // GET /admin/users/export
   exportUsers: async (params?: { role?: string }) => {
     try {
