@@ -85,7 +85,7 @@ const handleSubmit = async (e: React.FormEvent) => {
   setSubmitError(null);
 
   try {
-    const response = await fetch('https://api.rsaristomatch.com/api/contact', {
+    const response = await fetch('https://api.rsaristomatch.com/backend/contact', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
