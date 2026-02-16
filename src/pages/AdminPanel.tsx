@@ -1917,7 +1917,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
                         Delete
                       </button>
                     </td>
-                    </td>
                   </tr>
                 ))
               )}
