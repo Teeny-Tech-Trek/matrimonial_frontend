@@ -1,17 +1,19 @@
+
+
 // import api from "./api";
 
 // export const adminService = {
-//   // GET /backend/admin/stats
+//   // GET /admin/stats
 //   getStats: async () => {
 //     try {
-//       const response = await api.get("/backend/admin/stats");
+//       const response = await api.get("/admin/stats");
 //       return response.data;
 //     } catch (error: any) {
 //       throw new Error(error.response?.data?.message || "Failed to fetch stats");
 //     }
 //   },
 
-//   // GET /backend/admin/users
+//   // GET /admin/users
 //   listUsers: async (params: {
 //     page?: number;
 //     limit?: number;
@@ -20,52 +22,47 @@
 //     isActive?: string;
 //   }) => {
 //     try {
-//       const response = await api.get("/backend/admin/users", { params });
+//       const response = await api.get("/admin/users", { params });
 //       return response.data;
 //     } catch (error: any) {
 //       throw new Error(error.response?.data?.message || "Failed to fetch users");
 //     }
 //   },
 
-//   // GET /backend/admin/users/:userId
+//   // GET /admin/users/:userId
 //   getUser: async (userId: string) => {
 //     try {
-//       const response = await api.get(`/backend/admin/users/${userId}`);
+//       const response = await api.get(`/admin/users/${userId}`);
 //       return response.data;
 //     } catch (error: any) {
 //       throw new Error(error.response?.data?.message || "Failed to fetch user");
 //     }
 //   },
 
-//   // PUT /backend/admin/users/:userId
+//   // PUT /admin/users/:userId
 //   updateUser: async (userId: string, data: any) => {
 //     try {
-//       const response = await api.put(
-//         `/backend/admin/users/${userId}`,
-//         data
-//       );
+//       const response = await api.put(`/admin/users/${userId}`, data);
 //       return response.data;
 //     } catch (error: any) {
 //       throw new Error(error.response?.data?.message || "Failed to update user");
 //     }
 //   },
 
-//   // DELETE /backend/admin/users/:userId
+//   // DELETE /admin/users/:userId
 //   deleteUser: async (userId: string) => {
 //     try {
-//       const response = await api.delete(
-//         `/backend/admin/users/${userId}`
-//       );
+//       const response = await api.delete(`/admin/users/${userId}`);
 //       return response.data;
 //     } catch (error: any) {
 //       throw new Error(error.response?.data?.message || "Failed to delete user");
 //     }
 //   },
 
-//   // GET /backend/admin/users/export
+//   // GET /admin/users/export
 //   exportUsers: async (params?: { role?: string }) => {
 //     try {
-//       const response = await api.get("/backend/admin/users/export", {
+//       const response = await api.get("/admin/users/export", {
 //         params,
 //         responseType: "blob",
 //       });
@@ -75,7 +72,7 @@
 //     }
 //   },
 
-//   // GET /backend/admin/profiles
+//   // GET /admin/profiles
 //   listProfiles: async (params: {
 //     page?: number;
 //     limit?: number;
@@ -83,7 +80,7 @@
 //     search?: string;
 //   }) => {
 //     try {
-//       const response = await api.get("/backend/admin/profiles", { params });
+//       const response = await api.get("/admin/profiles", { params });
 //       return response.data;
 //     } catch (error: any) {
 //       throw new Error(
@@ -92,11 +89,11 @@
 //     }
 //   },
 
-//   // PUT /backend/admin/profiles/:profileId/verify
+//   // PUT /admin/profiles/:profileId/verify
 //   verifyProfile: async (profileId: string, isVerified: boolean) => {
 //     try {
 //       const response = await api.put(
-//         `/backend/admin/profiles/${profileId}/verify`,
+//         `/admin/profiles/${profileId}/verify`,
 //         { isVerified }
 //       );
 //       return response.data;
@@ -107,7 +104,7 @@
 //     }
 //   },
 
-//   // PUT /backend/admin/profiles/:profileId/photos/:photoId/moderate
+//   // PUT /admin/profiles/:profileId/photos/:photoId/moderate
 //   moderatePhoto: async (
 //     profileId: string,
 //     photoId: string,
@@ -115,7 +112,7 @@
 //   ) => {
 //     try {
 //       const response = await api.put(
-//         `/backend/admin/profiles/${profileId}/photos/${photoId}/moderate`,
+//         `/admin/profiles/${profileId}/photos/${photoId}/moderate`,
 //         { status }
 //       );
 //       return response.data;
@@ -126,7 +123,7 @@
 //     }
 //   },
 
-//   // GET /backend/admin/requests
+//   // GET /admin/requests
 //   listRequests: async (params: {
 //     page?: number;
 //     limit?: number;
@@ -134,7 +131,7 @@
 //     search?: string;
 //   }) => {
 //     try {
-//       const response = await api.get("/backend/admin/requests", { params });
+//       const response = await api.get("/admin/requests", { params });
 //       return response.data;
 //     } catch (error: any) {
 //       throw new Error(
@@ -143,14 +140,14 @@
 //     }
 //   },
 
-//   // GET /backend/admin/conversations
+//   // GET /admin/conversations
 //   listConversations: async (params: {
 //     page?: number;
 //     limit?: number;
 //     search?: string;
 //   }) => {
 //     try {
-//       const response = await api.get("/backend/admin/conversations", {
+//       const response = await api.get("/admin/conversations", {
 //         params,
 //       });
 //       return response.data;
@@ -161,10 +158,10 @@
 //     }
 //   },
 
-//   // GET /backend/admin/search
+//   // GET /admin/search
 //   quickSearch: async (query: string) => {
 //     try {
-//       const response = await api.get("/backend/admin/search", {
+//       const response = await api.get("/admin/search", {
 //         params: { q: query },
 //       });
 //       return response.data;
@@ -346,6 +343,18 @@ export const adminService = {
     } catch (error: any) {
       throw new Error(
         error.response?.data?.message || "Search failed"
+      );
+    }
+  },
+
+  // DELETE /admin/profiles/:profileId
+  deleteProfile: async (profileId: string) => {
+    try {
+      const response = await api.delete(`/admin/profiles/${profileId}`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message || "Failed to delete profile"
       );
     }
   },
