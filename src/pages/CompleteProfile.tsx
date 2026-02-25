@@ -31,7 +31,6 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [currentSection, setCurrentSection] = useState(0);
   const [availableHobbies, setAvailableHobbies] = useState<string[]>(defaultHobbies);
-  const [customHobby, setCustomHobby] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
 
@@ -177,7 +176,22 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
   const addCustomHobby = () => {
     const value = (formData as any).customHobbyInput?.trim();
     if (!value) return;
-    setFormData(prev => ({ ...prev, hobbies: [...prev.hobbies, value], customHobbyInput: '' }));
+
+    const normalizedValue = value.toLowerCase();
+
+    setAvailableHobbies((prev) => {
+      const exists = prev.some((h) => h.toLowerCase() === normalizedValue);
+      return exists ? prev : [...prev, value];
+    });
+
+    setFormData((prev) => {
+      const alreadySelected = prev.hobbies.some((h) => h.toLowerCase() === normalizedValue);
+      return {
+        ...prev,
+        hobbies: alreadySelected ? prev.hobbies : [...prev.hobbies, value],
+        customHobbyInput: "",
+      };
+    });
   };
 
   // MULTIPLE IMAGE UPLOAD - Appends new images instead of replacing
