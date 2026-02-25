@@ -1118,11 +1118,12 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
                       onClick={() => toggleHobby(hobby)}
                       className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                         formData.hobbies.includes(hobby)
-                          ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white'
+                          ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white inline-flex items-center gap-1.5'
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                       }`}
                     >
-                      {hobby}
+                      <span>{hobby}</span>
+                      {formData.hobbies.includes(hobby) && <X size={14} />}
                     </button>
                   ))}
 
