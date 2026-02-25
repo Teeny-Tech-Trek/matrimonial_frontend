@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Heart, Users, Award, Sparkles, GraduationCap, Shield, Star, Zap, Crown, Target, Camera, BookOpen, MessageCircle, Compass, Gift, Laugh } from 'lucide-react';
 
 const AboutUs = () => {
@@ -15,7 +15,7 @@ const AboutUs = () => {
               <div className="inline-block mb-4">
                 <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-md border border-pink-300">
                   <div className="w-2 h-2 bg-pink-500 rounded-full animate-pulse"></div>
-                  <span className="text-sm font-bold text-pink-700">LIVE • TRUSTED BY 500+ FAMILIES</span>
+                  <span className="text-sm font-bold text-pink-700">LIVE | TRUSTED BY 500+ FAMILIES</span>
                 </div>
               </div>
               
@@ -25,7 +25,7 @@ const AboutUs = () => {
               </h1>
               
               <p className="text-xl md:text-2xl text-gray-600 font-medium mb-2">R.S. Matrimonial Services</p>
-              <p className="text-base text-gray-500 italic">Est. 2025 • Bathinda, Punjab</p>
+              <p className="text-base text-gray-500 italic">Est. 2025 | Bathinda, Punjab</p>
             </div>
           </div>
         </div>
@@ -49,66 +49,30 @@ const AboutUs = () => {
                   </p>
                 </div>
               </div>
-
-              {/* Two Column Layout */}
-              <div className="grid md:grid-cols-2 gap-12 mb-16">
-                {/* Left Column - About */}
-                <div>
-                  <div className="border-l-4 border-pink-500 pl-6 mb-8">
+              {/* Who We Are - Centered */}
+              <div className="mb-16">
+                <div className="max-w-4xl mx-auto text-center">
+                  <div className="mb-8">
                     <h3 className="text-sm font-bold text-pink-700 uppercase tracking-wider mb-2">Who We Are</h3>
                     <h4 className="text-3xl font-black text-gray-900 mb-4">A Team Like No Other</h4>
                   </div>
                   <p className="text-gray-700 leading-relaxed mb-4">
-                    Founded and led by a distinguished panel of doctors, professors, retired military officers, 
-                    and successful businessmen, AristoMatch brings together decades of life experience, 
+                    Founded and led by a distinguished panel of doctors, professors, retired military officers,
+                    and successful businessmen, AristoMatch brings together decades of life experience,
                     professional expertise, and genuine care for your happiness.
                   </p>
                   <p className="text-gray-700 leading-relaxed">
-                    We understand that matrimony is not just about two individuals—it's about two families, 
+                    We understand that matrimony is not just about two individuals - it's about two families,
                     two cultures, and two sets of dreams coming together.
                   </p>
                 </div>
 
-                {/* Right Column - Stats Cards */}
+                {/* Stats cards commented out as requested
                 <div className="space-y-6">
-                  <div className="bg-gradient-to-br from-pink-50 to-rose-50 p-6 rounded-2xl border-2 border-pink-200">
-                    <div className="flex items-start gap-4">
-                      <div className="w-14 h-14 bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <Heart className="w-7 h-7 text-white" />
-                      </div>
-                      <div>
-                        <div className="text-3xl font-black text-gray-900 mb-1">500+</div>
-                        <div className="text-sm text-gray-600 font-medium">Successful marriages created with love and care</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-6 rounded-2xl border-2 border-purple-200">
-                    <div className="flex items-start gap-4">
-                      <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <Award className="w-7 h-7 text-white" />
-                      </div>
-                      <div>
-                        <div className="text-3xl font-black text-gray-900 mb-1">15+</div>
-                        <div className="text-sm text-gray-600 font-medium">Years of trusted service to families across India</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-gradient-to-br from-rose-50 to-purple-50 p-6 rounded-2xl border-2 border-rose-200">
-                    <div className="flex items-start gap-4">
-                      <div className="w-14 h-14 bg-gradient-to-br from-rose-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <Shield className="w-7 h-7 text-white" />
-                      </div>
-                      <div>
-                        <div className="text-3xl font-black text-gray-900 mb-1">100%</div>
-                        <div className="text-sm text-gray-600 font-medium">Confidential and personalized service guaranteed</div>
-                      </div>
-                    </div>
-                  </div>
+                  ...
                 </div>
+                */}
               </div>
-
               {/* Bottom Feature Bar */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-gray-50 p-8 rounded-2xl border border-gray-200">
                 <div className="text-center">
@@ -316,3 +280,4 @@ const AboutUs = () => {
 };
 
 export default AboutUs;
+

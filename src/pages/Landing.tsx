@@ -3,13 +3,23 @@ import { useNavigate } from "react-router-dom";
 import { Heart, Shield, Users, Star, CheckCircle, TrendingUp } from 'lucide-react';
 import heroImage from '../Images/ChatGPT Image Jan 3, 2026, 04_53_31 PM.png';
 import coupleOverlayImage from '../Images/Untitled design (3).png'; // Add your overlay image here
+import reviewService from '../services/review.service';
 
 
 interface LandingProps {
   onNavigate: (page: string) => void;
 }
 
-const mockReviews = [
+interface ReviewItem {
+  id?: number | string;
+  _id?: string;
+  name: string;
+  city: string;
+  rating: number;
+  text: string;
+}
+
+const mockReviews: ReviewItem[] = [
   {
     id: 1,
     name: 'Priya Sharma',
@@ -42,14 +52,35 @@ const mockReviews = [
 
 export const Landing: React.FC<LandingProps> = ({onNavigate}) => {
   const [activeReview, setActiveReview] = useState(0);
+  const [liveReviews, setLiveReviews] = useState<ReviewItem[]>([]);
+  const displayReviews = liveReviews.length > 0 ? liveReviews : mockReviews;
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setActiveReview((prev) => (prev + 1) % mockReviews.length);
+      setActiveReview((prev) => (prev + 1) % displayReviews.length);
     }, 4500);
 
     return () => clearInterval(timer);
+  }, [displayReviews.length]);
+
+  useEffect(() => {
+    const loadReviews = async () => {
+      try {
+        const response = await reviewService.getPublicReviews();
+        if (response?.success && Array.isArray(response.data)) {
+          setLiveReviews(response.data);
+        }
+      } catch (error) {
+        // Keep mock reviews as fallback on API failure.
+      }
+    };
+
+    loadReviews();
   }, []);
+
+  useEffect(() => {
+    setActiveReview(0);
+  }, [liveReviews.length]);
 
   return (
     <div className="space-y-0">
@@ -287,8 +318,8 @@ export const Landing: React.FC<LandingProps> = ({onNavigate}) => {
             className="flex transition-transform duration-500 ease-out"
             style={{ transform: `translateX(-${activeReview * 100}%)` }}
           >
-            {mockReviews.map((review) => (
-              <div key={review.id} className="w-full shrink-0 px-1 md:px-4">
+            {displayReviews.map((review, index) => (
+              <div key={review._id || review.id || index} className="w-full shrink-0 px-1 md:px-4">
                 <div className="rounded-2xl p-6 md:p-8 bg-gradient-to-br from-rose-50/90 to-pink-100/80 border border-rose-200/60">
                   <div className="flex justify-center mb-4 gap-1">
                     {Array.from({ length: 5 }).map((_, index) => (
@@ -321,7 +352,7 @@ export const Landing: React.FC<LandingProps> = ({onNavigate}) => {
         <div className="flex items-center justify-center gap-4 mt-8">
           <button
             onClick={() =>
-              setActiveReview((prev) => (prev - 1 + mockReviews.length) % mockReviews.length)
+              setActiveReview((prev) => (prev - 1 + displayReviews.length) % displayReviews.length)
             }
             className="w-10 h-10 rounded-full bg-rose-100 hover:bg-rose-200 text-xl font-bold transition-colors"
             style={{ color: '#A0522D' }}
@@ -330,10 +361,10 @@ export const Landing: React.FC<LandingProps> = ({onNavigate}) => {
             ‹
           </button>
 
-          <div className="flex items-center gap-2">
-            {mockReviews.map((review, index) => (
+            <div className="flex items-center gap-2">
+            {displayReviews.map((review, index) => (
               <button
-                key={review.id}
+                key={review._id || review.id || index}
                 onClick={() => setActiveReview(index)}
                 className="w-2.5 h-2.5 rounded-full transition-all"
                 style={{
@@ -346,7 +377,7 @@ export const Landing: React.FC<LandingProps> = ({onNavigate}) => {
           </div>
 
           <button
-            onClick={() => setActiveReview((prev) => (prev + 1) % mockReviews.length)}
+            onClick={() => setActiveReview((prev) => (prev + 1) % displayReviews.length)}
             className="w-10 h-10 rounded-full bg-rose-100 hover:bg-rose-200 text-xl font-bold transition-colors"
             style={{ color: '#A0522D' }}
             aria-label="Next review"

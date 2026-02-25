@@ -997,7 +997,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Users, FileText, MessageSquare, UserCheck, 
-  Download, Shield, TrendingUp, ArrowLeft, X, Search as SearchIcon, Trash2, AlertTriangle
+  Download, Shield, TrendingUp, ArrowLeft, X, Search as SearchIcon, Trash2, AlertTriangle, Star
 } from 'lucide-react';
 import adminService from '../services/admin.service';
 import { useAuth } from '../context/AuthContext';
@@ -1007,7 +1007,7 @@ interface AdminPanelProps {
   onNavigate: (page: string) => void;
 }
 
-type TabType = 'dashboard' | 'users' | 'profiles' | 'requests' | 'conversations';
+type TabType = 'dashboard' | 'users' | 'profiles' | 'requests' | 'conversations' | 'manage-reviews';
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
   const { logout } = useAuth();
@@ -1759,7 +1759,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
 
       <div className="bg-white p-6 rounded-lg shadow">
         <h3 className="text-xl font-bold mb-4">Quick Actions</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <button
             onClick={() => setActiveTab('users')}
             className="p-4 bg-blue-50 hover:bg-blue-100 rounded-lg text-center transition-colors"
@@ -1787,6 +1787,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
           >
             <MessageSquare className="mx-auto mb-2 text-pink-600" size={32} />
             <span className="text-sm font-medium">Conversations</span>
+          </button>
+          <button
+            onClick={() => onNavigate('admin-reviews')}
+            className="p-4 bg-rose-50 hover:bg-rose-100 rounded-lg text-center transition-colors"
+          >
+            <Star className="mx-auto mb-2 text-rose-600" size={32} />
+            <span className="text-sm font-medium">Manage Reviews</span>
           </button>
         </div>
       </div>
@@ -2211,10 +2218,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
               { id: 'profiles', label: 'Profiles' },
               { id: 'requests', label: 'Requests' },
               { id: 'conversations', label: 'Conversations' },
+              { id: 'manage-reviews', label: 'Manage Reviews' },
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as TabType)}
+                onClick={() => {
+                  if (tab.id === 'manage-reviews') {
+                    onNavigate('admin-reviews');
+                    return;
+                  }
+                  setActiveTab(tab.id as TabType);
+                }}
                 className={`px-6 py-4 font-medium border-b-2 ${
                   activeTab === tab.id
                     ? 'border-rose-600 text-rose-600'

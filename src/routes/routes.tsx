@@ -9,6 +9,7 @@ import { Messages } from '../pages/Messages';
 import { Membership } from '../pages/Membership';
 import { ProfileView } from '../pages/ProfileView';
 import { AdminPanel } from '../pages/AdminPanel';
+import AdminReviews from '../pages/AdminReviews';
 import CompleteProfile from '../pages/CompleteProfile';
 import { MyProfile } from '../pages/MyProfile';
 import { ViewRequests } from '../components/ViewRequest'; // ✅ Add this import
@@ -21,6 +22,7 @@ import HelpCenter from '../pages/Footer/HelpCenter';
 import PrivacyPolicy from '../pages/Footer/PrivayPolicy';
 import SafetyTips from '../pages/Footer/SafetyTips';
 import TermsOfService from '../pages/Footer/TermsOfService';
+import LeaveReview from '../pages/Footer/LeaveReview';
 
 export type Page = 
   | 'landing'
@@ -44,6 +46,8 @@ export type Page =
   | 'privacy-policy'
   | 'safety-tips'
   | 'terms-of-service'
+  | 'leave-review'
+  | 'admin-reviews'
    | 'matches'; 
 
 export interface NavigationData {
@@ -82,6 +86,8 @@ export const routes: Route[] = [
   { path: 'privacy-policy', url: '/privacy-policy', component: PrivacyPolicy, requiresAuth: false },
   { path: 'safety-tips', url: '/safety-tips', component: SafetyTips, requiresAuth: false },
   { path: 'terms-of-service', url: '/terms-of-service', component: TermsOfService, requiresAuth: false },
+  { path: 'leave-review', url: '/leave-review', component: LeaveReview, requiresAuth: false },
+  { path: 'admin-reviews', url: '/admin/reviews', component: AdminReviews, requiresAuth: true, requiresAdmin: true },
   // Admin routes
   { path: 'admin', url: '/admin', component: AdminPanel, requiresAuth: true, requiresAdmin: true },
 ];
@@ -117,28 +123,31 @@ export const Router: React.FC<RouterProps> = ({
       case 'register':
         return <Register onNavigate={onNavigate} />;
       case 'faq': 
-      return <FAQComponent onNavigate={onNavigate} />;
+      return <FAQComponent />;
       
     case 'about': 
-      return <AboutUs onNavigate={onNavigate} />;
+      return <AboutUs />;
 
     case 'contact': 
-      return <ContactUs onNavigate={onNavigate} />;
+      return <ContactUs />;
 
     case 'cookie-policy': 
-      return <CookiePolicy onNavigate={onNavigate} />;
+      return <CookiePolicy />;
 
     case 'help-center': 
-      return <HelpCenter onNavigate={onNavigate} />;
+      return <HelpCenter />;
 
     case 'privacy-policy': 
-      return <PrivacyPolicy onNavigate={onNavigate} />;
+      return <PrivacyPolicy />;
 
     case 'safety-tips': 
-      return <SafetyTips onNavigate={onNavigate} />;
+      return <SafetyTips />;
 
     case 'terms-of-service': 
-      return <TermsOfService onNavigate={onNavigate} />;
+      return <TermsOfService />;
+
+    case 'leave-review':
+      return <LeaveReview onNavigate={onNavigate} />;
       
       default:
         return <Landing onNavigate={onNavigate} />;
@@ -163,28 +172,31 @@ export const Router: React.FC<RouterProps> = ({
       return <AdvancedMatches onNavigate={onNavigate} />;
  
     case 'faq': 
-      return <FAQComponent onNavigate={onNavigate} />;
+      return <FAQComponent />;
       
     case 'about': 
-      return <AboutUs onNavigate={onNavigate} />;
+      return <AboutUs />;
 
     case 'contact': 
-      return <ContactUs onNavigate={onNavigate} />;
+      return <ContactUs />;
 
     case 'cookie-policy': 
-      return <CookiePolicy onNavigate={onNavigate} />;
+      return <CookiePolicy />;
 
     case 'help-center': 
-      return <HelpCenter onNavigate={onNavigate} />;
+      return <HelpCenter />;
 
     case 'privacy-policy': 
-      return <PrivacyPolicy onNavigate={onNavigate} />;
+      return <PrivacyPolicy />;
 
     case 'safety-tips': 
-      return <SafetyTips onNavigate={onNavigate} />;
+      return <SafetyTips />;
 
     case 'terms-of-service': 
-      return <TermsOfService onNavigate={onNavigate} />;
+      return <TermsOfService />;
+
+    case 'leave-review':
+      return <LeaveReview onNavigate={onNavigate} />;
     
     case 'profile-view':
       return <ProfileView profileId={navigationData.profileId || ''} onNavigate={onNavigate} />;
@@ -200,6 +212,9 @@ export const Router: React.FC<RouterProps> = ({
       
     case 'admin':
       return isAdmin ? <AdminPanel onNavigate={onNavigate} /> : <Dashboard onNavigate={onNavigate} />;
+
+    case 'admin-reviews':
+      return isAdmin ? <AdminReviews onNavigate={onNavigate} /> : <Dashboard onNavigate={onNavigate} />;
       
     default:
       return <Dashboard onNavigate={onNavigate} />;

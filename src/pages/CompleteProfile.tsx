@@ -3,6 +3,7 @@ import { User, Heart, Briefcase, GraduationCap, Home, Activity, Loader2, Upload,
 import { useAuth } from '../context/AuthContext';
 import profileService from '../services/profile.service';
 import { useToast } from '../context/ToastContext';
+import { State, City } from 'country-state-city';
 
 interface CompleteProfileProps {
   onNavigate: (page: string) => void;
@@ -17,13 +18,16 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
     name: '', gender: '', age: '', height: '', maritalStatus: '', language: '',
     createdFor: '', religion: '', caste: '', subCaste: '', manglik: '',
     degree: '', field: '', institution: '', occupation: '', company: '',
-    annualIncomeMin: '', annualIncomeMax: '', city: '', state: 'Punjab',
+    annualIncomeMin: '', annualIncomeMax: '', city: '', state: '',
     familyType: '', fatherName: '', fatherOccupation: '', motherName: '',
     motherOccupation: '', brothers: '', sisters: '', diet: '', smoking: '',
-    drinking: '', hobbies: [] as string[], partnerExpectations: '', about: ''
+    drinking: '', hobbies: [] as string[], partnerExpectations: '', about: '',
+    // custom field for adding a hobby via input
+    customHobbyInput: ''
   });
 
-  const [photos, setPhotos] = useState<Array<{url: string; isPrimary: boolean; file?: File}>>([]);
+  const [photos, setPhotos] = useState<Array<{url: string; file?: File}>>([]);
+  const [selectedDP, setSelectedDP] = useState<number>(0);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [currentSection, setCurrentSection] = useState(0);
   const [availableHobbies, setAvailableHobbies] = useState<string[]>(defaultHobbies);
@@ -31,15 +35,15 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
   const [loading, setLoading] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
 
-  const PUNJAB_CITIES = [
-    'Amritsar', 'Ludhiana', 'Jalandhar', 'Patiala', 'Bathinda', 'Pathankot',
-    'Hoshiarpur', 'Mohali', 'Batala', 'Moga', 'Malerkotla', 'Khanna',
-    'Phagwara', 'Muktsar', 'Barnala', 'Rajpura', 'Firozpur', 'Kapurthala',
-    'Faridkot', 'Sunam', 'Sangrur', 'Fazilka', 'Gurdaspur', 'Kharar',
-    'Gobindgarh', 'Mansa', 'Malout', 'Nabha', 'Tarn Taran', 'Jagraon',
-    'Abohar', 'Budhlada', 'Zirakpur', 'Kot Kapura', 'Nawanshahr',
-    'Rupnagar', 'Fatehgarh Sahib'
-  ].sort();
+  // load India states and cities via country-state-city package
+  const [statesList, setStatesList] = useState<Array<{name: string; isoCode: string}>>([]);
+  const [availableCities, setAvailableCities] = useState<string[]>([]);
+
+  useEffect(() => {
+    // load Indian states once
+    const s = State.getStatesOfCountry('IN') || [];
+    setStatesList(s.map(st => ({ name: st.name, isoCode: st.isoCode })));
+  }, []);
 
   // Load existing profile on mount
   useEffect(() => {
@@ -89,6 +93,7 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
           hobbies: profile.lifestylePreferences?.hobbies || [],
           about: profile.lifestylePreferences?.aboutMe || '',
           partnerExpectations: profile.lifestylePreferences?.partnerExpectations || '',
+          customHobbyInput: '',
         });
         const existingHobbies = profile.lifestylePreferences?.hobbies || [];
         setAvailableHobbies(prev => Array.from(new Set([...prev, ...existingHobbies])));
@@ -96,9 +101,22 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
         // Load photos if they exist
         if (profile.photos && profile.photos.length > 0) {
           setPhotos(profile.photos.map((photo: any) => ({
-            url: photo.photoUrl,
-            isPrimary: photo.isPrimary || false
+            url: photo.photoUrl
           })));
+          
+          // Find the display picture index
+          const dpIndex = profile.photos.findIndex((photo: any) => photo.isPrimary);
+          setSelectedDP(dpIndex >= 0 ? dpIndex : 0);
+        }
+
+        // Populate cities dropdown if state exists in profile
+        const selectedState = profile.familyDetails?.currentResidenceState || '';
+        if (selectedState) {
+          const st = (State.getStatesOfCountry('IN') || []).find((s:any) => s.name === selectedState);
+          if (st && st.isoCode) {
+            const cities = City.getCitiesOfState('IN', st.isoCode) || [];
+            setAvailableCities(cities.map((c:any) => c.name));
+          }
         }
       }
     } catch (err: any) {
@@ -128,7 +146,22 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => {
+      const updated = { ...prev, [name]: value } as any;
+      // when state changes, reset city and update availableCities
+      if (name === 'state') {
+        updated.city = '';
+        // find isoCode for selected state and load cities
+        const st = statesList.find(s => s.name === value);
+        if (st && st.isoCode) {
+          const cities = City.getCitiesOfState('IN', st.isoCode) || [];
+          setAvailableCities(cities.map(c => c.name));
+        } else {
+          setAvailableCities([]);
+        }
+      }
+      return updated;
+    });
   };
 
   const toggleHobby = (hobby: string) => {
@@ -140,82 +173,93 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
     }));
   };
 
-  const handleAddHobby = () => {
-    const hobby = customHobby.trim();
-    if (!hobby) return;
-
-    const existingOption = availableHobbies.find(
-      (item) => item.toLowerCase() === hobby.toLowerCase()
-    );
-    const hobbyToUse = existingOption || hobby;
-
-    if (!existingOption) {
-      setAvailableHobbies(prev => [...prev, hobbyToUse]);
-    }
-
-    setFormData(prev => ({
-      ...prev,
-      hobbies: prev.hobbies.includes(hobbyToUse) ? prev.hobbies : [...prev.hobbies, hobbyToUse]
-    }));
-    setCustomHobby('');
+  // Add a custom hobby from the input field (if provided)
+  const addCustomHobby = () => {
+    const value = (formData as any).customHobbyInput?.trim();
+    if (!value) return;
+    setFormData(prev => ({ ...prev, hobbies: [...prev.hobbies, value], customHobbyInput: '' }));
   };
 
-  //  FIXED: Correct route - /backend instead of /api
+  // MULTIPLE IMAGE UPLOAD - Appends new images instead of replacing
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-    if (!file.type.startsWith('image/')) {
-      showToast('Please upload an image file', 'error');
-      return;
+    const newPhotos: typeof photos = [];
+    let validCount = 0;
+
+    // Validate all files first
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+
+      if (!file.type.startsWith('image/')) {
+        showToast(`Skipping ${file.name} - not an image file`, 'error');
+        continue;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        showToast(`Skipping ${file.name} - file size exceeds 5MB`, 'error');
+        continue;
+      }
+
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(file);
+      newPhotos.push({ url: previewUrl, file });
+      validCount++;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      showToast('Image size should be less than 5MB', 'error');
+    if (validCount === 0) {
+      showToast('No valid images to upload', 'error');
+      e.target.value = '';
       return;
     }
 
     setUploadingPhoto(true);
 
     try {
-      const formData = new FormData();
-      formData.append('image', file);
+      const uploadedPhotos: typeof photos = [];
 
-   // Line 154 ko update karo
-const response = await fetch('https://api.rsaristomatch.com/backend/upload-image', {
-  method: 'POST',
-  body: formData,
-  credentials: 'include'
-});
+      // Upload each image individually
+      for (const photoData of newPhotos) {
+        const formData = new FormData();
+        formData.append('image', photoData.file!);
 
-      // Check if response is ok before parsing JSON
-      if (!response.ok) {
-        throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+        const response = await fetch('https://api.rsaristomatch.com/backend/upload-image', {
+          method: 'POST',
+          body: formData,
+          credentials: 'include'
+        });
+
+        if (!response.ok) {
+          throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+        }
+
+        const text = await response.text();
+        if (!text) {
+          throw new Error('Empty response from server');
+        }
+
+        const data = JSON.parse(text);
+
+        if (data.success && data.imageUrl) {
+          uploadedPhotos.push({ url: data.imageUrl, file: photoData.file });
+        } else {
+          throw new Error(data.message || 'Upload failed');
+        }
       }
 
-      // Check if response has content
-      const text = await response.text();
-      if (!text) {
-        throw new Error('Empty response from server');
+      // Add uploaded photos to existing ones
+      setPhotos(prev => [...prev, ...uploadedPhotos]);
+      
+      // If this is the first set of images, set the first one as DP
+      if (photos.length === 0 && uploadedPhotos.length > 0) {
+        setSelectedDP(0);
       }
 
-      const data = JSON.parse(text);
-
-      if (data.success && data.imageUrl) {
-        // Only allow a single photo; set as primary
-        setPhotos([{ 
-          url: data.imageUrl,
-          isPrimary: true,
-          file: file
-        }]);
-        showToast('Photo uploaded successfully and set as primary!', 'success');
-      } else {
-        throw new Error(data.message || 'Upload failed');
-      }
+      showToast(`Successfully uploaded ${validCount} photo${validCount !== 1 ? 's' : ''}!`, 'success');
     } catch (err: any) {
-      // console.error('Upload error:', err);
-       console.error(err);
-      showToast(err.message || 'Failed to upload photo', 'error');
+      console.error(err);
+      showToast(err.message || 'Failed to upload photos', 'error');
     } finally {
       setUploadingPhoto(false);
       e.target.value = '';
@@ -225,19 +269,20 @@ const response = await fetch('https://api.rsaristomatch.com/backend/upload-image
   const removePhoto = (index: number) => {
     setPhotos(prev => {
       const updated = prev.filter((_, i) => i !== index);
-      // If we removed the primary photo, make the first one primary
-      if (updated.length > 0 && prev[index].isPrimary) {
-        updated[0].isPrimary = true;
+      
+      // Adjust selectedDP if necessary
+      if (selectedDP >= updated.length && updated.length > 0) {
+        setSelectedDP(updated.length - 1);
+      } else if (updated.length === 0) {
+        setSelectedDP(0);
       }
+      
       return updated;
     });
   };
 
-  const setPrimaryPhoto = (index: number) => {
-    setPhotos(prev => prev.map((photo, i) => ({
-      ...photo,
-      isPrimary: i === index
-    })));
+  const setDisplayPicture = (index: number) => {
+    setSelectedDP(index);
   };
 
   // SUBMIT HANDLER
@@ -269,10 +314,11 @@ const response = await fetch('https://api.rsaristomatch.com/backend/upload-image
         gender: formData.gender, 
         dateOfBirth: new Date(birthYear, 0, 1).toISOString(),
         profileCreatedFor: formData.createdFor,
-        photos: photos.map(photo => ({
+        photos: photos.map((photo, index) => ({
           photoUrl: photo.url,
-          isPrimary: photo.isPrimary
+          isPrimary: index === selectedDP
         })),
+        displayPictureIndex: selectedDP,
         personalDetails: {
           heightCm: parseInt(formData.height),
           maritalStatus: formData.maritalStatus.toLowerCase().replace(/\s+/g, '_'),
@@ -400,60 +446,102 @@ const response = await fetch('https://api.rsaristomatch.com/backend/upload-image
               
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                 <p className="text-sm text-blue-800">
-                  <strong>Tip for your photo:</strong> Upload a clear, recent photo. Only one photo is allowed and it will be set as your primary display picture.
+                  <strong>Tips for your photos:</strong> Upload multiple clear, recent photos. You can select one as your Display Picture, which will be shown first in your profile.
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-                {photos.map((photo, index) => (
-                  <div key={index} className="relative group">
+              {/* Display Picture Preview */}
+              {photos.length > 0 && (
+                <div className="mb-8">
+                  <h3 className="text-lg font-semibold text-gray-700 mb-4">Display Picture Preview</h3>
+                  <div className="relative inline-block">
                     <img
-                      src={photo.url}
-                      alt={`Upload ${index + 1}`}
-                      className="w-full h-48 object-cover rounded-lg"
+                      src={photos[selectedDP].url}
+                      alt="Display Picture"
+                      className="w-64 h-80 object-cover rounded-xl shadow-lg"
                     />
-                    {photo.isPrimary && (
-                      <div className="absolute top-2 left-2 bg-rose-600 text-white text-xs px-2 py-1 rounded">
-                        Primary
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => removePhoto(index)}
-                        className="p-2 bg-red-600 text-white rounded-full hover:bg-red-700"
-                      >
-                        <X size={16} />
-                      </button>
+                    <div className="absolute top-3 left-3 bg-gradient-to-r from-rose-600 to-pink-600 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
+                      ✓ Display Picture
                     </div>
                   </div>
-                ))}
+                </div>
+              )}
 
-                {photos.length === 0 && (
-                  <label className="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-rose-500 hover:bg-rose-50 transition-all">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      disabled={uploadingPhoto}
-                      className="hidden"
-                    />
-                    {uploadingPhoto ? (
-                      <Loader2 className="h-8 w-8 text-rose-600 animate-spin mb-2" />
-                    ) : (
-                      <Upload className="h-8 w-8 text-gray-400 mb-2" />
-                    )}
-                    <span className="text-sm text-gray-600">
-                      {uploadingPhoto ? 'Uploading...' : 'Upload Photo'}
-                    </span>
-                    <span className="text-xs text-gray-400 mt-1">Max 100kb</span>
-                  </label>
-                )}
+              {/* Upload Area */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-700">Upload Photos</h3>
+                <label className="w-full h-40 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-rose-500 hover:bg-rose-50 transition-all">
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    disabled={uploadingPhoto}
+                    className="hidden"
+                  />
+                  {uploadingPhoto ? (
+                    <Loader2 className="h-8 w-8 text-rose-600 animate-spin mb-2" />
+                  ) : (
+                    <Upload className="h-8 w-8 text-gray-400 mb-2" />
+                  )}
+                  <span className="text-sm font-medium text-gray-600">
+                    {uploadingPhoto ? 'Uploading...' : 'Click to upload or drag files'}
+                  </span>
+                  <span className="text-xs text-gray-400 mt-1">PNG, JPG, GIF up to 5MB each</span>
+                </label>
               </div>
 
+              {/* Grid of Uploaded Photos */}
+              {photos.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-700">Uploaded Photos ({photos.length})</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {photos.map((photo, index) => (
+                      <div key={index} className="relative group">
+                        <div className={`relative h-40 overflow-hidden rounded-lg shadow-md transition-all ${
+                          index === selectedDP ? 'ring-4 ring-rose-500 ring-offset-2' : 'ring-2 ring-gray-200'
+                        }`}>
+                          <img
+                            src={photo.url}
+                            alt={`Photo ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                          
+                          {index === selectedDP && (
+                            <div className="absolute top-1 left-1 bg-gradient-to-r from-rose-600 to-pink-600 text-white px-2 py-0.5 rounded-full text-xs font-semibold">
+                              DP
+                            </div>
+                          )}
+
+                          {/* Hover Actions */}
+                          <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col items-center justify-center gap-2">
+                            {index !== selectedDP && (
+                              <button
+                                type="button"
+                                onClick={() => setDisplayPicture(index)}
+                                className="px-3 py-1.5 bg-rose-600 text-white text-xs font-semibold rounded-lg hover:bg-rose-700 transition-colors"
+                              >
+                                Set as DP
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => removePhoto(index)}
+                              className="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors"
+                            >
+                              <X size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {photos.length === 0 && (
-                <div className="text-center py-8 border border-rose-200 rounded-lg bg-rose-50">
-                  <Camera className="h-12 w-12 text-rose-600 mx-auto mb-3" />
+                <div className="text-center py-12 border border-rose-200 rounded-xl bg-rose-50">
+                  <Camera className="h-14 w-14 text-rose-600 mx-auto mb-3" />
                   <p className="text-gray-700 font-medium">No photos uploaded yet</p>
                   <p className="text-sm text-gray-600 mt-1">Upload at least one photo to continue</p>
                 </div>
@@ -511,7 +599,7 @@ const response = await fetch('https://api.rsaristomatch.com/backend/upload-image
                     onChange={handleChange}
                     required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                    placeholder="28"
+                    // placeholder=""
                   />
                 </div>
 
@@ -526,7 +614,7 @@ const response = await fetch('https://api.rsaristomatch.com/backend/upload-image
                     onChange={handleChange}
                     required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                    placeholder="170"
+                    // placeholder="170"
                   />
                 </div>
 
@@ -559,7 +647,7 @@ const response = await fetch('https://api.rsaristomatch.com/backend/upload-image
                     onChange={handleChange}
                     required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                    placeholder="Punjabi"
+                    // placeholder="Punjabi"
                   />
                 </div>
 
@@ -626,7 +714,7 @@ const response = await fetch('https://api.rsaristomatch.com/backend/upload-image
                     value={formData.caste}
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                    placeholder="Patel"
+                    // placeholder="Patel"
                   />
                 </div>
 
@@ -640,7 +728,7 @@ const response = await fetch('https://api.rsaristomatch.com/backend/upload-image
                     value={formData.subCaste}
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                    placeholder="Leva Patel"
+                    // placeholder="Leva Patel"
                   />
                 </div>
 
@@ -700,7 +788,7 @@ const response = await fetch('https://api.rsaristomatch.com/backend/upload-image
                     onChange={handleChange}
                     required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                    placeholder="Computer Science"
+                    // placeholder="Computer Science"
                   />
                 </div>
 
@@ -714,7 +802,7 @@ const response = await fetch('https://api.rsaristomatch.com/backend/upload-image
                     value={formData.institution}
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                    placeholder="University Name"
+                    // placeholder="University Name"
                   />
                 </div>
               </div>
@@ -738,7 +826,7 @@ const response = await fetch('https://api.rsaristomatch.com/backend/upload-image
                     onChange={handleChange}
                     required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                    placeholder="Software Engineer"
+                    // placeholder="Software Engineer"
                   />
                 </div>
 
@@ -752,7 +840,7 @@ const response = await fetch('https://api.rsaristomatch.com/backend/upload-image
                     value={formData.company}
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                    placeholder="Tech Company"
+                    // placeholder="Tech Company"
                   />
                 </div>
 
@@ -766,7 +854,7 @@ const response = await fetch('https://api.rsaristomatch.com/backend/upload-image
                     value={formData.annualIncomeMin}
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                    placeholder="600000"
+                    // placeholder="600000"
                   />
                 </div>
 
@@ -780,7 +868,7 @@ const response = await fetch('https://api.rsaristomatch.com/backend/upload-image
                     value={formData.annualIncomeMax}
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                    placeholder="800000"
+                    // placeholder="800000"
                   />
                 </div>
               </div>
@@ -802,10 +890,11 @@ const response = await fetch('https://api.rsaristomatch.com/backend/upload-image
                     value={formData.city}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                    disabled={availableCities.length === 0}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent disabled:opacity-50"
                   >
-                    <option value="">Select City</option>
-                    {PUNJAB_CITIES.map(city => (
+                    <option value="">{availableCities.length === 0 ? 'Select state first' : 'Select City'}</option>
+                    {availableCities.map(city => (
                       <option key={city} value={city}>
                         {city}
                       </option>
@@ -817,14 +906,18 @@ const response = await fetch('https://api.rsaristomatch.com/backend/upload-image
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     State <span className="text-rose-600">*</span>
                   </label>
-                  <input
-                    type="text"
+                  <select
                     name="state"
                     value={formData.state}
-                    readOnly
-                    placeholder='Punjab'
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
-                  />
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                  >
+                    <option value="">Select State</option>
+                    {statesList.map(st => (
+                      <option key={st.isoCode} value={st.name}>{st.name}</option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
@@ -868,7 +961,7 @@ const response = await fetch('https://api.rsaristomatch.com/backend/upload-image
                     value={formData.fatherOccupation}
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                    placeholder="Business"
+                    // placeholder="Business"
                   />
                 </div>
 
@@ -896,7 +989,7 @@ const response = await fetch('https://api.rsaristomatch.com/backend/upload-image
                     value={formData.motherOccupation}
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                    placeholder="Homemaker"
+                    // placeholder="Homemaker"
                   />
                 </div>
 
@@ -910,7 +1003,7 @@ const response = await fetch('https://api.rsaristomatch.com/backend/upload-image
                     value={formData.brothers}
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                    placeholder="1"
+                    // placeholder="1"
                   />
                 </div>
 
@@ -924,7 +1017,7 @@ const response = await fetch('https://api.rsaristomatch.com/backend/upload-image
                     value={formData.sisters}
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                    placeholder="0"
+                    // placeholder="0"
                   />
                 </div>
               </div>
@@ -952,7 +1045,10 @@ const response = await fetch('https://api.rsaristomatch.com/backend/upload-image
                     <option value="Non-Vegetarian">Non-Vegetarian</option>
                     <option value="Vegan">Vegan</option>
                     <option value="Eggetarian">Eggetarian</option>
+                    <option value="Other">Other</option>
                   </select>
+
+                  {/* No custom input for 'Other' per user request */}
                 </div>
 
                 <div>
@@ -969,7 +1065,10 @@ const response = await fetch('https://api.rsaristomatch.com/backend/upload-image
                     <option value="No">No</option>
                     <option value="Yes">Yes</option>
                     <option value="Occasionally">Occasionally</option>
+                    <option value="Other">Other</option>
                   </select>
+
+                  {/* No custom input for 'Other' per user request */}
                 </div>
 
                 <div>
@@ -986,7 +1085,10 @@ const response = await fetch('https://api.rsaristomatch.com/backend/upload-image
                     <option value="No">No</option>
                     <option value="Yes">Yes</option>
                     <option value="Socially">Socially</option>
+                    <option value="Other">Other</option>
                   </select>
+
+                  {/* No custom input for 'Other' per user request */}
                 </div>
               </div>
 
@@ -1009,28 +1111,26 @@ const response = await fetch('https://api.rsaristomatch.com/backend/upload-image
                       {hobby}
                     </button>
                   ))}
-                </div>
-                <div className="mt-4 flex flex-col sm:flex-row gap-3">
-                  <input
-                    type="text"
-                    value={customHobby}
-                    onChange={(e) => setCustomHobby(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleAddHobby();
-                      }
-                    }}
-                    className="w-full sm:max-w-xs px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                    placeholder="Add hobby"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddHobby}
-                    className="px-5 py-2 bg-gradient-to-r from-rose-600 to-pink-600 text-white rounded-lg font-semibold hover:shadow-md transition-all"
-                  >
-                    Add
-                  </button>
+
+                  {/* Allow user to add a custom hobby */}
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      name="customHobbyInput"
+                      value={(formData as any).customHobbyInput}
+                      onChange={handleChange}
+                      placeholder="Add hobby"
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomHobby(); } }}
+                      className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={addCustomHobby}
+                      className="px-3 py-2 bg-rose-600 text-white rounded-lg text-sm"
+                    >
+                      Add
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

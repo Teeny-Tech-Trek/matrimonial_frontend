@@ -2,8 +2,19 @@
 
 import axios from "axios";
 
+const getBaseUrl = () => {
+    const envBase = import.meta.env.VITE_API_BASE_URL;
+    if (envBase) return envBase;
+
+    if (typeof window !== "undefined" && window.location.hostname === "localhost") {
+        return "http://localhost:5000/backend";
+    }
+
+    return "https://api.rsaristomatch.com/backend";
+};
+
 const api = axios.create({
-    baseURL: "https://api.rsaristomatch.com/backend",
+    baseURL: getBaseUrl(),
     
  //  Added /backend
     withCredentials: true,
