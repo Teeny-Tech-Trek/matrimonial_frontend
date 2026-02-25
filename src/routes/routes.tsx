@@ -22,7 +22,6 @@ import HelpCenter from '../pages/Footer/HelpCenter';
 import PrivacyPolicy from '../pages/Footer/PrivayPolicy';
 import SafetyTips from '../pages/Footer/SafetyTips';
 import TermsOfService from '../pages/Footer/TermsOfService';
-import LeaveReview from '../pages/Footer/LeaveReview';
 
 export type Page = 
   | 'landing'
@@ -46,7 +45,6 @@ export type Page =
   | 'privacy-policy'
   | 'safety-tips'
   | 'terms-of-service'
-  | 'leave-review'
   | 'admin-reviews'
    | 'matches'; 
 
@@ -86,7 +84,6 @@ export const routes: Route[] = [
   { path: 'privacy-policy', url: '/privacy-policy', component: PrivacyPolicy, requiresAuth: false },
   { path: 'safety-tips', url: '/safety-tips', component: SafetyTips, requiresAuth: false },
   { path: 'terms-of-service', url: '/terms-of-service', component: TermsOfService, requiresAuth: false },
-  { path: 'leave-review', url: '/leave-review', component: LeaveReview, requiresAuth: false },
   { path: 'admin-reviews', url: '/admin/reviews', component: AdminReviews, requiresAuth: true, requiresAdmin: true },
   // Admin routes
   { path: 'admin', url: '/admin', component: AdminPanel, requiresAuth: true, requiresAdmin: true },
@@ -146,9 +143,6 @@ export const Router: React.FC<RouterProps> = ({
     case 'terms-of-service': 
       return <TermsOfService />;
 
-    case 'leave-review':
-      return <LeaveReview onNavigate={onNavigate} />;
-      
       default:
         return <Landing onNavigate={onNavigate} />;
     }
@@ -195,9 +189,6 @@ export const Router: React.FC<RouterProps> = ({
     case 'terms-of-service': 
       return <TermsOfService />;
 
-    case 'leave-review':
-      return <LeaveReview onNavigate={onNavigate} />;
-    
     case 'profile-view':
       return <ProfileView profileId={navigationData.profileId || ''} onNavigate={onNavigate} />;
       

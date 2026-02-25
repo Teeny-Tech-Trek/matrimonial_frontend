@@ -321,14 +321,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentPage, onNavigat
                       Contact Us
                     </a>
                   </li>
-                  <li>
-                    <button
-                      onClick={() => onNavigate('leave-review')}
-                      className="text-gray-400 hover:text-white transition-colors text-left"
-                    >
-                      Leave a Review
-                    </button>
-                  </li>
                 </ul>
               </div>
               <div>
