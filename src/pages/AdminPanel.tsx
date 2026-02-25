@@ -1064,6 +1064,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
   const [selectedUserForDelete, setSelectedUserForDelete] = useState<any>(null);
   const [showDeleteUserModal, setShowDeleteUserModal] = useState(false);
   const [deletingUser, setDeletingUser] = useState(false);
+  const [confirmPermanentDelete, setConfirmPermanentDelete] = useState(false);
 
   // Global Search
   const [searchQuery, setSearchQuery] = useState('');
@@ -1284,8 +1285,30 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
         showToast('User permanently deleted', 'success');
         setShowDeleteUserModal(false);
         setSelectedUserForDelete(null);
+        setConfirmPermanentDelete(false);
         fetchUsers();
         fetchStats(); // Refresh stats
+      }
+    } catch (error: any) {
+      showToast(error.message, 'error');
+    } finally {
+      setDeletingUser(false);
+    }
+  };
+
+  const handleDeleteUserFromDashboard = async () => {
+    if (!selectedUserForDelete) return;
+
+    setDeletingUser(true);
+    try {
+      const response = await adminService.deleteUser(selectedUserForDelete._id);
+      if (response.success) {
+        showToast('User removed from dashboard', 'success');
+        setShowDeleteUserModal(false);
+        setSelectedUserForDelete(null);
+        setConfirmPermanentDelete(false);
+        fetchUsers();
+        fetchStats();
       }
     } catch (error: any) {
       showToast(error.message, 'error');
@@ -1385,71 +1408,111 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
     if (!showDeleteUserModal || !selectedUserForDelete) return null;
 
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg max-w-md w-full">
-          <div className="p-6">
-            <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
-              <AlertTriangle className="text-red-600" size={24} />
-            </div>
-            
-            <h2 className="text-xl font-bold text-center mb-2">Permanently Delete User</h2>
-            <p className="text-gray-600 text-center mb-6">
-              Are you sure you want to <strong className="text-red-600">permanently delete</strong> the user <strong>{selectedUserForDelete.fullName}</strong>? 
-              This action <strong className="text-red-600">CANNOT BE UNDONE</strong> and will completely remove all user data from the system.
-            </p>
+      <div className="fixed inset-0 bg-black/55 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="relative bg-white rounded-2xl border border-rose-100 shadow-2xl max-w-xl w-full overflow-hidden">
+          <div className="absolute -top-24 -right-24 w-56 h-56 bg-rose-100/70 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -left-24 w-56 h-56 bg-pink-100/70 rounded-full blur-3xl pointer-events-none" />
 
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-              <div className="flex gap-2">
-                <AlertTriangle className="text-red-600 flex-shrink-0 mt-0.5" size={20} />
-                <div className="text-sm text-red-800">
-                  <p className="font-medium mb-1">⚠️ This will PERMANENTLY:</p>
-                  <ul className="list-disc list-inside space-y-1">
-                    <li>Delete the user account</li>
-                    <li>Delete all user profiles</li>
-                    <li>Remove all photos and documents</li>
-                    <li>Delete all connection requests</li>
-                    <li>Remove all conversations and messages</li>
-                    <li>Remove from all connections/favorites/blocked lists</li>
-                  </ul>
+          <div className="relative p-6 md:p-7">
+            <div className="flex items-center justify-center w-14 h-14 mx-auto bg-gradient-to-r from-rose-600 to-pink-600 rounded-full mb-4 shadow-md">
+              <Trash2 className="text-white" size={24} />
+            </div>
+
+            {!confirmPermanentDelete ? (
+              <>
+                <h2 className="text-2xl font-bold text-center text-gray-900 mb-2">Delete User</h2>
+                <p className="text-gray-600 text-center mb-6">
+                  Choose how you want to remove <strong>{selectedUserForDelete.fullName}</strong>.
+                </p>
+
+                <div className="space-y-3 mb-6">
+                  <button
+                    onClick={handleDeleteUserFromDashboard}
+                    disabled={deletingUser}
+                    className="w-full text-left rounded-xl border border-amber-200 bg-amber-50 hover:bg-amber-100 px-4 py-4 transition-colors disabled:opacity-50"
+                  >
+                    <p className="font-semibold text-amber-800">Delete For Admin Dashboard</p>
+                    <p className="text-sm text-amber-700 mt-1">
+                      User will be hidden from admin dashboard listings (soft delete).
+                    </p>
+                  </button>
+
+                  <button
+                    onClick={() => setConfirmPermanentDelete(true)}
+                    disabled={deletingUser}
+                    className="w-full text-left rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 px-4 py-4 transition-colors disabled:opacity-50"
+                  >
+                    <p className="font-semibold text-red-800">Permanently Delete From Database</p>
+                    <p className="text-sm text-red-700 mt-1">
+                      Completely removes user and related data forever.
+                    </p>
+                  </button>
                 </div>
-              </div>
-            </div>
 
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-6">
-              <p className="text-sm text-yellow-800">
-                💡 <strong>Tip:</strong> If you want to temporarily disable the user, use the "Deactivate" button instead. Deactivation can be reversed.
-              </p>
-            </div>
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => {
+                      setShowDeleteUserModal(false);
+                      setSelectedUserForDelete(null);
+                      setConfirmPermanentDelete(false);
+                    }}
+                    disabled={deletingUser}
+                    className="px-5 py-2.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h2 className="text-2xl font-bold text-center text-red-700 mb-2">Confirm Permanent Delete</h2>
+                <p className="text-gray-700 text-center mb-5">
+                  This is final confirmation. <strong>{selectedUserForDelete.fullName}</strong> will be permanently removed from database.
+                </p>
 
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setShowDeleteUserModal(false);
-                  setSelectedUserForDelete(null);
-                }}
-                disabled={deletingUser}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handlePermanentDeleteUser}
-                disabled={deletingUser}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {deletingUser ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Deleting...
-                  </>
-                ) : (
-                  <>
-                    <Trash2 size={16} />
-                    Permanently Delete
-                  </>
-                )}
-              </button>
-            </div>
+                <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+                  <div className="flex gap-2">
+                    <AlertTriangle className="text-red-600 flex-shrink-0 mt-0.5" size={20} />
+                    <div className="text-sm text-red-800">
+                      <p className="font-semibold mb-1">This cannot be undone and will remove:</p>
+                      <ul className="list-disc list-inside space-y-1">
+                        <li>User account</li>
+                        <li>Profile and photos</li>
+                        <li>Requests and conversations</li>
+                        <li>All user references</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setConfirmPermanentDelete(false)}
+                    disabled={deletingUser}
+                    className="flex-1 px-4 py-2.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  >
+                    Go Back
+                  </button>
+                  <button
+                    onClick={handlePermanentDeleteUser}
+                    disabled={deletingUser}
+                    className="flex-1 px-4 py-2.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {deletingUser ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 size={16} />
+                        Confirm Delete
+                      </>
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -1607,6 +1670,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
                     <button
                       onClick={() => {
                         setSelectedUserForDelete(selectedUser);
+                        setConfirmPermanentDelete(false);
                         setShowUserModal(false);
                         setShowDeleteUserModal(true);
                       }}
@@ -1916,6 +1980,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
                       <button
                         onClick={() => {
                           setSelectedUserForDelete(user);
+                          setConfirmPermanentDelete(false);
                           setShowDeleteUserModal(true);
                         }}
                         className="text-red-600 hover:text-red-900 font-medium"
