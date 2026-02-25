@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Search as SearchIcon } from 'lucide-react';
+import { Search as SearchIcon, X, SlidersHorizontal } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { CompleteProfile } from '../types';
 import { ProfileCard } from '../components/ProfileCard';
@@ -13,6 +13,23 @@ interface SearchProps {
 
 export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
   const { currentUser } = useAuth();
+  const preferenceDefaults = {
+    gender: '',
+    state: '',
+    religion: '',
+    maritalStatus: '',
+    diet: '',
+    ageMin: '',
+    ageMax: '',
+  };
+  const stateOptions = ['Punjab', 'Delhi', 'Haryana', 'Uttar Pradesh', 'Maharashtra', 'Gujarat', 'Rajasthan'];
+  const religionOptions = ['Hindu', 'Muslim', 'Sikh', 'Christian', 'Jain'];
+  const maritalStatusOptions = [
+    { value: 'never_married', label: 'Never Married' },
+    { value: 'divorced', label: 'Divorced' },
+    { value: 'widowed', label: 'Widowed' },
+  ];
+  const dietOptions = ['Vegetarian', 'Non-Vegetarian', 'Eggetarian', 'Vegan'];
 
   const [profiles, setProfiles] = useState<CompleteProfile[]>([]);
   const [loading, setLoading] = useState(false);
@@ -24,9 +41,22 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
   const [currentFilters, setCurrentFilters] = useState<any>({});
   const [currentQueryString, setCurrentQueryString] = useState('');
   const [acceptedConnectionIds, setAcceptedConnectionIds] = useState<string[]>([]);
+  const [showPreferencePrompt, setShowPreferencePrompt] = useState(true);
+  const [quickFilterKey, setQuickFilterKey] = useState(0);
+  const [preferenceDraft, setPreferenceDraft] = useState(preferenceDefaults);
   
   const isFirstRender = useRef(true);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
+
+  const buildQueryStringFromFilters = (filters: any) => {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value && value !== '' && value !== 'Other') {
+        params.append(key, String(value));
+      }
+    });
+    return params.toString();
+  };
 
   // ✅ Fetch accepted connections using axios
   const fetchAcceptedConnections = async () => {
@@ -218,6 +248,46 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
     fetchProfiles(filters, queryString, activeView);
   };
 
+  const applyPreferenceFilters = () => {
+    const updatedFilters = {
+      ...currentFilters,
+      gender: preferenceDraft.gender,
+      state: preferenceDraft.state,
+      religion: preferenceDraft.religion,
+      maritalStatus: preferenceDraft.maritalStatus,
+      diet: preferenceDraft.diet,
+      ageMin: preferenceDraft.ageMin,
+      ageMax: preferenceDraft.ageMax,
+    };
+    const queryString = buildQueryStringFromFilters(updatedFilters);
+    setCurrentFilters(updatedFilters);
+    setCurrentQueryString(queryString);
+    setCurrentPage(1);
+    setQuickFilterKey(prev => prev + 1);
+    fetchProfiles(updatedFilters, queryString, activeView);
+    setShowPreferencePrompt(false);
+  };
+
+  const clearPreferenceFilters = () => {
+    const updatedFilters = {
+      ...currentFilters,
+      gender: '',
+      state: '',
+      religion: '',
+      maritalStatus: '',
+      diet: '',
+      ageMin: '',
+      ageMax: '',
+    };
+    const queryString = buildQueryStringFromFilters(updatedFilters);
+    setPreferenceDraft(preferenceDefaults);
+    setCurrentFilters(updatedFilters);
+    setCurrentQueryString(queryString);
+    setCurrentPage(1);
+    setQuickFilterKey(prev => prev + 1);
+    fetchProfiles(updatedFilters, queryString, activeView);
+  };
+
   // ✅ Send interest using axios
   const handleSendInterest = async (profileId: string) => {
     if (!currentUser) {
@@ -329,8 +399,150 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
         </div>
       </div>
 
+      {showPreferencePrompt && (
+        <div className="bg-white rounded-2xl shadow-sm border border-rose-100 p-5 md:p-6">
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <div>
+              <p className="inline-flex items-center gap-2 text-sm font-semibold text-rose-700 bg-rose-50 px-3 py-1 rounded-full mb-2">
+                <SlidersHorizontal size={16} />
+                Preference Setup
+              </p>
+              <h3 className="text-xl md:text-2xl font-bold text-gray-900">Aap kis type ka profile search karna chahte hain?</h3>
+              <p className="text-gray-600">Quick preference select karo, filtered cards turant mil jayengi.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowPreferencePrompt(false)}
+              className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-rose-600 transition-colors"
+            >
+              <X size={16} />
+              Nahi chahiye preference
+            </button>
+          </div>
+
+          <div className="flex gap-4 overflow-x-auto pb-2 snap-x md:grid md:grid-cols-3 md:overflow-visible">
+            <div className="min-w-[250px] md:min-w-0 snap-start rounded-xl border border-rose-100 bg-rose-50/40 p-4">
+              <p className="text-sm font-semibold text-gray-700 mb-2">Gender</p>
+              <select
+                value={preferenceDraft.gender}
+                onChange={(e) => setPreferenceDraft(prev => ({ ...prev, gender: e.target.value }))}
+                className="w-full px-3 py-2 border border-rose-200 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+              >
+                <option value="">Any</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </select>
+            </div>
+
+            <div className="min-w-[250px] md:min-w-0 snap-start rounded-xl border border-rose-100 bg-rose-50/40 p-4">
+              <p className="text-sm font-semibold text-gray-700 mb-2">State</p>
+              <select
+                value={preferenceDraft.state}
+                onChange={(e) => setPreferenceDraft(prev => ({ ...prev, state: e.target.value }))}
+                className="w-full px-3 py-2 border border-rose-200 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+              >
+                <option value="">Any State</option>
+                {stateOptions.map((state) => (
+                  <option key={state} value={state}>{state}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="min-w-[250px] md:min-w-0 snap-start rounded-xl border border-rose-100 bg-rose-50/40 p-4">
+              <p className="text-sm font-semibold text-gray-700 mb-2">Religion</p>
+              <select
+                value={preferenceDraft.religion}
+                onChange={(e) => setPreferenceDraft(prev => ({ ...prev, religion: e.target.value }))}
+                className="w-full px-3 py-2 border border-rose-200 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+              >
+                <option value="">Any Religion</option>
+                {religionOptions.map((religion) => (
+                  <option key={religion} value={religion}>{religion}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="min-w-[250px] md:min-w-0 snap-start rounded-xl border border-rose-100 bg-rose-50/40 p-4">
+              <p className="text-sm font-semibold text-gray-700 mb-2">Marital Status</p>
+              <select
+                value={preferenceDraft.maritalStatus}
+                onChange={(e) => setPreferenceDraft(prev => ({ ...prev, maritalStatus: e.target.value }))}
+                className="w-full px-3 py-2 border border-rose-200 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+              >
+                <option value="">Any Status</option>
+                {maritalStatusOptions.map((status) => (
+                  <option key={status.value} value={status.value}>{status.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="min-w-[250px] md:min-w-0 snap-start rounded-xl border border-rose-100 bg-rose-50/40 p-4">
+              <p className="text-sm font-semibold text-gray-700 mb-2">Diet</p>
+              <select
+                value={preferenceDraft.diet}
+                onChange={(e) => setPreferenceDraft(prev => ({ ...prev, diet: e.target.value }))}
+                className="w-full px-3 py-2 border border-rose-200 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+              >
+                <option value="">Any Diet</option>
+                {dietOptions.map((diet) => (
+                  <option key={diet} value={diet}>{diet}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="min-w-[250px] md:min-w-0 snap-start rounded-xl border border-rose-100 bg-rose-50/40 p-4">
+              <p className="text-sm font-semibold text-gray-700 mb-2">Age Range</p>
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="number"
+                  min={18}
+                  max={80}
+                  value={preferenceDraft.ageMin}
+                  onChange={(e) => setPreferenceDraft(prev => ({ ...prev, ageMin: e.target.value }))}
+                  className="w-full px-3 py-2 border border-rose-200 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                  placeholder="Min"
+                />
+                <input
+                  type="number"
+                  min={18}
+                  max={80}
+                  value={preferenceDraft.ageMax}
+                  onChange={(e) => setPreferenceDraft(prev => ({ ...prev, ageMax: e.target.value }))}
+                  className="w-full px-3 py-2 border border-rose-200 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                  placeholder="Max"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-3 mt-5">
+            <button
+              type="button"
+              onClick={applyPreferenceFilters}
+              className="px-5 py-2.5 rounded-lg bg-gradient-to-r from-rose-600 to-pink-600 text-white font-semibold hover:shadow-md transition-all"
+            >
+              Apply Preference
+            </button>
+            <button
+              type="button"
+              onClick={clearPreferenceFilters}
+              className="px-5 py-2.5 rounded-lg border border-rose-200 text-rose-700 font-semibold hover:bg-rose-50 transition-colors"
+            >
+              Clear Preference
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowPreferencePrompt(false)}
+              className="px-5 py-2.5 rounded-lg border border-gray-200 text-gray-600 font-semibold hover:bg-gray-50 transition-colors"
+            >
+              Skip
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* QuickFilters Component */}
-      <QuickFilters onFilterChange={handleFilterChange} initialFilters={currentFilters} />
+      <QuickFilters key={quickFilterKey} onFilterChange={handleFilterChange} initialFilters={currentFilters} />
 
       {/* Error Message */}
       {error && (

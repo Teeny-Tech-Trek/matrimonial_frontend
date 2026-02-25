@@ -11,6 +11,7 @@ interface CompleteProfileProps {
 export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
   const { refreshProfile } = useAuth();
   const { showToast } = useToast();
+  const defaultHobbies = ['Drawing', 'Shopping', 'Dancing', 'Cooking', 'Reading', 'Traveling', 'Music', 'Sports'];
 
   const [formData, setFormData] = useState({
     name: '', gender: '', age: '', height: '', maritalStatus: '', language: '',
@@ -25,7 +26,8 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
   const [photos, setPhotos] = useState<Array<{url: string; isPrimary: boolean; file?: File}>>([]);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [currentSection, setCurrentSection] = useState(0);
-  const [availableHobbies] = useState(['Drawing', 'Shopping', 'Dancing', 'Cooking', 'Reading', 'Traveling', 'Music', 'Sports']);
+  const [availableHobbies, setAvailableHobbies] = useState<string[]>(defaultHobbies);
+  const [customHobby, setCustomHobby] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
 
@@ -88,6 +90,8 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
           about: profile.lifestylePreferences?.aboutMe || '',
           partnerExpectations: profile.lifestylePreferences?.partnerExpectations || '',
         });
+        const existingHobbies = profile.lifestylePreferences?.hobbies || [];
+        setAvailableHobbies(prev => Array.from(new Set([...prev, ...existingHobbies])));
 
         // Load photos if they exist
         if (profile.photos && profile.photos.length > 0) {
@@ -134,6 +138,26 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
         ? prev.hobbies.filter(h => h !== hobby)
         : [...prev.hobbies, hobby]
     }));
+  };
+
+  const handleAddHobby = () => {
+    const hobby = customHobby.trim();
+    if (!hobby) return;
+
+    const existingOption = availableHobbies.find(
+      (item) => item.toLowerCase() === hobby.toLowerCase()
+    );
+    const hobbyToUse = existingOption || hobby;
+
+    if (!existingOption) {
+      setAvailableHobbies(prev => [...prev, hobbyToUse]);
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      hobbies: prev.hobbies.includes(hobbyToUse) ? prev.hobbies : [...prev.hobbies, hobbyToUse]
+    }));
+    setCustomHobby('');
   };
 
   //  FIXED: Correct route - /backend instead of /api
@@ -985,6 +1009,28 @@ const response = await fetch('https://api.rsaristomatch.com/backend/upload-image
                       {hobby}
                     </button>
                   ))}
+                </div>
+                <div className="mt-4 flex flex-col sm:flex-row gap-3">
+                  <input
+                    type="text"
+                    value={customHobby}
+                    onChange={(e) => setCustomHobby(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddHobby();
+                      }
+                    }}
+                    className="w-full sm:max-w-xs px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                    placeholder="Add hobby"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddHobby}
+                    className="px-5 py-2 bg-gradient-to-r from-rose-600 to-pink-600 text-white rounded-lg font-semibold hover:shadow-md transition-all"
+                  >
+                    Add
+                  </button>
                 </div>
               </div>
             </div>

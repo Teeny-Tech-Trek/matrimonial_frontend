@@ -25,7 +25,7 @@ const AboutUs = () => {
               </h1>
               
               <p className="text-xl md:text-2xl text-gray-600 font-medium mb-2">R.S. Matrimonial Services</p>
-              <p className="text-base text-gray-500 italic">Est. 2009 • Ludhiana, Punjab</p>
+              <p className="text-base text-gray-500 italic">Est. 2025 • Bathinda, Punjab</p>
             </div>
           </div>
         </div>
