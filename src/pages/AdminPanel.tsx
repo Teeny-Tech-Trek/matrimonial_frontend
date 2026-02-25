@@ -1064,7 +1064,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
   const [selectedUserForDelete, setSelectedUserForDelete] = useState<any>(null);
   const [showDeleteUserModal, setShowDeleteUserModal] = useState(false);
   const [deletingUser, setDeletingUser] = useState(false);
-  const [confirmPermanentDelete, setConfirmPermanentDelete] = useState(false);
 
   // Global Search
   const [searchQuery, setSearchQuery] = useState('');
@@ -1275,27 +1274,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
     }
   };
 
-  const handlePermanentDeleteUser = async () => {
-    if (!selectedUserForDelete) return;
-    
-    setDeletingUser(true);
-    try {
-      const response = await adminService.permanentDeleteUser(selectedUserForDelete._id);
-      if (response.success) {
-        showToast('User permanently deleted', 'success');
-        setShowDeleteUserModal(false);
-        setSelectedUserForDelete(null);
-        setConfirmPermanentDelete(false);
-        fetchUsers();
-        fetchStats(); // Refresh stats
-      }
-    } catch (error: any) {
-      showToast(error.message, 'error');
-    } finally {
-      setDeletingUser(false);
-    }
-  };
-
   const handleDeleteUserFromDashboard = async () => {
     if (!selectedUserForDelete) return;
 
@@ -1306,7 +1284,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
         showToast('User removed from dashboard', 'success');
         setShowDeleteUserModal(false);
         setSelectedUserForDelete(null);
-        setConfirmPermanentDelete(false);
         fetchUsers();
         fetchStats();
       }
@@ -1418,101 +1395,49 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
               <Trash2 className="text-white" size={24} />
             </div>
 
-            {!confirmPermanentDelete ? (
-              <>
-                <h2 className="text-2xl font-bold text-center text-gray-900 mb-2">Delete User</h2>
-                <p className="text-gray-600 text-center mb-6">
-                  Choose how you want to remove <strong>{selectedUserForDelete.fullName}</strong>.
+            <h2 className="text-2xl font-bold text-center text-gray-900 mb-2">Delete User</h2>
+            <p className="text-gray-600 text-center mb-6">
+              Remove <strong>{selectedUserForDelete.fullName}</strong> from admin dashboard?
+            </p>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+              <div className="flex gap-2">
+                <AlertTriangle className="text-amber-600 flex-shrink-0 mt-0.5" size={20} />
+                <p className="text-sm text-amber-800">
+                  This will soft delete the user and hide them from admin dashboard listings.
                 </p>
+              </div>
+            </div>
 
-                <div className="space-y-3 mb-6">
-                  <button
-                    onClick={handleDeleteUserFromDashboard}
-                    disabled={deletingUser}
-                    className="w-full text-left rounded-xl border border-amber-200 bg-amber-50 hover:bg-amber-100 px-4 py-4 transition-colors disabled:opacity-50"
-                  >
-                    <p className="font-semibold text-amber-800">Delete For Admin Dashboard</p>
-                    <p className="text-sm text-amber-700 mt-1">
-                      User will be hidden from admin dashboard listings (soft delete).
-                    </p>
-                  </button>
-
-                  <button
-                    onClick={() => setConfirmPermanentDelete(true)}
-                    disabled={deletingUser}
-                    className="w-full text-left rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 px-4 py-4 transition-colors disabled:opacity-50"
-                  >
-                    <p className="font-semibold text-red-800">Permanently Delete From Database</p>
-                    <p className="text-sm text-red-700 mt-1">
-                      Completely removes user and related data forever.
-                    </p>
-                  </button>
-                </div>
-
-                <div className="flex justify-end">
-                  <button
-                    onClick={() => {
-                      setShowDeleteUserModal(false);
-                      setSelectedUserForDelete(null);
-                      setConfirmPermanentDelete(false);
-                    }}
-                    disabled={deletingUser}
-                    className="px-5 py-2.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <h2 className="text-2xl font-bold text-center text-red-700 mb-2">Confirm Permanent Delete</h2>
-                <p className="text-gray-700 text-center mb-5">
-                  This is final confirmation. <strong>{selectedUserForDelete.fullName}</strong> will be permanently removed from database.
-                </p>
-
-                <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
-                  <div className="flex gap-2">
-                    <AlertTriangle className="text-red-600 flex-shrink-0 mt-0.5" size={20} />
-                    <div className="text-sm text-red-800">
-                      <p className="font-semibold mb-1">This cannot be undone and will remove:</p>
-                      <ul className="list-disc list-inside space-y-1">
-                        <li>User account</li>
-                        <li>Profile and photos</li>
-                        <li>Requests and conversations</li>
-                        <li>All user references</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setConfirmPermanentDelete(false)}
-                    disabled={deletingUser}
-                    className="flex-1 px-4 py-2.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
-                  >
-                    Go Back
-                  </button>
-                  <button
-                    onClick={handlePermanentDeleteUser}
-                    disabled={deletingUser}
-                    className="flex-1 px-4 py-2.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    {deletingUser ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        Deleting...
-                      </>
-                    ) : (
-                      <>
-                        <Trash2 size={16} />
-                        Confirm Delete
-                      </>
-                    )}
-                  </button>
-                </div>
-              </>
-            )}
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowDeleteUserModal(false);
+                  setSelectedUserForDelete(null);
+                }}
+                disabled={deletingUser}
+                className="flex-1 px-4 py-2.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteUserFromDashboard}
+                disabled={deletingUser}
+                className="flex-1 px-4 py-2.5 rounded-lg bg-rose-600 text-white hover:bg-rose-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {deletingUser ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={16} />
+                    Delete From Dashboard
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -1670,7 +1595,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
                     <button
                       onClick={() => {
                         setSelectedUserForDelete(selectedUser);
-                        setConfirmPermanentDelete(false);
                         setShowUserModal(false);
                         setShowDeleteUserModal(true);
                       }}
@@ -1980,7 +1904,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
                       <button
                         onClick={() => {
                           setSelectedUserForDelete(user);
-                          setConfirmPermanentDelete(false);
                           setShowDeleteUserModal(true);
                         }}
                         className="text-red-600 hover:text-red-900 font-medium"
