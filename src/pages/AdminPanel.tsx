@@ -1533,6 +1533,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
                   <p className="text-base text-gray-900 capitalize">{selectedUser.profileCreatedFor || 'N/A'}</p>
                 </div>
 
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Profile Completion</label>
+                    <p className="text-base font-semibold text-gray-900">
+                      {typeof selectedUser.profileCompletion === 'number' ? `${selectedUser.profileCompletion}%` : '0%'}
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Profile Exists</label>
+                    <p className="text-base font-semibold text-gray-900">
+                      {selectedUser.hasProfile ? 'Yes' : 'No'}
+                    </p>
+                  </div>
+                </div>
+
                 {/* Timeline */}
                 <div className="pt-4 border-t">
                   <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4">Timeline</h3>
