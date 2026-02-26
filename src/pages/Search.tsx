@@ -61,6 +61,9 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
     return params.toString();
   };
 
+  const hasAnyPreferenceValues = (prefs: Record<string, string>) =>
+    Object.values(prefs).some((v) => String(v || '').trim() !== '');
+
   const goToNextPreferenceSlide = () => {
     setPreferenceSlideIndex((prev) => (prev + 1) % totalPreferenceSlides);
   };
@@ -392,6 +395,8 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
     fetchProfiles(updatedFilters, queryString, activeView);
   };
 
+  const hasSavedPreferences = hasAnyPreferenceValues(preferenceDraft);
+
   // ✅ Send interest using axios
   const handleSendInterest = async (profileId: string) => {
     if (!currentUser) {
@@ -453,6 +458,15 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
     };
   }, []);
 
+  useEffect(() => {
+    if (!showPreferencePrompt) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [showPreferencePrompt]);
+
   return (
     <div className="space-y-6 relative">
       {/* View Toggle Buttons + Search Bar */}
@@ -491,27 +505,39 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-3 mb-4">
-          <button
-            type="button"
-            onClick={clearFiltersTemporarily}
-            className="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 transition-colors"
-          >
-            Clear Filters
-          </button>
-          <button
-            type="button"
-            onClick={openPreferencePrompt}
-            className="px-4 py-2 rounded-lg border border-rose-200 text-rose-700 font-semibold hover:bg-rose-50 transition-colors"
-          >
-            Edit Preferences
-          </button>
-          <button
-            type="button"
-            onClick={clearPreferenceFilters}
-            className="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 transition-colors"
-          >
-            Clear All Preferences
-          </button>
+          {hasSavedPreferences ? (
+            <>
+              <button
+                type="button"
+                onClick={clearFiltersTemporarily}
+                className="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 transition-colors"
+              >
+                Clear Filters
+              </button>
+              <button
+                type="button"
+                onClick={openPreferencePrompt}
+                className="px-4 py-2 rounded-lg border border-rose-200 text-rose-700 font-semibold hover:bg-rose-50 transition-colors"
+              >
+                Edit Preferences
+              </button>
+              <button
+                type="button"
+                onClick={clearPreferenceFilters}
+                className="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 transition-colors"
+              >
+                Clear All Preferences
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={openPreferencePrompt}
+              className="px-4 py-2 rounded-lg border border-rose-200 text-rose-700 font-semibold hover:bg-rose-50 transition-colors"
+            >
+              Set Preferences
+            </button>
+          )}
         </div>
 
         {/* Search Bar */}
@@ -528,7 +554,7 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
       </div>
 
       {showPreferencePrompt && (
-        <div className="absolute inset-0 z-40 bg-white/55 backdrop-blur-[1px] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[60] bg-black/35 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="relative w-full max-w-4xl overflow-hidden bg-white rounded-3xl shadow-2xl border border-rose-100 p-5 md:p-7">
           <div className="absolute -top-16 -right-12 w-48 h-48 bg-rose-100/50 rounded-full blur-3xl pointer-events-none"></div>
           <div className="absolute -bottom-20 -left-10 w-56 h-56 bg-pink-100/40 rounded-full blur-3xl pointer-events-none"></div>
