@@ -77,6 +77,11 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
     setPreferenceSlideIndex(0);
   };
 
+  const openPreferencePrompt = () => {
+    setShowPreferencePrompt(true);
+    setPreferenceSlideIndex(0);
+  };
+
   // ✅ Fetch accepted connections using axios
   const fetchAcceptedConnections = async () => {
     try {
@@ -367,6 +372,26 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
     fetchProfiles(updatedFilters, queryString, activeView);
   };
 
+  const clearFiltersTemporarily = () => {
+    const updatedFilters = {
+      ...currentFilters,
+      gender: '',
+      state: '',
+      religion: '',
+      maritalStatus: '',
+      diet: '',
+      ageMin: '',
+      ageMax: '',
+    };
+    const queryString = buildQueryStringFromFilters(updatedFilters);
+    setCurrentFilters(updatedFilters);
+    setCurrentQueryString(queryString);
+    setCurrentPage(1);
+    setQuickFilterKey(prev => prev + 1);
+    isFirstRender.current = false;
+    fetchProfiles(updatedFilters, queryString, activeView);
+  };
+
   // ✅ Send interest using axios
   const handleSendInterest = async (profileId: string) => {
     if (!currentUser) {
@@ -462,6 +487,30 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
             }`}
           >
             Recently Joined
+          </button>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-end gap-3 mb-4">
+          <button
+            type="button"
+            onClick={clearFiltersTemporarily}
+            className="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 transition-colors"
+          >
+            Clear Filters
+          </button>
+          <button
+            type="button"
+            onClick={openPreferencePrompt}
+            className="px-4 py-2 rounded-lg border border-rose-200 text-rose-700 font-semibold hover:bg-rose-50 transition-colors"
+          >
+            Edit Preferences
+          </button>
+          <button
+            type="button"
+            onClick={clearPreferenceFilters}
+            className="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 transition-colors"
+          >
+            Clear All Preferences
           </button>
         </div>
 
@@ -669,7 +718,7 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
               onClick={clearPreferenceFilters}
               className="px-5 py-2.5 rounded-lg border border-rose-200 text-rose-700 font-semibold hover:bg-rose-50 transition-colors"
             >
-              Clear Preferences
+              Clear All Preferences
             </button>
             <button
               type="button"
