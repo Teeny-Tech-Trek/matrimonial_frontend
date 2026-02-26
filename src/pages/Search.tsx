@@ -6,6 +6,7 @@ import { CompleteProfile } from '../types';
 import { ProfileCard } from '../components/ProfileCard';
 import QuickFilters from '../components/QuickFilters';
 import api from '../services/api'; 
+import profileService from '../services/profile.service';
 
 interface SearchProps {
   onNavigate: (page: string, data?: any) => void;
@@ -237,6 +238,47 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
     }
   }, [showPreferencePrompt]);
 
+  useEffect(() => {
+    const loadSavedPreferences = async () => {
+      try {
+        const response = await profileService.getMyProfile();
+        if (!response?.success || !response?.data) return;
+
+        const restoredPrefs = {
+          ...preferenceDefaults,
+          ...(response.data.searchPreferences || {}),
+        };
+
+        const hasAnyPreference = Object.values(restoredPrefs).some((v) => String(v).trim() !== '');
+        if (!hasAnyPreference) return;
+
+        const updatedFilters = {
+          ...currentFilters,
+          gender: restoredPrefs.gender,
+          state: restoredPrefs.state,
+          religion: restoredPrefs.religion,
+          maritalStatus: restoredPrefs.maritalStatus,
+          diet: restoredPrefs.diet,
+          ageMin: restoredPrefs.ageMin,
+          ageMax: restoredPrefs.ageMax,
+        };
+
+        const queryString = buildQueryStringFromFilters(updatedFilters);
+
+        setPreferenceDraft(restoredPrefs);
+        setCurrentFilters(updatedFilters);
+        setCurrentQueryString(queryString);
+        setShowPreferencePrompt(false);
+        setQuickFilterKey((prev) => prev + 1);
+        isFirstRender.current = false;
+        fetchProfiles(updatedFilters, queryString, activeView);
+      } catch {
+      }
+    };
+
+    loadSavedPreferences();
+  }, [currentUser?.id, currentUser?.userId]);
+
   // Handle page changes
   useEffect(() => {
     if (!isFirstRender.current) {
@@ -266,7 +308,7 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
     fetchProfiles(filters, queryString, activeView);
   };
 
-  const applyPreferenceFilters = () => {
+  const applyPreferenceFilters = async () => {
     const updatedFilters = {
       ...currentFilters,
       gender: preferenceDraft.gender,
@@ -277,6 +319,10 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
       ageMin: preferenceDraft.ageMin,
       ageMax: preferenceDraft.ageMax,
     };
+    try {
+      await profileService.saveSearchPreferences(preferenceDraft);
+    } catch {
+    }
     const queryString = buildQueryStringFromFilters(updatedFilters);
     setCurrentFilters(updatedFilters);
     setCurrentQueryString(queryString);
@@ -287,7 +333,7 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
     dismissPreferencePrompt();
   };
 
-  const clearPreferenceFilters = () => {
+  const clearPreferenceFilters = async () => {
     const updatedFilters = {
       ...currentFilters,
       gender: '',
@@ -299,6 +345,10 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
       ageMax: '',
     };
     const queryString = buildQueryStringFromFilters(updatedFilters);
+    try {
+      await profileService.saveSearchPreferences(preferenceDefaults);
+    } catch {
+    }
     setPreferenceDraft(preferenceDefaults);
     setCurrentFilters(updatedFilters);
     setCurrentQueryString(queryString);
@@ -603,14 +653,7 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-3 mt-5">
-            <button
-              type="button"
-              onClick={applyPreferenceFilters}
-              className="px-5 py-2.5 rounded-lg bg-gradient-to-r from-rose-600 to-pink-600 text-white font-semibold hover:shadow-md transition-all"
-            >
-              Apply Preferences
-            </button>
+          <div className="flex flex-wrap justify-end items-center gap-3 mt-5">
             <button
               type="button"
               onClick={clearPreferenceFilters}
@@ -626,6 +669,13 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
               className="px-5 py-2.5 rounded-lg border border-gray-200 text-gray-600 font-semibold hover:bg-gray-50 transition-colors"
             >
               Skip for now
+            </button>
+            <button
+              type="button"
+              onClick={applyPreferenceFilters}
+              className="px-5 py-2.5 rounded-lg bg-gradient-to-r from-rose-600 to-pink-600 text-white font-semibold hover:shadow-md transition-all"
+            >
+              Apply Preferences
             </button>
           </div>
         </div>

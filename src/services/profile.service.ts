@@ -61,6 +61,16 @@ interface ProfileResponse {
   error?: string;
 }
 
+interface SearchPreferencesPayload {
+  gender?: string;
+  state?: string;
+  religion?: string;
+  maritalStatus?: string;
+  diet?: string;
+  ageMin?: string;
+  ageMax?: string;
+}
+
 export const profileService = {
   // Create or Update Profile
   saveProfile: async (data: ProfileData): Promise<ProfileResponse> => {
@@ -131,6 +141,18 @@ export const profileService = {
       const errorMessage = error.response?.data?.message 
         || error.response?.data?.error 
         || 'Failed to delete profile';
+      throw new Error(errorMessage);
+    }
+  },
+
+  saveSearchPreferences: async (data: SearchPreferencesPayload): Promise<ProfileResponse> => {
+    try {
+      const response = await api.patch<ProfileResponse>('/profile/preferences/search', data);
+      return response.data;
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message
+        || error.response?.data?.error
+        || 'Failed to save search preferences';
       throw new Error(errorMessage);
     }
   },
