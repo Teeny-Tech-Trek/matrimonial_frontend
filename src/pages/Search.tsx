@@ -258,7 +258,7 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
 
         const updatedFilters = {
           ...currentFilters,
-          gender: '',
+          gender: restoredPrefs.gender,
           state: restoredPrefs.state,
           religion: restoredPrefs.religion,
           maritalStatus: restoredPrefs.maritalStatus,
@@ -316,7 +316,7 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
     dismissPreferencePrompt();
     const updatedFilters = {
       ...currentFilters,
-      gender: '',
+      gender: preferenceDraft.gender,
       state: preferenceDraft.state,
       religion: preferenceDraft.religion,
       maritalStatus: preferenceDraft.maritalStatus,
