@@ -1,7 +1,5 @@
-// src/services/profile.service.ts
 import api from "./api";
 
-// Interface for complete profile data
 interface ProfileData {
   fullName: string;
   gender: string;
@@ -72,47 +70,56 @@ interface SearchPreferencesPayload {
 }
 
 export const profileService = {
-  // Create or Update Profile
   saveProfile: async (data: ProfileData): Promise<ProfileResponse> => {
     try {
-      const response = await api.post<ProfileResponse>('/profile/save', data);
+      const response = await api.post<ProfileResponse>("/profile/save", data);
       return response.data;
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message 
-        || error.response?.data?.error 
-        || 'Failed to save profile';
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        "Failed to save profile";
       throw new Error(errorMessage);
     }
   },
 
-  // ✅ FIXED: Get My Profile - changed to /profile/me (matches backend)
   getMyProfile: async (): Promise<ProfileResponse> => {
     try {
-      // ✅ CHANGED FROM /profile/my-profile TO /profile/me
-      const response = await api.get<ProfileResponse>('/profile/me');
+      const response = await api.get<ProfileResponse>("/profile/me");
       return response.data;
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message 
-        || error.response?.data?.error 
-        || 'Failed to fetch profile';
+      if (error.response?.status === 404) {
+        try {
+          const fallbackResponse = await api.get<ProfileResponse>("/profile/my-profile");
+          return fallbackResponse.data;
+        } catch (fallbackError: any) {
+          if (fallbackError.response?.status === 404) {
+            return { success: true, data: null, message: "Profile not found" };
+          }
+        }
+      }
+
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        "Failed to fetch profile";
       throw new Error(errorMessage);
     }
   },
 
-  // Get Profile by ID (for viewing other profiles)
   getProfileById: async (id: string): Promise<ProfileResponse> => {
     try {
       const response = await api.get<ProfileResponse>(`/profile/${id}`);
       return response.data;
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message 
-        || error.response?.data?.error 
-        || 'Failed to fetch profile';
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        "Failed to fetch profile";
       throw new Error(errorMessage);
     }
   },
 
-  // Get All Profiles (with filters)
   listProfiles: async (filters?: {
     gender?: string;
     religion?: string;
@@ -121,38 +128,46 @@ export const profileService = {
     try {
       const queryParams = new URLSearchParams(filters as any).toString();
       const response = await api.get<ProfileResponse>(
-        `/profile/list${queryParams ? `?${queryParams}` : ''}`
+        `/profile/list${queryParams ? `?${queryParams}` : ""}`
       );
       return response.data;
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message 
-        || error.response?.data?.error 
-        || 'Failed to fetch profiles';
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        "Failed to fetch profiles";
       throw new Error(errorMessage);
     }
   },
 
-  // Delete Profile
   deleteProfile: async (): Promise<ProfileResponse> => {
     try {
-      const response = await api.delete<ProfileResponse>('/profile');
+      const response = await api.delete<ProfileResponse>("/profile");
       return response.data;
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message 
-        || error.response?.data?.error 
-        || 'Failed to delete profile';
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        "Failed to delete profile";
       throw new Error(errorMessage);
     }
   },
 
-  saveSearchPreferences: async (data: SearchPreferencesPayload): Promise<ProfileResponse> => {
+  saveSearchPreferences: async (
+    data: SearchPreferencesPayload
+  ): Promise<ProfileResponse> => {
     try {
-      const response = await api.patch<ProfileResponse>('/profile/preferences/search', data);
+      const response = await api.patch<ProfileResponse>("/profile/preferences/search", data);
       return response.data;
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message
-        || error.response?.data?.error
-        || 'Failed to save search preferences';
+      if (error.response?.status === 400 || error.response?.status === 404) {
+        return { success: false, data: null, message: "Preferences not saved on server" };
+      }
+
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        "Failed to save search preferences";
       throw new Error(errorMessage);
     }
   },

@@ -313,6 +313,7 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
   };
 
   const applyPreferenceFilters = async () => {
+    dismissPreferencePrompt();
     const updatedFilters = {
       ...currentFilters,
       gender: '',
@@ -336,10 +337,10 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
     setQuickFilterKey(prev => prev + 1);
     isFirstRender.current = false;
     fetchProfiles(updatedFilters, queryString, activeView);
-    dismissPreferencePrompt();
   };
 
   const clearPreferenceFilters = async () => {
+    dismissPreferencePrompt();
     const updatedFilters = {
       ...currentFilters,
       gender: '',
@@ -364,7 +365,6 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
     setQuickFilterKey(prev => prev + 1);
     isFirstRender.current = false;
     fetchProfiles(updatedFilters, queryString, activeView);
-    dismissPreferencePrompt();
   };
 
   // ✅ Send interest using axios
