@@ -13,7 +13,7 @@ interface SearchProps {
 }
 
 export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
-  const { currentUser } = useAuth();
+  const { currentUser, profileComplete } = useAuth();
   const preferenceDefaults = {
     gender: '',
     state: '',
@@ -240,6 +240,10 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
 
   useEffect(() => {
     const loadSavedPreferences = async () => {
+      if (!profileComplete) {
+        return;
+      }
+
       try {
         const response = await profileService.getMyProfile();
         if (!response?.success || !response?.data) return;
@@ -254,7 +258,7 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
 
         const updatedFilters = {
           ...currentFilters,
-          gender: restoredPrefs.gender,
+          gender: '',
           state: restoredPrefs.state,
           religion: restoredPrefs.religion,
           maritalStatus: restoredPrefs.maritalStatus,
@@ -277,7 +281,7 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
     };
 
     loadSavedPreferences();
-  }, [currentUser?.id, currentUser?.userId]);
+  }, [currentUser?.id, currentUser?.userId, profileComplete]);
 
   // Handle page changes
   useEffect(() => {
@@ -311,7 +315,7 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
   const applyPreferenceFilters = async () => {
     const updatedFilters = {
       ...currentFilters,
-      gender: preferenceDraft.gender,
+      gender: '',
       state: preferenceDraft.state,
       religion: preferenceDraft.religion,
       maritalStatus: preferenceDraft.maritalStatus,
@@ -319,9 +323,11 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
       ageMin: preferenceDraft.ageMin,
       ageMax: preferenceDraft.ageMax,
     };
-    try {
-      await profileService.saveSearchPreferences(preferenceDraft);
-    } catch {
+    if (profileComplete) {
+      try {
+        await profileService.saveSearchPreferences(preferenceDraft);
+      } catch {
+      }
     }
     const queryString = buildQueryStringFromFilters(updatedFilters);
     setCurrentFilters(updatedFilters);
@@ -345,16 +351,20 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
       ageMax: '',
     };
     const queryString = buildQueryStringFromFilters(updatedFilters);
-    try {
-      await profileService.saveSearchPreferences(preferenceDefaults);
-    } catch {
+    if (profileComplete) {
+      try {
+        await profileService.saveSearchPreferences(preferenceDefaults);
+      } catch {
+      }
     }
     setPreferenceDraft(preferenceDefaults);
     setCurrentFilters(updatedFilters);
     setCurrentQueryString(queryString);
     setCurrentPage(1);
     setQuickFilterKey(prev => prev + 1);
+    isFirstRender.current = false;
     fetchProfiles(updatedFilters, queryString, activeView);
+    dismissPreferencePrompt();
   };
 
   // ✅ Send interest using axios

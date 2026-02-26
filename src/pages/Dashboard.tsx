@@ -967,14 +967,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       }
       
       matchCriteria.push(`gender=${oppositeGender}`);
-      
-      if (currentUser?.religiousDetails?.religion) {
-        matchCriteria.push(`religion=${encodeURIComponent(currentUser.religiousDetails.religion)}`);
-      }
-      
-      if (currentUser?.familyDetails?.currentResidenceCity) {
-        matchCriteria.push(`city=${encodeURIComponent(currentUser.familyDetails.currentResidenceCity)}`);
-      }
 
       matchCriteria.push('page=1');
       matchCriteria.push('limit=50');
@@ -1005,16 +997,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             if (userGenderNormalized === profileGender) return false;
           }
           
-          if (currentUser?.religiousDetails?.religion) {
-            const profileReligion = profile.religiousDetails?.religion;
-            if (profileReligion !== currentUser.religiousDetails.religion) return false;
-          }
-          
-          if (currentUser?.familyDetails?.currentResidenceCity) {
-            const profileCity = profile.familyDetails?.currentResidenceCity;
-            if (profileCity !== currentUser.familyDetails.currentResidenceCity) return false;
-          }
-
           const isConnected = possibleProfileIds.some(profileId => 
             connectedUserIds.includes(profileId)
           );
