@@ -27,6 +27,12 @@ interface LoginData {
   phoneNumber: string;
   password: string;
 }
+
+interface GenericMessageResponse {
+  success: boolean;
+  message: string;
+}
+
 export const authService = {
   // Register new user
   register: async (data: RegisterData): Promise<AuthResponse> => {
@@ -82,6 +88,33 @@ export const authService = {
       throw new Error(
         error.response?.data?.error || "Google login failed"
       );
+    }
+  },
+
+  forgotPassword: async (email: string): Promise<GenericMessageResponse> => {
+    try {
+      const response = await api.post<GenericMessageResponse>("/auth/forgot-password", { email });
+      return response.data;
+    } catch (error: any) {
+      const fallback =
+        "If an account with that email exists, a password reset link has been sent.";
+      const status = error.response?.status;
+      if (status === 404 || status >= 500 || !status) {
+        throw new Error("Email doesn't exist");
+      }
+      throw new Error(fallback);
+    }
+  },
+
+  resetPassword: async (token: string, password: string, confirmPassword: string): Promise<GenericMessageResponse> => {
+    try {
+      const response = await api.post<GenericMessageResponse>(`/auth/reset-password/${token}`, {
+        password,
+        confirmPassword,
+      });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || error.response?.data?.error || "Password reset failed");
     }
   },
 };

@@ -131,6 +131,16 @@ export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
                 )}
               </button>
             </div>
+            <div className="mt-2 text-right">
+              <button
+                type="button"
+                onClick={() => onNavigate('forgot-password')}
+                className="text-sm text-indigo-600 hover:text-indigo-500 hover:underline"
+                disabled={loading}
+              >
+                Forgot Password?
+              </button>
+            </div>
           </div>
 
           <button

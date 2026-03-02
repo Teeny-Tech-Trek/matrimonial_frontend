@@ -3,6 +3,8 @@ import React from 'react';
 import { Landing } from '../pages/Landing';
 import { Login } from '../pages/Login';
 import { Register } from '../pages/Register';
+import ForgotPassword from '../pages/ForgotPassword';
+import ResetPassword from '../pages/ResetPassword';
 import { Dashboard } from '../pages/Dashboard';
 import { Search } from '../pages/Search';
 import { Messages } from '../pages/Messages';
@@ -26,6 +28,8 @@ export type Page =
   | 'landing'
   | 'login'
   | 'register'
+  | 'forgot-password'
+  | 'reset-password'
   | 'dashboard'
   | 'search'
   | 'messages'
@@ -63,6 +67,8 @@ export const routes: Route[] = [
   { path: 'landing', url: '/', component: Landing, requiresAuth: false },
   { path: 'login', url: '/login', component: Login, requiresAuth: false },
   { path: 'register', url: '/register', component: Register, requiresAuth: false },
+  { path: 'forgot-password', url: '/forgot-password', component: ForgotPassword, requiresAuth: false },
+  { path: 'reset-password', url: '/reset-password/:token', component: ResetPassword, requiresAuth: false },
   
   // Protected routes
   { path: 'dashboard', url: '/dashboard', component: Dashboard, requiresAuth: true },
@@ -91,7 +97,16 @@ export const getRouteByPath = (path: Page) => {
 };
 
 export const getRouteByUrl = (url: string) => {
-  return routes.find(route => route.url === url || route.path === url.replace('/', ''));
+  const normalizedUrl = url.split("?")[0];
+  return routes.find((route) => {
+    if (route.url === normalizedUrl || route.path === normalizedUrl.replace('/', '')) {
+      return true;
+    }
+    if (route.path === 'reset-password' && /^\/reset-password\/[^/]+$/.test(normalizedUrl)) {
+      return true;
+    }
+    return false;
+  });
 };
 
 interface RouterProps {
@@ -116,6 +131,10 @@ export const Router: React.FC<RouterProps> = ({
         return <Login onNavigate={onNavigate} />;
       case 'register':
         return <Register onNavigate={onNavigate} />;
+      case 'forgot-password':
+        return <ForgotPassword onNavigate={onNavigate} />;
+      case 'reset-password':
+        return <ResetPassword onNavigate={onNavigate} />;
       case 'faq': 
       return <FAQComponent onNavigate={onNavigate} />;
       

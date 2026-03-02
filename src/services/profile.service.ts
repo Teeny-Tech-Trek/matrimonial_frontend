@@ -4,6 +4,7 @@ import api from "./api";
 // Interface for complete profile data
 interface ProfileData {
   fullName: string;
+  email: string;
   gender: string;
   dateOfBirth: string;
   profileCreatedFor: string;

@@ -2,10 +2,16 @@
 
 import axios from "axios";
 
+const configuredBaseURL =
+    import.meta.env.VITE_API_BASE_URL ||
+    import.meta.env.VITE_API_URL ||
+    "http://localhost:5000/backend";
+
+// Backward compatibility: old env files use `/api`, while current backend mounts under `/backend`.
+const baseURL = configuredBaseURL.replace(/\/api\/?$/, "/backend");
+
 const api = axios.create({
-    baseURL: "https://api.rsaristomatch.com/backend",
-    
- //  Added /backend
+    baseURL,
     withCredentials: true,
     headers: {
         "Content-Type": "application/json",

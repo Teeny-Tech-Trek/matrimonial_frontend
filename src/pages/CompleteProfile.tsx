@@ -14,7 +14,7 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
   const { showToast } = useToast();
 
   const [formData, setFormData] = useState({
-    name: '', gender: '', age: '', height: '', maritalStatus: '', language: '',
+    name: '', email: '', gender: '', age: '', height: '', maritalStatus: '', language: '',
     createdFor: '', religion: '', caste: '', subCaste: '', manglik: '',
     degree: '', field: '', institution: '', occupation: '', company: '',
     annualIncomeMin: '', annualIncomeMax: '', city: '', state: '',
@@ -59,6 +59,7 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
         // Map backend data to form fields
         setFormData({
           name: profile.fullName || '',
+          email: profile.email || '',
           gender: profile.gender || '',
           age: profile.dateOfBirth ? calculateAge(profile.dateOfBirth) : '',
           height: profile.personalDetails?.heightCm?.toString() || '',
@@ -287,8 +288,16 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
 
     try {
       // Validate required fields
-      if (!formData.name || !formData.age || !formData.height) {
+      if (!formData.name || !formData.email || !formData.age || !formData.height) {
         showToast('Please fill in all required fields', 'error');
+        setLoading(false);
+        return;
+      }
+
+      const normalizedEmail = formData.email.trim().toLowerCase();
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailPattern.test(normalizedEmail)) {
+        showToast('Please enter a valid email address', 'error');
         setLoading(false);
         return;
       }
@@ -306,6 +315,7 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
       
       const profileData = {
         fullName: formData.name,
+        email: normalizedEmail,
         gender: formData.gender, 
         dateOfBirth: new Date(birthYear, 0, 1).toISOString(),
         profileCreatedFor: formData.createdFor,
@@ -562,6 +572,21 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
                     required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                     placeholder="Enter your name"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Email <span className="text-rose-600">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                    placeholder="Enter your email"
                   />
                 </div>
 

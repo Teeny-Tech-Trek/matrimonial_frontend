@@ -41,7 +41,7 @@ function AppContent() {
 
   // Prevent authenticated users from accessing login/register pages
   useEffect(() => {
-    const publicPages: Page[] = ['login', 'register'];
+    const publicPages: Page[] = ['login', 'register', 'forgot-password', 'reset-password'];
     
     if (isAuthenticated && publicPages.includes(currentPage)) {
       if (isAdmin) {
@@ -94,7 +94,7 @@ function AppContent() {
       
       if (route) {
         // If authenticated user tries to access auth pages via back button, redirect
-        const publicPages: Page[] = ['login', 'register'];
+        const publicPages: Page[] = ['login', 'register', 'forgot-password', 'reset-password'];
         const adminRestrictedPages: Page[] = ['dashboard', 'search', 'messages', 'requests', 'my-profile', 'membership', 'matches', 'profile-view'];
         
         if (isAuthenticated && publicPages.includes(route.path)) {
