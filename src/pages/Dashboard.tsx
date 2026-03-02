@@ -954,7 +954,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       
       setAcceptedConnectionIds(connectedUserIds);
 
-      const matchCriteria: string[] = [];
       const userGender = currentUser?.gender?.toLowerCase()?.trim();
       
       let oppositeGender: string;
@@ -965,23 +964,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       } else {
         oppositeGender = 'female';
       }
-      
-      matchCriteria.push(`gender=${oppositeGender}`);
-      
-      if (currentUser?.religiousDetails?.religion) {
-        matchCriteria.push(`religion=${encodeURIComponent(currentUser.religiousDetails.religion)}`);
-      }
-      
-      if (currentUser?.familyDetails?.currentResidenceCity) {
-        matchCriteria.push(`city=${encodeURIComponent(currentUser.familyDetails.currentResidenceCity)}`);
-      }
 
-      matchCriteria.push('page=1');
-      matchCriteria.push('limit=50');
-      matchCriteria.push('sortBy=createdAt');
-      matchCriteria.push('sortOrder=desc');
-      
-      const queryString = matchCriteria.join('&');
+      const queryString = 'page=1&limit=50&sortBy=createdAt&sortOrder=desc';
       
       // ✅ FIXED: Using centralized API
       const profilesResponse = await api.get(`/profile/list?${queryString}`);
@@ -999,22 +983,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           if (possibleProfileIds.includes(currentUserId)) return false;
 
           const profileGender = profile.gender?.toLowerCase()?.trim();
-          const userGenderNormalized = currentUser?.gender?.toLowerCase()?.trim();
-          
-          if (userGenderNormalized && profileGender) {
-            if (userGenderNormalized === profileGender) return false;
-          }
-          
-          if (currentUser?.religiousDetails?.religion) {
-            const profileReligion = profile.religiousDetails?.religion;
-            if (profileReligion !== currentUser.religiousDetails.religion) return false;
-          }
-          
-          if (currentUser?.familyDetails?.currentResidenceCity) {
-            const profileCity = profile.familyDetails?.currentResidenceCity;
-            if (profileCity !== currentUser.familyDetails.currentResidenceCity) return false;
-          }
 
+          if (!profileGender) return false;
+          if (profileGender !== oppositeGender) return false;
+          
           const isConnected = possibleProfileIds.some(profileId => 
             connectedUserIds.includes(profileId)
           );

@@ -12,6 +12,7 @@ interface CompleteProfileProps {
 export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
   const { refreshProfile } = useAuth();
   const { showToast } = useToast();
+  const defaultHobbies = ['Drawing', 'Shopping', 'Dancing', 'Cooking', 'Reading', 'Traveling', 'Music', 'Sports'];
 
   const [formData, setFormData] = useState({
     name: '', email: '', gender: '', age: '', height: '', maritalStatus: '', language: '',
@@ -29,7 +30,7 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
   const [selectedDP, setSelectedDP] = useState<number>(0);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [currentSection, setCurrentSection] = useState(0);
-  const [availableHobbies] = useState(['Drawing', 'Shopping', 'Dancing', 'Cooking', 'Reading', 'Traveling', 'Music', 'Sports']);
+  const [availableHobbies, setAvailableHobbies] = useState<string[]>(defaultHobbies);
   const [loading, setLoading] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
 
@@ -92,7 +93,10 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
           hobbies: profile.lifestylePreferences?.hobbies || [],
           about: profile.lifestylePreferences?.aboutMe || '',
           partnerExpectations: profile.lifestylePreferences?.partnerExpectations || '',
+          customHobbyInput: '',
         });
+        const existingHobbies = profile.lifestylePreferences?.hobbies || [];
+        setAvailableHobbies(prev => Array.from(new Set([...prev, ...existingHobbies])));
 
         // Load photos if they exist
         if (profile.photos && profile.photos.length > 0) {
@@ -173,7 +177,22 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
   const addCustomHobby = () => {
     const value = (formData as any).customHobbyInput?.trim();
     if (!value) return;
-    setFormData(prev => ({ ...prev, hobbies: [...prev.hobbies, value], customHobbyInput: '' }));
+
+    const normalizedValue = value.toLowerCase();
+
+    setAvailableHobbies((prev) => {
+      const exists = prev.some((h) => h.toLowerCase() === normalizedValue);
+      return exists ? prev : [...prev, value];
+    });
+
+    setFormData((prev) => {
+      const alreadySelected = prev.hobbies.some((h) => h.toLowerCase() === normalizedValue);
+      return {
+        ...prev,
+        hobbies: alreadySelected ? prev.hobbies : [...prev.hobbies, value],
+        customHobbyInput: "",
+      };
+    });
   };
 
   // MULTIPLE IMAGE UPLOAD - Appends new images instead of replacing
@@ -1124,11 +1143,12 @@ export default function CompleteProfile({ onNavigate }: CompleteProfileProps) {
                       onClick={() => toggleHobby(hobby)}
                       className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                         formData.hobbies.includes(hobby)
-                          ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white'
+                          ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white inline-flex items-center gap-1.5'
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                       }`}
                     >
-                      {hobby}
+                      <span>{hobby}</span>
+                      {formData.hobbies.includes(hobby) && <X size={14} />}
                     </button>
                   ))}
 

@@ -1,16 +1,86 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import { Heart, Shield, Users, Star, CheckCircle, TrendingUp } from 'lucide-react';
 import heroImage from '../Images/ChatGPT Image Jan 3, 2026, 04_53_31 PM.png';
 import coupleOverlayImage from '../Images/Untitled design (3).png'; // Add your overlay image here
+import reviewService from '../services/review.service';
 
 
 interface LandingProps {
   onNavigate: (page: string) => void;
 }
 
+interface ReviewItem {
+  id?: number | string;
+  _id?: string;
+  name: string;
+  city: string;
+  rating: number;
+  text: string;
+}
+
+const mockReviews: ReviewItem[] = [
+  {
+    id: 1,
+    name: 'Priya Sharma',
+    city: 'Pune',
+    rating: 5,
+    text: 'AristoMatch ne hamari journey bahut easy bana di. Family filters aur verified profiles ki wajah se perfect match mila.',
+  },
+  {
+    id: 2,
+    name: 'Anjali Mehta',
+    city: 'Jaipur',
+    rating: 5,
+    text: 'Simple interface, genuine profiles aur quick support. 3 mahine ke andar hi engagement fix ho gayi.',
+  },
+  {
+    id: 3,
+    name: 'Neha Verma',
+    city: 'Lucknow',
+    rating: 4,
+    text: 'Platform trusted laga aur suggestions kaafi relevant the. Hume exactly waise hi values wala partner mila.',
+  },
+  {
+    id: 4,
+    name: 'Sanya Kapoor',
+    city: 'Delhi',
+    rating: 5,
+    text: 'Family-friendly experience, privacy controls aur smooth communication tools. Highly recommended.',
+  },
+];
+
 export const Landing: React.FC<LandingProps> = ({onNavigate}) => {
- 
+  const [activeReview, setActiveReview] = useState(0);
+  const [liveReviews, setLiveReviews] = useState<ReviewItem[]>([]);
+  const displayReviews = liveReviews.length > 0 ? liveReviews : mockReviews;
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveReview((prev) => (prev + 1) % displayReviews.length);
+    }, 4500);
+
+    return () => clearInterval(timer);
+  }, [displayReviews.length]);
+
+  useEffect(() => {
+    const loadReviews = async () => {
+      try {
+        const response = await reviewService.getPublicReviews();
+        if (response?.success && Array.isArray(response.data)) {
+          setLiveReviews(response.data);
+        }
+      } catch (error) {
+        // Keep mock reviews as fallback on API failure.
+      }
+    };
+
+    loadReviews();
+  }, []);
+
+  useEffect(() => {
+    setActiveReview(0);
+  }, [liveReviews.length]);
 
   return (
     <div className="space-y-0">
@@ -236,6 +306,90 @@ export const Landing: React.FC<LandingProps> = ({onNavigate}) => {
       </div>
     </section>
 
+    {/* Reviews Slider Section */}
+    <section className="max-w-5xl mx-auto px-4 md:px-8 pb-16">
+      <div className="bg-white/65 backdrop-blur-sm rounded-3xl p-8 md:p-12 shadow-xl">
+        <h3 className="text-3xl md:text-4xl font-bold text-center mb-8" style={{ color: '#A0522D' }}>
+          What Our Users Say
+        </h3>
+
+        <div className="relative overflow-hidden">
+          <div
+            className="flex transition-transform duration-500 ease-out"
+            style={{ transform: `translateX(-${activeReview * 100}%)` }}
+          >
+            {displayReviews.map((review, index) => (
+              <div key={review._id || review.id || index} className="w-full shrink-0 px-1 md:px-4">
+                <div className="rounded-2xl p-6 md:p-8 bg-gradient-to-br from-rose-50/90 to-pink-100/80 border border-rose-200/60">
+                  <div className="flex justify-center mb-4 gap-1">
+                    {Array.from({ length: 5 }).map((_, index) => (
+                      <span
+                        key={index}
+                        className="text-2xl"
+                        style={{ color: index < review.rating ? '#FFD700' : '#E8D8C8' }}
+                      >
+                        ★
+                      </span>
+                    ))}
+                  </div>
+                  <p className="text-lg md:text-xl text-center leading-relaxed mb-6" style={{ color: '#5D4E47' }}>
+                    "{review.text}"
+                  </p>
+                  <div className="text-center">
+                    <p className="text-xl md:text-2xl font-bold" style={{ color: '#8B6F47' }}>
+                      Reviewed by {review.name}
+                    </p>
+                    <p className="text-base md:text-lg" style={{ color: '#A0522D' }}>
+                      {review.city}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-center gap-4 mt-8">
+          <button
+            onClick={() =>
+              setActiveReview((prev) => (prev - 1 + displayReviews.length) % displayReviews.length)
+            }
+            className="w-10 h-10 rounded-full bg-rose-100 hover:bg-rose-200 text-xl font-bold transition-colors"
+            style={{ color: '#A0522D' }}
+            aria-label="Previous review"
+          >
+            ‹
+          </button>
+
+            <div className="flex items-center gap-2">
+            {displayReviews.map((review, index) => (
+              <button
+                key={review._id || review.id || index}
+                onClick={() => setActiveReview(index)}
+                className="w-2.5 h-2.5 rounded-full transition-all"
+                style={{
+                  backgroundColor: index === activeReview ? '#E85D8D' : '#D8B0BE',
+                  transform: index === activeReview ? 'scale(1.25)' : 'scale(1)',
+                }}
+                aria-label={`Go to review ${index + 1}`}
+              />
+            ))}
+          </div>
+
+          <button
+            onClick={() => setActiveReview((prev) => (prev + 1) % displayReviews.length)}
+            className="w-10 h-10 rounded-full bg-rose-100 hover:bg-rose-200 text-xl font-bold transition-colors"
+            style={{ color: '#A0522D' }}
+            aria-label="Next review"
+          >
+            ›
+          </button>
+        </div>
+      </div>
+    </section>
+
+
+
     {/* Stats Section */}
     <section className="max-w-7xl mx-auto px-4 md:px-8 py-16">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
@@ -267,6 +421,8 @@ export const Landing: React.FC<LandingProps> = ({onNavigate}) => {
       </div>
     </section>
 
+
+
     {/* Final CTA Section */}
     <section className="max-w-6xl mx-auto px-4 md:px-8 py-16 pb-24">
       <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-12 md:p-16 text-center shadow-xl">
@@ -293,3 +449,6 @@ export const Landing: React.FC<LandingProps> = ({onNavigate}) => {
     </div>
   );
 };
+
+
+

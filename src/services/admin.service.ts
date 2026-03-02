@@ -368,6 +368,24 @@ export const adminService = {
       );
     }
   },
+
+  listReviews: async (params: { page?: number; limit?: number; status?: string; search?: string }) => {
+    try {
+      const response = await api.get("/admin/reviews", { params });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || "Failed to fetch reviews");
+    }
+  },
+
+  updateReviewStatus: async (reviewId: string, status: "hold" | "approved" | "rejected") => {
+    try {
+      const response = await api.patch(`/admin/reviews/${reviewId}/status`, { status });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || "Failed to update review");
+    }
+  },
 };
 
 export default adminService;

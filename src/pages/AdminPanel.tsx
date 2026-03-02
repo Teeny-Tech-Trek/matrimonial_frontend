@@ -997,7 +997,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Users, FileText, MessageSquare, UserCheck, 
-  Download, Shield, TrendingUp, ArrowLeft, X, Search as SearchIcon, Trash2, AlertTriangle
+  Download, Shield, TrendingUp, ArrowLeft, X, Search as SearchIcon, Trash2, AlertTriangle, Star
 } from 'lucide-react';
 import adminService from '../services/admin.service';
 import { useAuth } from '../context/AuthContext';
@@ -1007,7 +1007,7 @@ interface AdminPanelProps {
   onNavigate: (page: string) => void;
 }
 
-type TabType = 'dashboard' | 'users' | 'profiles' | 'requests' | 'conversations';
+type TabType = 'dashboard' | 'users' | 'profiles' | 'requests' | 'conversations' | 'manage-reviews';
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
   const { logout } = useAuth();
@@ -1274,18 +1274,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
     }
   };
 
-  const handlePermanentDeleteUser = async () => {
+  const handleDeleteUserFromDashboard = async () => {
     if (!selectedUserForDelete) return;
-    
+
     setDeletingUser(true);
     try {
-      const response = await adminService.permanentDeleteUser(selectedUserForDelete._id);
+      const response = await adminService.deleteUser(selectedUserForDelete._id);
       if (response.success) {
-        showToast('User permanently deleted', 'success');
+        showToast('User removed from dashboard', 'success');
         setShowDeleteUserModal(false);
         setSelectedUserForDelete(null);
         fetchUsers();
-        fetchStats(); // Refresh stats
+        fetchStats();
       }
     } catch (error: any) {
       showToast(error.message, 'error');
@@ -1385,40 +1385,28 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
     if (!showDeleteUserModal || !selectedUserForDelete) return null;
 
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg max-w-md w-full">
-          <div className="p-6">
-            <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
-              <AlertTriangle className="text-red-600" size={24} />
+      <div className="fixed inset-0 bg-black/55 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="relative bg-white rounded-2xl border border-rose-100 shadow-2xl max-w-xl w-full overflow-hidden">
+          <div className="absolute -top-24 -right-24 w-56 h-56 bg-rose-100/70 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -left-24 w-56 h-56 bg-pink-100/70 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="relative p-6 md:p-7">
+            <div className="flex items-center justify-center w-14 h-14 mx-auto bg-gradient-to-r from-rose-600 to-pink-600 rounded-full mb-4 shadow-md">
+              <Trash2 className="text-white" size={24} />
             </div>
-            
-            <h2 className="text-xl font-bold text-center mb-2">Permanently Delete User</h2>
+
+            <h2 className="text-2xl font-bold text-center text-gray-900 mb-2">Delete User</h2>
             <p className="text-gray-600 text-center mb-6">
-              Are you sure you want to <strong className="text-red-600">permanently delete</strong> the user <strong>{selectedUserForDelete.fullName}</strong>? 
-              This action <strong className="text-red-600">CANNOT BE UNDONE</strong> and will completely remove all user data from the system.
+              Remove <strong>{selectedUserForDelete.fullName}</strong> from admin dashboard?
             </p>
 
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
               <div className="flex gap-2">
-                <AlertTriangle className="text-red-600 flex-shrink-0 mt-0.5" size={20} />
-                <div className="text-sm text-red-800">
-                  <p className="font-medium mb-1">⚠️ This will PERMANENTLY:</p>
-                  <ul className="list-disc list-inside space-y-1">
-                    <li>Delete the user account</li>
-                    <li>Delete all user profiles</li>
-                    <li>Remove all photos and documents</li>
-                    <li>Delete all connection requests</li>
-                    <li>Remove all conversations and messages</li>
-                    <li>Remove from all connections/favorites/blocked lists</li>
-                  </ul>
-                </div>
+                <AlertTriangle className="text-amber-600 flex-shrink-0 mt-0.5" size={20} />
+                <p className="text-sm text-amber-800">
+                  This will soft delete the user and hide them from admin dashboard listings.
+                </p>
               </div>
-            </div>
-
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-6">
-              <p className="text-sm text-yellow-800">
-                💡 <strong>Tip:</strong> If you want to temporarily disable the user, use the "Deactivate" button instead. Deactivation can be reversed.
-              </p>
             </div>
 
             <div className="flex gap-3">
@@ -1428,14 +1416,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
                   setSelectedUserForDelete(null);
                 }}
                 disabled={deletingUser}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                className="flex-1 px-4 py-2.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
-                onClick={handlePermanentDeleteUser}
+                onClick={handleDeleteUserFromDashboard}
                 disabled={deletingUser}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-2.5 rounded-lg bg-rose-600 text-white hover:bg-rose-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {deletingUser ? (
                   <>
@@ -1445,7 +1433,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
                 ) : (
                   <>
                     <Trash2 size={16} />
-                    Permanently Delete
+                    Delete From Dashboard
                   </>
                 )}
               </button>
@@ -1543,6 +1531,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Profile Created For</label>
                   <p className="text-base text-gray-900 capitalize">{selectedUser.profileCreatedFor || 'N/A'}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Profile Completion</label>
+                    <p className="text-base font-semibold text-gray-900">
+                      {typeof selectedUser.profileCompletion === 'number' ? `${selectedUser.profileCompletion}%` : '0%'}
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Profile Exists</label>
+                    <p className="text-base font-semibold text-gray-900">
+                      {selectedUser.hasProfile ? 'Yes' : 'No'}
+                    </p>
+                  </div>
                 </div>
 
                 {/* Timeline */}
@@ -1759,7 +1762,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
 
       <div className="bg-white p-6 rounded-lg shadow">
         <h3 className="text-xl font-bold mb-4">Quick Actions</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <button
             onClick={() => setActiveTab('users')}
             className="p-4 bg-blue-50 hover:bg-blue-100 rounded-lg text-center transition-colors"
@@ -1787,6 +1790,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
           >
             <MessageSquare className="mx-auto mb-2 text-pink-600" size={32} />
             <span className="text-sm font-medium">Conversations</span>
+          </button>
+          <button
+            onClick={() => onNavigate('admin-reviews')}
+            className="p-4 bg-rose-50 hover:bg-rose-100 rounded-lg text-center transition-colors"
+          >
+            <Star className="mx-auto mb-2 text-rose-600" size={32} />
+            <span className="text-sm font-medium">Manage Reviews</span>
           </button>
         </div>
       </div>
@@ -2211,10 +2221,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onNavigate }) => {
               { id: 'profiles', label: 'Profiles' },
               { id: 'requests', label: 'Requests' },
               { id: 'conversations', label: 'Conversations' },
+              { id: 'manage-reviews', label: 'Manage Reviews' },
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as TabType)}
+                onClick={() => {
+                  if (tab.id === 'manage-reviews') {
+                    onNavigate('admin-reviews');
+                    return;
+                  }
+                  setActiveTab(tab.id as TabType);
+                }}
                 className={`px-6 py-4 font-medium border-b-2 ${
                   activeTab === tab.id
                     ? 'border-rose-600 text-rose-600'

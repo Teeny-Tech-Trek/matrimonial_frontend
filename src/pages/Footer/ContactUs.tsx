@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
-import axios from 'axios'; // Add axios for API calls
+import React, { useEffect, useState } from 'react';
+import { MapPin, Star, User } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
+import profileService from "../../services/profile.service";
+import reviewService from "../../services/review.service";
 
 interface FormData {
   name: string;
@@ -20,6 +23,7 @@ interface ContactUsProps {
 }
 
 const ContactUs: React.FC<ContactUsProps> = ({ onNavigate }) => {
+  const { currentUser, isAuthenticated } = useAuth();
   const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
@@ -31,6 +35,36 @@ const ContactUs: React.FC<ContactUsProps> = ({ onNavigate }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null); // Add state for errors
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewStatus, setReviewStatus] = useState("");
+  const [reviewForm, setReviewForm] = useState({
+    name: currentUser?.fullName || "",
+    city: "",
+    rating: 5,
+    text: "",
+  });
+
+  useEffect(() => {
+    const prefillFromProfile = async () => {
+      try {
+        const response = await profileService.getMyProfile();
+        if (response?.success && response?.data) {
+          const fullName = response.data.fullName || "";
+          const city = response.data.familyDetails?.currentResidenceCity || "";
+          setReviewForm((prev) => ({
+            ...prev,
+            name: prev.name || fullName,
+            city: prev.city || city,
+          }));
+        }
+      } catch {
+      }
+    };
+
+    if (isAuthenticated) {
+      prefillFromProfile();
+    }
+  }, [isAuthenticated]);
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -119,6 +153,31 @@ const handleSubmit = async (e: React.FormEvent) => {
     setIsSubmitting(false);
   }
 };
+
+  const handleReviewSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reviewForm.name.trim() || !reviewForm.city.trim() || !reviewForm.text.trim()) {
+      setReviewStatus("Please fill name, city and review.");
+      return;
+    }
+
+    try {
+      setReviewSubmitting(true);
+      setReviewStatus("");
+      await reviewService.submitReview({
+        name: reviewForm.name.trim(),
+        city: reviewForm.city.trim(),
+        rating: reviewForm.rating,
+        text: reviewForm.text.trim(),
+      });
+      setReviewStatus("Thanks. Your review was submitted successfully.");
+      setReviewForm((prev) => ({ ...prev, text: "", rating: 5 }));
+    } catch (error: any) {
+      setReviewStatus(error?.response?.data?.error || "Failed to submit review. Please try again.");
+    } finally {
+      setReviewSubmitting(false);
+    }
+  };
 
 
   return (
@@ -213,7 +272,7 @@ const handleSubmit = async (e: React.FormEvent) => {
           </div>
 
           {/* Contact Form */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-6">
             <div className="bg-white rounded-lg shadow-md p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Send us a Message</h2>
               
@@ -375,6 +434,101 @@ const handleSubmit = async (e: React.FormEvent) => {
                 </div>
               </form>
             </div>
+
+            {isAuthenticated && (
+              <div className="relative rounded-3xl bg-gradient-to-br from-white via-rose-50/80 to-pink-100/70 border border-rose-100 shadow-xl overflow-hidden">
+                <div className="absolute -top-20 -right-20 w-56 h-56 bg-rose-200/40 rounded-full blur-3xl"></div>
+                <div className="absolute -bottom-20 -left-20 w-56 h-56 bg-pink-200/40 rounded-full blur-3xl"></div>
+
+                <div className="relative p-6 md:p-8">
+                  <p className="inline-flex items-center gap-2 text-xs md:text-sm font-semibold text-rose-700 bg-white/80 border border-rose-200 rounded-full px-3 py-1">
+                    <Star size={14} className="fill-yellow-400 text-yellow-400" />
+                    Community Feedback
+                  </p>
+                  <h2 className="mt-3 text-2xl md:text-3xl font-bold text-[#5c1a2d]">Leave a Review</h2>
+                  <p className="mt-2 text-gray-600">
+                    Share your experience with AristoMatch.
+                  </p>
+
+                  <form onSubmit={handleReviewSubmit} className="mt-6 space-y-5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                          <User size={14} />
+                          Name
+                        </label>
+                        <input
+                          type="text"
+                          value={reviewForm.name}
+                          onChange={(e) => setReviewForm((prev) => ({ ...prev, name: e.target.value }))}
+                          className="w-full px-4 py-3 rounded-xl border border-rose-200 bg-white/90 focus:ring-2 focus:ring-rose-400 focus:border-transparent"
+                          placeholder="Enter your name"
+                          maxLength={80}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                          <MapPin size={14} />
+                          City
+                        </label>
+                        <input
+                          type="text"
+                          value={reviewForm.city}
+                          onChange={(e) => setReviewForm((prev) => ({ ...prev, city: e.target.value }))}
+                          className="w-full px-4 py-3 rounded-xl border border-rose-200 bg-white/90 focus:ring-2 focus:ring-rose-400 focus:border-transparent"
+                          placeholder="Enter your city"
+                          maxLength={80}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-semibold text-gray-700 mb-2 block">Rating</label>
+                      <div className="flex items-center gap-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setReviewForm((prev) => ({ ...prev, rating: star }))}
+                            className={`text-4xl transition-all hover:scale-105 ${
+                              star <= reviewForm.rating ? "text-yellow-400" : "text-gray-300"
+                            }`}
+                            aria-label={`Rate ${star}`}
+                          >
+                            ★
+                          </button>
+                        ))}
+                      </div>
+                      <p className="mt-2 text-sm font-medium text-gray-700">
+                        Selected: {reviewForm.rating} {reviewForm.rating === 1 ? "star" : "stars"}
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-semibold text-gray-700 mb-2 block">Your Review</label>
+                      <textarea
+                        value={reviewForm.text}
+                        onChange={(e) => setReviewForm((prev) => ({ ...prev, text: e.target.value }))}
+                        className="w-full h-36 px-4 py-3 rounded-xl border border-rose-200 bg-white/90 resize-none focus:ring-2 focus:ring-rose-400 focus:border-transparent"
+                        placeholder="Tell us about your experience..."
+                        maxLength={600}
+                      />
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3">
+                      <button
+                        type="submit"
+                        disabled={reviewSubmitting}
+                        className="px-8 py-3 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 text-white font-semibold transition-all hover:scale-[1.02] hover:shadow-lg disabled:opacity-70"
+                      >
+                        {reviewSubmitting ? "Submitting..." : "Submit Review"}
+                      </button>
+                      {reviewStatus && <p className="text-sm text-rose-700">{reviewStatus}</p>}
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

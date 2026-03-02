@@ -1,18 +1,36 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Search as SearchIcon } from 'lucide-react';
+import { Search as SearchIcon, X, SlidersHorizontal, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { CompleteProfile } from '../types';
 import { ProfileCard } from '../components/ProfileCard';
 import QuickFilters from '../components/QuickFilters';
 import api from '../services/api'; 
+import profileService from '../services/profile.service';
 
 interface SearchProps {
   onNavigate: (page: string, data?: any) => void;
 }
 
 export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
-  const { currentUser } = useAuth();
+  const { currentUser, profileComplete } = useAuth();
+  const preferenceDefaults = {
+    gender: '',
+    state: '',
+    religion: '',
+    maritalStatus: '',
+    diet: '',
+    ageMin: '',
+    ageMax: '',
+  };
+  const stateOptions = ['Punjab', 'Delhi', 'Haryana', 'Uttar Pradesh', 'Maharashtra', 'Gujarat', 'Rajasthan'];
+  const religionOptions = ['Hindu', 'Muslim', 'Sikh', 'Christian', 'Jain'];
+  const maritalStatusOptions = [
+    { value: 'never_married', label: 'Never Married' },
+    { value: 'divorced', label: 'Divorced' },
+    { value: 'widowed', label: 'Widowed' },
+  ];
+  const dietOptions = ['Vegetarian', 'Non-Vegetarian', 'Eggetarian', 'Vegan'];
 
   const [profiles, setProfiles] = useState<CompleteProfile[]>([]);
   const [loading, setLoading] = useState(false);
@@ -24,9 +42,48 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
   const [currentFilters, setCurrentFilters] = useState<any>({});
   const [currentQueryString, setCurrentQueryString] = useState('');
   const [acceptedConnectionIds, setAcceptedConnectionIds] = useState<string[]>([]);
+  const [showPreferencePrompt, setShowPreferencePrompt] = useState(true);
+  const [quickFilterKey, setQuickFilterKey] = useState(0);
+  const [preferenceDraft, setPreferenceDraft] = useState(preferenceDefaults);
+  const [preferenceSlideIndex, setPreferenceSlideIndex] = useState(0);
+  const totalPreferenceSlides = 6;
   
   const isFirstRender = useRef(true);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
+
+  const buildQueryStringFromFilters = (filters: any) => {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value && value !== '' && value !== 'Other') {
+        params.append(key, String(value));
+      }
+    });
+    return params.toString();
+  };
+
+  const hasAnyPreferenceValues = (prefs: Record<string, string>) =>
+    Object.values(prefs).some((v) => String(v || '').trim() !== '');
+
+  const goToNextPreferenceSlide = () => {
+    setPreferenceSlideIndex((prev) => (prev + 1) % totalPreferenceSlides);
+  };
+
+  const handlePreferenceSelect = (field: keyof typeof preferenceDefaults, value: string) => {
+    setPreferenceDraft((prev) => ({ ...prev, [field]: value }));
+    if (value) {
+      goToNextPreferenceSlide();
+    }
+  };
+
+  const dismissPreferencePrompt = () => {
+    setShowPreferencePrompt(false);
+    setPreferenceSlideIndex(0);
+  };
+
+  const openPreferencePrompt = () => {
+    setShowPreferencePrompt(true);
+    setPreferenceSlideIndex(0);
+  };
 
   // ✅ Fetch accepted connections using axios
   const fetchAcceptedConnections = async () => {
@@ -181,13 +238,58 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
     }
   };
 
-  // Initial load - only once
+  // Initial load - wait until preference prompt is dismissed
   useEffect(() => {
-    if (isFirstRender.current) {
+    if (isFirstRender.current && !showPreferencePrompt) {
       isFirstRender.current = false;
       fetchProfiles(currentFilters, currentQueryString, activeView);
     }
-  }, []);
+  }, [showPreferencePrompt]);
+
+  useEffect(() => {
+    const loadSavedPreferences = async () => {
+      if (!profileComplete) {
+        return;
+      }
+
+      try {
+        const response = await profileService.getMyProfile();
+        if (!response?.success || !response?.data) return;
+
+        const restoredPrefs = {
+          ...preferenceDefaults,
+          ...(response.data.searchPreferences || {}),
+        };
+
+        const hasAnyPreference = Object.values(restoredPrefs).some((v) => String(v).trim() !== '');
+        if (!hasAnyPreference) return;
+
+        const updatedFilters = {
+          ...currentFilters,
+          gender: restoredPrefs.gender,
+          state: restoredPrefs.state,
+          religion: restoredPrefs.religion,
+          maritalStatus: restoredPrefs.maritalStatus,
+          diet: restoredPrefs.diet,
+          ageMin: restoredPrefs.ageMin,
+          ageMax: restoredPrefs.ageMax,
+        };
+
+        const queryString = buildQueryStringFromFilters(updatedFilters);
+
+        setPreferenceDraft(restoredPrefs);
+        setCurrentFilters(updatedFilters);
+        setCurrentQueryString(queryString);
+        setShowPreferencePrompt(false);
+        setQuickFilterKey((prev) => prev + 1);
+        isFirstRender.current = false;
+        fetchProfiles(updatedFilters, queryString, activeView);
+      } catch {
+      }
+    };
+
+    loadSavedPreferences();
+  }, [currentUser?.id, currentUser?.userId, profileComplete]);
 
   // Handle page changes
   useEffect(() => {
@@ -217,6 +319,83 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
     setCurrentPage(1);
     fetchProfiles(filters, queryString, activeView);
   };
+
+  const applyPreferenceFilters = async () => {
+    dismissPreferencePrompt();
+    const updatedFilters = {
+      ...currentFilters,
+      gender: preferenceDraft.gender,
+      state: preferenceDraft.state,
+      religion: preferenceDraft.religion,
+      maritalStatus: preferenceDraft.maritalStatus,
+      diet: preferenceDraft.diet,
+      ageMin: preferenceDraft.ageMin,
+      ageMax: preferenceDraft.ageMax,
+    };
+    if (profileComplete) {
+      try {
+        await profileService.saveSearchPreferences(preferenceDraft);
+      } catch {
+      }
+    }
+    const queryString = buildQueryStringFromFilters(updatedFilters);
+    setCurrentFilters(updatedFilters);
+    setCurrentQueryString(queryString);
+    setCurrentPage(1);
+    setQuickFilterKey(prev => prev + 1);
+    isFirstRender.current = false;
+    fetchProfiles(updatedFilters, queryString, activeView);
+  };
+
+  const clearPreferenceFilters = async () => {
+    dismissPreferencePrompt();
+    const updatedFilters = {
+      ...currentFilters,
+      gender: '',
+      state: '',
+      religion: '',
+      maritalStatus: '',
+      diet: '',
+      ageMin: '',
+      ageMax: '',
+    };
+    const queryString = buildQueryStringFromFilters(updatedFilters);
+    if (profileComplete) {
+      try {
+        await profileService.saveSearchPreferences(preferenceDefaults);
+      } catch {
+      }
+    }
+    setPreferenceDraft(preferenceDefaults);
+    setCurrentFilters(updatedFilters);
+    setCurrentQueryString(queryString);
+    setCurrentPage(1);
+    setQuickFilterKey(prev => prev + 1);
+    isFirstRender.current = false;
+    fetchProfiles(updatedFilters, queryString, activeView);
+  };
+
+  const clearFiltersTemporarily = () => {
+    const updatedFilters = {
+      ...currentFilters,
+      gender: '',
+      state: '',
+      religion: '',
+      maritalStatus: '',
+      diet: '',
+      ageMin: '',
+      ageMax: '',
+    };
+    const queryString = buildQueryStringFromFilters(updatedFilters);
+    setCurrentFilters(updatedFilters);
+    setCurrentQueryString(queryString);
+    setCurrentPage(1);
+    setQuickFilterKey(prev => prev + 1);
+    isFirstRender.current = false;
+    fetchProfiles(updatedFilters, queryString, activeView);
+  };
+
+  const hasSavedPreferences = hasAnyPreferenceValues(preferenceDraft);
 
   // ✅ Send interest using axios
   const handleSendInterest = async (profileId: string) => {
@@ -279,8 +458,17 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
     };
   }, []);
 
+  useEffect(() => {
+    if (!showPreferencePrompt) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [showPreferencePrompt]);
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
       {/* View Toggle Buttons + Search Bar */}
       <div className="bg-white rounded-xl shadow-sm p-6">
         <div className="flex flex-wrap gap-3 mb-4">
@@ -316,6 +504,42 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
           </button>
         </div>
 
+        <div className="flex flex-wrap items-center justify-end gap-3 mb-4">
+          {hasSavedPreferences ? (
+            <>
+              <button
+                type="button"
+                onClick={clearFiltersTemporarily}
+                className="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 transition-colors"
+              >
+                Clear Filters
+              </button>
+              <button
+                type="button"
+                onClick={openPreferencePrompt}
+                className="px-4 py-2 rounded-lg border border-rose-200 text-rose-700 font-semibold hover:bg-rose-50 transition-colors"
+              >
+                Edit Preferences
+              </button>
+              <button
+                type="button"
+                onClick={clearPreferenceFilters}
+                className="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 transition-colors"
+              >
+                Clear All Preferences
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={openPreferencePrompt}
+              className="px-4 py-2 rounded-lg border border-rose-200 text-rose-700 font-semibold hover:bg-rose-50 transition-colors"
+            >
+              Set Preferences
+            </button>
+          )}
+        </div>
+
         {/* Search Bar */}
         <div className="relative">
           <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -329,8 +553,222 @@ export const Search: React.FC<SearchProps> = ({ onNavigate }) => {
         </div>
       </div>
 
+      {showPreferencePrompt && (
+        <div className="fixed inset-0 z-[60] bg-black/35 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="relative w-full max-w-4xl overflow-hidden bg-white rounded-3xl shadow-2xl border border-rose-100 p-5 md:p-7">
+          <div className="absolute -top-16 -right-12 w-48 h-48 bg-rose-100/50 rounded-full blur-3xl pointer-events-none"></div>
+          <div className="absolute -bottom-20 -left-10 w-56 h-56 bg-pink-100/40 rounded-full blur-3xl pointer-events-none"></div>
+
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <div>
+              <p className="inline-flex items-center gap-2 text-xs md:text-sm font-semibold text-rose-700 bg-white/80 border border-rose-100 px-3 py-1 rounded-full mb-2">
+                <SlidersHorizontal size={16} />
+                Smart Preferences
+              </p>
+              <h3 className="text-xl md:text-2xl font-bold text-gray-900">Tell us your ideal match in a few quick steps</h3>
+              <p className="text-gray-600">Pick preferences and we will instantly refine your profile results.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                dismissPreferencePrompt();
+              }}
+              className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-rose-600 transition-colors"
+            >
+              <X size={16} />
+              Close
+            </button>
+          </div>
+
+          <div className="max-w-2xl mx-auto relative z-10">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm font-semibold text-rose-700">
+                Step {preferenceSlideIndex + 1} of {totalPreferenceSlides}
+              </p>
+              <button
+                type="button"
+                onClick={() => setPreferenceSlideIndex((prev) => (prev + 1) % totalPreferenceSlides)}
+                className="text-xs font-semibold text-rose-600 hover:text-rose-700"
+              >
+                Skip Step
+              </button>
+            </div>
+
+            <div className="rounded-2xl border border-rose-100/90 bg-white/85 backdrop-blur-sm p-5 shadow-sm min-h-[190px]">
+              {preferenceSlideIndex === 0 && (
+                <div>
+                  <p className="text-sm font-semibold text-gray-700 mb-2">Preferred Gender</p>
+                  <select
+                    value={preferenceDraft.gender}
+                    onChange={(e) => handlePreferenceSelect('gender', e.target.value)}
+                    className="w-full px-3 py-2 border border-rose-200 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                  >
+                    <option value="">Select gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                  </select>
+                </div>
+              )}
+
+              {preferenceSlideIndex === 1 && (
+                <div>
+                  <p className="text-sm font-semibold text-gray-700 mb-2">Preferred State</p>
+                  <select
+                    value={preferenceDraft.state}
+                    onChange={(e) => handlePreferenceSelect('state', e.target.value)}
+                    className="w-full px-3 py-2 border border-rose-200 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                  >
+                    <option value="">Select state</option>
+                    {stateOptions.map((state) => (
+                      <option key={state} value={state}>{state}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {preferenceSlideIndex === 2 && (
+                <div>
+                  <p className="text-sm font-semibold text-gray-700 mb-2">Preferred Religion</p>
+                  <select
+                    value={preferenceDraft.religion}
+                    onChange={(e) => handlePreferenceSelect('religion', e.target.value)}
+                    className="w-full px-3 py-2 border border-rose-200 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                  >
+                    <option value="">Select religion</option>
+                    {religionOptions.map((religion) => (
+                      <option key={religion} value={religion}>{religion}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {preferenceSlideIndex === 3 && (
+                <div>
+                  <p className="text-sm font-semibold text-gray-700 mb-2">Marital Status</p>
+                  <select
+                    value={preferenceDraft.maritalStatus}
+                    onChange={(e) => handlePreferenceSelect('maritalStatus', e.target.value)}
+                    className="w-full px-3 py-2 border border-rose-200 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                  >
+                    <option value="">Select status</option>
+                    {maritalStatusOptions.map((status) => (
+                      <option key={status.value} value={status.value}>{status.label}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {preferenceSlideIndex === 4 && (
+                <div>
+                  <p className="text-sm font-semibold text-gray-700 mb-2">Diet Preference</p>
+                  <select
+                    value={preferenceDraft.diet}
+                    onChange={(e) => handlePreferenceSelect('diet', e.target.value)}
+                    className="w-full px-3 py-2 border border-rose-200 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                  >
+                    <option value="">Select diet</option>
+                    {dietOptions.map((diet) => (
+                      <option key={diet} value={diet}>{diet}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {preferenceSlideIndex === 5 && (
+                <div>
+                  <p className="text-sm font-semibold text-gray-700 mb-2">Preferred Age Range</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="number"
+                      min={18}
+                      max={80}
+                      value={preferenceDraft.ageMin}
+                      onChange={(e) => setPreferenceDraft(prev => ({ ...prev, ageMin: e.target.value }))}
+                      className="w-full px-3 py-2 border border-rose-200 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                      placeholder="Min age"
+                    />
+                    <input
+                      type="number"
+                      min={18}
+                      max={80}
+                      value={preferenceDraft.ageMax}
+                      onChange={(e) => setPreferenceDraft(prev => ({ ...prev, ageMax: e.target.value }))}
+                      className="w-full px-3 py-2 border border-rose-200 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                      placeholder="Max age"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-center gap-3 mt-4">
+              <button
+                type="button"
+                onClick={() => setPreferenceSlideIndex((prev) => (prev - 1 + totalPreferenceSlides) % totalPreferenceSlides)}
+                className="w-9 h-9 rounded-full bg-white border border-rose-200 hover:bg-rose-50 flex items-center justify-center text-rose-700 transition-colors"
+                aria-label="Previous preference card"
+              >
+                <ChevronLeft size={18} />
+              </button>
+
+              <div className="flex items-center gap-2">
+                {Array.from({ length: totalPreferenceSlides }).map((_, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setPreferenceSlideIndex(idx)}
+                    className="w-2.5 h-2.5 rounded-full transition-all"
+                    style={{
+                      backgroundColor: idx === preferenceSlideIndex ? '#E85D8D' : '#D8B0BE',
+                      transform: idx === preferenceSlideIndex ? 'scale(1.2)' : 'scale(1)',
+                    }}
+                    aria-label={`Go to preference card ${idx + 1}`}
+                  />
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setPreferenceSlideIndex((prev) => (prev + 1) % totalPreferenceSlides)}
+                className="w-9 h-9 rounded-full bg-white border border-rose-200 hover:bg-rose-50 flex items-center justify-center text-rose-700 transition-colors"
+                aria-label="Next preference card"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap justify-end items-center gap-3 mt-5">
+            <button
+              type="button"
+              onClick={clearPreferenceFilters}
+              className="px-5 py-2.5 rounded-lg border border-rose-200 text-rose-700 font-semibold hover:bg-rose-50 transition-colors"
+            >
+              Clear All Preferences
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                dismissPreferencePrompt();
+              }}
+              className="px-5 py-2.5 rounded-lg border border-gray-200 text-gray-600 font-semibold hover:bg-gray-50 transition-colors"
+            >
+              Skip for now
+            </button>
+            <button
+              type="button"
+              onClick={applyPreferenceFilters}
+              className="px-5 py-2.5 rounded-lg bg-gradient-to-r from-rose-600 to-pink-600 text-white font-semibold hover:shadow-md transition-all"
+            >
+              Apply Preferences
+            </button>
+          </div>
+        </div>
+        </div>
+      )}
+
       {/* QuickFilters Component */}
-      <QuickFilters onFilterChange={handleFilterChange} initialFilters={currentFilters} />
+      <QuickFilters key={quickFilterKey} onFilterChange={handleFilterChange} initialFilters={currentFilters} />
 
       {/* Error Message */}
       {error && (
